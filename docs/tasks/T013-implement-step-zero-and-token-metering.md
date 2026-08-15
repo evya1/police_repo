@@ -2,14 +2,26 @@
 id: T013
 status: blocked
 priority: P0
+task_type: component
+component: C03
+optional: false
 implements:
   - SEC-008
   - SEC-009
   - LEAGUE-007
   - QR-018
+context_files:
+  - docs/components/C03-peer-protocol-integrity/PRD.md
+  - docs/components/C03-peer-protocol-integrity/PLAN.md
+read_set: []
 depends_on:
   - T008
   - T010
+gates:
+  - id: INPUT-003
+    kind: input
+    scope: step_zero_key
+    blocks: criterion
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -36,6 +48,10 @@ Signed Step 0 captures the required reproducibility declaration, and token meter
 
 Hardware, model, code, team, sub-game, and Git commit fields are required. Cost tracking applies only when a paid API is used.
 
+## Gates
+
+- `INPUT-003` (`input`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `step_zero_key` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -46,7 +62,7 @@ Hardware, model, code, team, sub-game, and Git commit fields are required. Cost 
 
 ## Acceptance criteria
 
-- [ ] All required Step 0 fields are collected before the first move and signed through the integrity boundary.
+- [ ] All required Step 0 fields are collected before the first move and signed through the integrity boundary using the authorized Step 0 signing procedure once provisioned. `{#step_zero_key}`
 - [ ] Missing or unverifiable Git commit/config version blocks counted play.
 - [ ] Token input/output usage is aggregated per sub-game and series and included in artifacts.
 - [ ] No lecturer-side normalization formula is recreated locally.

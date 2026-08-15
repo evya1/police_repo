@@ -2,15 +2,26 @@
 id: T010
 status: blocked
 priority: P0
+task_type: integration
+component: C04
+optional: false
 implements:
   - ARCH-004
   - ARCH-005
   - ARCH-006
+context_files:
+  - docs/components/C04-runtime-reliability/PRD.md
+  - docs/components/C04-runtime-reliability/PLAN.md
+  - docs/contracts/CT-01-game-state.md
+  - docs/contracts/CT-02-strategy-decision.md
+  - docs/contracts/CT-03-peer-wire.md
+read_set: []
 depends_on:
   - T004
   - T005
   - T008
   - T009
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:

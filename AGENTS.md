@@ -9,12 +9,22 @@ This repository is the autonomous Police peer of a two-process P2P hidden-state 
 1. Official project specification for project behavior/submission.
 2. Official software-quality guide for classified quality expectations.
 3. Repository-local `docs/spec/CANONICAL_REQUIREMENTS.md`, `docs/spec/OPEN_QUESTIONS.md`, `docs/spec/TRACEABILITY.md`, `docs/spec/PRD_PLAN_TODO_AGENT_WORKFLOW.md`, `docs/inputs/INPUT_REGISTER.md`, and `docs/PRD.md` for approved intent, workflow, and unresolved inputs.
-4. `docs/PLAN.md` for repository technical strategy.
+4. `docs/PLAN.md` for repository system-level technical strategy; `docs/components/*/PRD.md` and `docs/components/*/PLAN.md` for one component's contract and design; `docs/mechanisms/*.md` for a dedicated algorithm; `docs/contracts/*.md` for a cross-component boundary.
 5. `docs/TODO.md` plus `docs/tasks/T###-*.md` for execution scope/state/evidence.
 
 Stop and escalate contradictions. Never convert an example, recommendation, default, or derived design into a mandatory requirement.
 
-In the packaged bundle, the files under `requirements/` are package masters and the files under `docs/spec/` and `docs/inputs/` are synchronized repository-local execution copies. When this repository is used alone, resolve every requirement, OPEN item, traceability entry, and input record from the local copies; never require a path above the repository root.
+In the packaged bundle, the files under `requirements/` and `planning/` are package masters and the files under `docs/spec/`, `docs/inputs/`, `docs/components/*/PRD.md`, `docs/mechanisms/` (shared ones), and `docs/contracts/` are synchronized repository-local execution copies. When this repository is used alone, resolve every requirement, OPEN item, traceability entry, and input record from the local copies; never require a path above the repository root.
+
+## Bounded task context (read this before claiming any task)
+
+A normal worker (human or agent) reads, in order: this file, the claimed task's own file, every path listed in that task's `context_files` frontmatter field, the requirement/OPEN/input/decision IDs the task names, and any path listed in its `read_set` (additional read-only scope outside the task's own `write_set` — every path already in `write_set` is always readable and writable by the claiming worker). This is normally a handful of files, not the whole repository.
+
+Do **not** default to reading the entire System PRD, System PLAN, canonical register, and task graph for a `component`-typed task — its `context_files` already names the one component PRD/PLAN (and, where declared, one mechanism PRD or contract) that fully specifies its scope. Reading more than the declared bounded context is a sign the task's `context_files` is incomplete, not a routine step — report it as a task-definition defect rather than silently over-reading.
+
+Wider context is expected only for `governance` and `release`-typed tasks, whose `context_files` may legitimately include the System PRD/PLAN.
+
+A task's `gates:` list distinguishes three levels: `blocks: start` (the task cannot be claimed), `blocks: criterion` (the task proceeds; only the named acceptance criterion waits), and `blocks: integration` (the task completes locally; it cannot pass the named integration gate in the bundle's `planning/INTEGRATION_PLAN.md` yet). Check `blocks: start` gates before claiming; the other two are checked when you reach the criterion or integration gate they name.
 
 ## Architecture map
 
@@ -57,9 +67,9 @@ When the approved lock is absent, use `uv sync --all-groups` only for infrastruc
 
 ## PRD, PLAN, TODO, and claiming
 
-- Only the orchestrator edits PRD, PLAN, task dependencies, or global TODO structure.
+- Only the orchestrator edits a PRD (System or component), a PLAN (System or component), task dependencies/gates, or global TODO structure.
 - A worker may update claim/result fields only in the claimed task and may request the orchestrator to mirror ledger state.
-- Claim before implementation: set `claimed_by`, set a finite `claim_expires_at`, and verify dependencies/status/write-set exclusivity.
+- Claim before implementation: set `claimed_by`, set a finite `claim_expires_at`, and verify dependencies/status/write-set exclusivity. A task is `ready` only when every `depends_on` task is `done` and no `gates:` entry has `blocks: start`.
 - Use a separate `task/T###-slug` branch/worktree where practical.
 - Edit only the declared write set. Ask before crossing it.
 - Newly discovered work gets a new task; scope never expands silently.

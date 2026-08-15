@@ -2,14 +2,27 @@
 id: T009
 status: blocked
 priority: P0
+task_type: component
+component: C03
+optional: false
 implements:
   - NET-001
   - NET-002
   - NET-003
   - NET-004
+context_files:
+  - docs/components/C03-peer-protocol-integrity/PRD.md
+  - docs/components/C03-peer-protocol-integrity/PLAN.md
+  - docs/mechanisms/M-06-peer-protocol-surface.md
+  - docs/contracts/CT-03-peer-wire.md
+read_set: []
 depends_on:
-  - T001
   - T003
+gates:
+  - id: G-LIVE
+    kind: input_gate
+    scope: public_endpoint
+    blocks: criterion
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -39,6 +52,10 @@ Thin FastMCP server/client adapters expose the approved peer contract, preserve 
 
 The official material fixes FastMCP/MCP behavior but does not supply a complete attached wire schema. Do not register guessed fields as official; record the negotiated contract.
 
+## Gates
+
+- `G-LIVE` (`input_gate`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `public_endpoint` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -53,7 +70,8 @@ The official material fixes FastMCP/MCP behavior but does not supply a complete 
 - [ ] Tool discovery and contract mismatch diagnostics fail before game start.
 - [ ] Natural-language hints remain free-form and no direct numeric-position side channel exists.
 - [ ] Endpoint, tunnel, request timeout, and retry limits come from configuration.
-- [ ] Contract tests exercise two independent processes and reject incompatible role/sub-game/config identifiers.
+- [ ] Contract tests exercise two independent processes and reject incompatible role/sub-game/config identifiers. `{#local_mcp_smoke}`
+- [ ] Public-endpoint reachability over a real or simulated tunnel is exercised only once `G-LIVE` is satisfied; the local smoke test above does not require it. `{#public_endpoint}`
 
 ## Verification
 

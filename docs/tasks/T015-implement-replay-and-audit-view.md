@@ -2,15 +2,23 @@
 id: T015
 status: blocked
 priority: P0
+task_type: component
+component: C05
+optional: false
 implements:
   - OBS-005
   - OBS-006
   - SEC-005
   - SEC-006
+context_files:
+  - docs/components/C05-observability-replay/PRD.md
+  - docs/components/C05-observability-replay/PLAN.md
+read_set: []
 depends_on:
   - T008
   - T010
   - T014
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:

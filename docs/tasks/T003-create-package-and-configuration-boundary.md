@@ -2,6 +2,9 @@
 id: T003
 status: blocked
 priority: P0
+task_type: foundation
+component: C01
+optional: false
 implements:
   - ARCH-001
   - ARCH-002
@@ -16,8 +19,13 @@ implements:
   - QR-006
   - QR-012
   - QR-013
+context_files:
+  - docs/components/C01-game-core/PRD.md
+  - docs/components/C01-game-core/PLAN.md
+read_set: []
 depends_on:
   - T002
+gates: []
 parallel_safe: false
 claimed_by:
 claim_expires_at:

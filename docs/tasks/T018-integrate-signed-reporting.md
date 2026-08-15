@@ -2,6 +2,9 @@
 id: T018
 status: blocked
 priority: P0
+task_type: integration
+component: C06
+optional: false
 implements:
   - REPORT-001
   - REPORT-004
@@ -10,12 +13,23 @@ implements:
   - REPORT-007
   - REPORT-008
   - REPORT-009
+context_files:
+  - docs/components/C06-reporting-league/PRD.md
+  - docs/components/C06-reporting-league/PLAN.md
+  - docs/mechanisms/M-07-report-reconciliation.md
+  - docs/contracts/CT-06-verified-result.md
+read_set: []
 depends_on:
   - T012
   - T013
   - T015
   - T016
   - T017
+gates:
+  - id: OPEN-004
+    kind: open
+    scope: sanction_settlement
+    blocks: criterion
 parallel_safe: false
 claimed_by:
 claim_expires_at:
@@ -48,6 +62,10 @@ The unresolved missing/conflicting-report sanction must follow the approved OPEN
 
 Artifact instances are produced in lifecycle order: one declaration before the series, one locked configuration and one incrementally recorded/finalized log per sub-game, and one result only after verified settlement. T016 must first supply the official schema/canonical contract.
 
+## Gates
+
+- `OPEN-004` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `sanction_settlement` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -62,7 +80,7 @@ Artifact instances are produced in lifecycle order: one declaration before the s
 - [ ] Declaration, configuration, log, and result instances are created only at their approved lifecycle points; finalized evidence is immutable.
 - [ ] Common identifiers, repositories, commits, hardware/model, token totals, and timestamps reconcile across all four artifact families.
 - [ ] The sender is idempotent and cannot silently send a second counted report.
-- [ ] An unsettled, tampered, schema-invalid, or peer-inconsistent result follows the approved refusal/sanction path.
+- [ ] An unsettled, tampered, schema-invalid, or peer-inconsistent result follows the approved refusal/sanction path once OPEN-004 resolves. `{#sanction_settlement}`
 - [ ] Integration tests assert the exact attachment bytes passed to a mock Gmail service.
 
 ## Verification

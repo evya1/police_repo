@@ -7,6 +7,14 @@ on:
 permissions:
   contents: read
 
+env:
+  # Pinned uv release and the SHA-256 of its official linux-x86_64 asset.
+  # Bump both together and deliberately: verifying against a digest recorded
+  # here (rather than one fetched alongside the download) is what makes the
+  # bootstrap reproducible and auditable. See docs/decisions/ADR-002.
+  UV_VERSION: "0.12.5"
+  UV_SHA256: "68a509da24b06b4223a1c0175fb5eb5bc79342b76cbeff0cfe51ac3f5b17b6b2"
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,11 +24,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v10
-        with:
-          version: latest-known
-          enable-cache: true
+      - name: Install uv
+        shell: bash
+        run: |
+          set -euo pipefail
+          # ubuntu-latest runners are x86_64; the asset name is pinned to match.
+          asset="uv-x86_64-unknown-linux-gnu.tar.gz"
+          url="https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/${asset}"
+          workdir="$(mktemp -d)"
+          curl -fsSL --retry 3 --retry-delay 2 -o "${workdir}/${asset}" "${url}"
+          # Fails the job unless the download matches the digest pinned above.
+          echo "${UV_SHA256}  ${workdir}/${asset}" | sha256sum -c -
+          mkdir -p "${HOME}/.local/bin"
+          tar -xzf "${workdir}/${asset}" --strip-components=1 -C "${HOME}/.local/bin" \
+            "uv-x86_64-unknown-linux-gnu/uv" "uv-x86_64-unknown-linux-gnu/uvx"
+          rm -rf "${workdir}"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          "${HOME}/.local/bin/uv" --version
 
       - name: Read configured Python version
         id: python

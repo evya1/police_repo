@@ -19,11 +19,11 @@ class Role(StrEnum):
 
 
 class Outcome(StrEnum):
-    CAPTURE = "capture"                  # the cop took the thief, by claim or by barrier or by trap
-    SURVIVAL = "survival"                # the thief reached the survival threshold uncaught
-    TIMEOUT = "timeout"                  # a side went silent past its budget — App. E, technical
-    TECHNICAL_LOSS = "technical_loss"    # a crash, an illegal move, an illegal state transition
-    TAMPER_FORFEIT = "tamper_forfeit"    # an audit re-hash missed: the iron rule, book ch.5
+    CAPTURE = "capture"  # the cop took the thief, by claim or by barrier or by trap
+    SURVIVAL = "survival"  # the thief reached the survival threshold uncaught
+    TIMEOUT = "timeout"  # a side went silent past its budget — App. E, technical
+    TECHNICAL_LOSS = "technical_loss"  # a crash, an illegal move, an illegal state transition
+    TAMPER_FORFEIT = "tamper_forfeit"  # an audit re-hash missed: the iron rule, book ch.5
 
 
 #: (police, thief) points. Technical loss and tamper forfeit deliberately zero BOTH sides — the
@@ -50,8 +50,9 @@ def is_tie_row(outcome: Outcome, score_a: int, score_b: int) -> bool:
     return outcome not in ZEROED and score_a == score_b
 
 
-def settled_outcome(outcome: Outcome, audits_present: bool,
-                    audits_passed: bool) -> tuple[Outcome, bool]:
+def settled_outcome(
+    outcome: Outcome, audits_present: bool, audits_passed: bool
+) -> tuple[Outcome, bool]:
     """(final outcome, settled?) — ONE settlement rule for both drivers.
 
     Before this function existed the two drivers disagreed ('s B4: selfplay kept a

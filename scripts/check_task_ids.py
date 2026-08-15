@@ -32,7 +32,10 @@ def task_file_id(path: Path, id_pattern: re.Pattern[str]) -> str | None:
 
 def links_in(text: str) -> list[str]:
     """Extract simple Markdown inline-link destinations."""
-    return [next(group for group in match.groups() if group is not None) for match in _LINK.finditer(text)]
+    return [
+        next(group for group in match.groups() if group is not None)
+        for match in _LINK.finditer(text)
+    ]
 
 
 def resolve_link(repo: Path, todo: Path, target: str) -> Path | None:
@@ -105,7 +108,8 @@ def validate_task_graph(
         resolved = {resolve_link(repo, todo, target) for target in links_in(row)}
         expected = set(by_id.get(task_id, []))
         if not expected or expected.isdisjoint(resolved):
-            issues.append(f"TODO row {task_id} does not link to its task file in {todo.relative_to(repo)}")
+            msg = f"TODO row {task_id} does not link to its task file in {todo.relative_to(repo)}"
+            issues.append(msg)
     return issues, sum(len(paths) for paths in by_id.values()), len(rows)
 
 

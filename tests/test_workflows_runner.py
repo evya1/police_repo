@@ -55,9 +55,7 @@ class WorkflowAndRunnerTests(unittest.TestCase):
             self.assertEqual(
                 issues, ["ci.yml job deploy: unapproved write permission for id-token"]
             )
-            self.assertEqual(
-                check_workflow_permissions.check_workflow(path, {"id-token"}), []
-            )
+            self.assertEqual(check_workflow_permissions.check_workflow(path, {"id-token"}), [])
 
     def test_broad_string_permissions_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -72,9 +70,7 @@ class WorkflowAndRunnerTests(unittest.TestCase):
             workflow_dir.mkdir(parents=True)
             (workflow_dir / "a.yml").write_text("permissions: {}\n", encoding="utf-8")
             (workflow_dir / "b.yaml").write_text("permissions: {}\n", encoding="utf-8")
-            files, issues = check_workflow_permissions.workflow_files(
-                root, [".github/workflows"]
-            )
+            files, issues = check_workflow_permissions.workflow_files(root, [".github/workflows"])
             self.assertEqual(len(files), 2)
             self.assertEqual(issues, [])
 
@@ -92,9 +88,7 @@ class WorkflowAndRunnerTests(unittest.TestCase):
                 failed = run_quality_gates.run_checks(root, root / "quality.toml", "python")
         self.assertEqual(failed, ["check_task_ids.py"])
         self.assertEqual(len(calls), 7)
-        self.assertTrue(
-            all("--repo" in command and "--config" in command for command in calls)
-        )
+        self.assertTrue(all("--repo" in command and "--config" in command for command in calls))
 
 
 if __name__ == "__main__":

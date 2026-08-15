@@ -50,64 +50,78 @@ _MINIMUMS = {
 }
 
 # Required sections (App. B)
-_REQUIRED_SECTIONS = frozenset({
-    "schema_version",
-    "agreed_between",
-    "board_and_agents",
-    "movement_and_barriers",
-    "scoring",
-    "world",
-    "pheromones",
-    "network_and_league",
-    "rate_limiter_gatekeeper",
-})
+_REQUIRED_SECTIONS = frozenset(
+    {
+        "schema_version",
+        "agreed_between",
+        "board_and_agents",
+        "movement_and_barriers",
+        "scoring",
+        "world",
+        "pheromones",
+        "network_and_league",
+        "rate_limiter_gatekeeper",
+    }
+)
 
 # Required fields per section (App. B)
 _REQUIRED_FIELDS: dict[str, frozenset[str]] = {
-    "board_and_agents": frozenset({
-        "grid_size",
-        "num_agents",
-        "thief_start",
-        "cop_start",
-        "axis_origin_corner",
-        "axis_start_index",
-    }),
-    "movement_and_barriers": frozenset({
-        "move_set",
-        "max_barriers",
-        "max_moves",
-        "survival_threshold",
-    }),
-    "scoring": frozenset({
-        "capture_cop",
-        "capture_thief",
-        "survival_cop",
-        "survival_thief",
-        "tie_score",
-        "technical_loss",
-    }),
+    "board_and_agents": frozenset(
+        {
+            "grid_size",
+            "num_agents",
+            "thief_start",
+            "cop_start",
+            "axis_origin_corner",
+            "axis_start_index",
+        }
+    ),
+    "movement_and_barriers": frozenset(
+        {
+            "move_set",
+            "max_barriers",
+            "max_moves",
+            "survival_threshold",
+        }
+    ),
+    "scoring": frozenset(
+        {
+            "capture_cop",
+            "capture_thief",
+            "survival_cop",
+            "survival_thief",
+            "tie_score",
+            "technical_loss",
+        }
+    ),
     "world": frozenset({"map_area", "hint_max_words"}),
-    "pheromones": frozenset({
-        "pheromone_center_intensity",
-        "pheromone_decay",
-        "pheromone_grid_size",
-    }),
-    "network_and_league": frozenset({
-        "response_timeout_sec",
-        "watchdog_timeout_sec",
-        "num_games",
-        "diversity_reward",
-        "min_games_to_pass",
-        "max_games_per_team",
-        "token_budget_per_series",
-    }),
-    "rate_limiter_gatekeeper": frozenset({
-        "requests_per_minute",
-        "concurrent_requests",
-        "retry_backoff_sec",
-        "max_retries",
-        "queue_depth",
-    }),
+    "pheromones": frozenset(
+        {
+            "pheromone_center_intensity",
+            "pheromone_decay",
+            "pheromone_grid_size",
+        }
+    ),
+    "network_and_league": frozenset(
+        {
+            "response_timeout_sec",
+            "watchdog_timeout_sec",
+            "num_games",
+            "diversity_reward",
+            "min_games_to_pass",
+            "max_games_per_team",
+            "token_budget_per_series",
+        }
+    ),
+    "rate_limiter_gatekeeper": frozenset(
+        {
+            "requests_per_minute",
+            "concurrent_requests",
+            "retry_backoff_sec",
+            "max_retries",
+            "queue_depth",
+        }
+    ),
 }
 
 
@@ -127,7 +141,7 @@ def load_config(path: Path | str) -> dict[str, Any]:
     if not path.is_file():
         raise ConfigError(f"Config file not found: {path}")
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
 
     validate_config(data)
@@ -167,15 +181,11 @@ def _validate_fields(data: dict[str, Any]) -> None:
         section_data = data.get(section, {})
         missing = fields - set(section_data.keys())
         if missing:
-            raise FieldError(
-                f"Missing required field '{section}.{', '.join(sorted(missing))}'"
-            )
+            raise FieldError(f"Missing required field '{section}.{', '.join(sorted(missing))}'")
 
         unknown = set(section_data.keys()) - fields
         if unknown:
-            raise FieldError(
-                f"Unknown field in '{section}': {', '.join(sorted(unknown))}"
-            )
+            raise FieldError(f"Unknown field in '{section}': {', '.join(sorted(unknown))}")
 
 
 def _validate_fixed_values(data: dict[str, Any]) -> None:
@@ -196,17 +206,13 @@ def _validate_minimums(data: dict[str, Any]) -> None:
     board = data.get("board_and_agents", {})
     grid_size = board.get("grid_size")
     if grid_size < _MINIMUMS["grid_size"]:
-        raise MinimumError(
-            f"grid_size must be >= {_MINIMUMS['grid_size']}, got {grid_size}"
-        )
+        raise MinimumError(f"grid_size must be >= {_MINIMUMS['grid_size']}, got {grid_size}")
 
     movement = data.get("movement_and_barriers", {})
     for key, minimum in _MINIMUMS.items():
         value = movement.get(key)
         if value is not None and value < minimum:
-            raise MinimumError(
-                f"{key} must be >= {minimum}, got {value}"
-            )
+            raise MinimumError(f"{key} must be >= {minimum}, got {value}")
 
 
 def _validate_num_agents(data: dict[str, Any]) -> None:
@@ -250,7 +256,6 @@ def _overlay_toml(base: dict[str, Any], toml: dict[str, Any]) -> None:
     must not weaken existing signed values.
     """
     for key, value in toml.items():
-        if key in base:
-            if isinstance(value, dict) and isinstance(base[key], dict):
-                _overlay_toml(base[key], value)
+        if key in base and isinstance(value, dict) and isinstance(base[key], dict):
+            _overlay_toml(base[key], value)
             # JSON wins on scalar conflicts — do not overwrite

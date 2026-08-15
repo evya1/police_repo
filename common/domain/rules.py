@@ -67,8 +67,9 @@ class GameEngine:
 
     def apply_own_move(self, move: str) -> None:
         if move not in self.legal_moves():
-            raise IllegalMoveError(f"{move} is not legal from {self.position} — "
-                                   f"legal here: {self.legal_moves()}")
+            raise IllegalMoveError(
+                f"{move} is not legal from {self.position} — legal here: {self.legal_moves()}"
+            )
         self.position = self.board.step(self.position, move)
         self.step += 1
 
@@ -97,7 +98,8 @@ class GameEngine:
             if self.opponent_barriers >= self.barriers_max:
                 raise IllegalMoveError(
                     f"opponent barrier #{self.opponent_barriers + 1} at {cell} exceeds the "
-                    f"signed quota of {self.barriers_max}")
+                    f"signed quota of {self.barriers_max}"
+                )
             self.barriers.append(cell)
             self.opponent_barriers += 1
 
@@ -120,9 +122,9 @@ class GameEngine:
         if self.role is not Role.THIEF:
             return None
         if self.position in self.barriers:
-            return Outcome.CAPTURE          # rule 46: a barrier dropped on our own cell
+            return Outcome.CAPTURE  # rule 46: a barrier dropped on our own cell
         if self.board.boxed_in(self.position, self.barriers):
-            return Outcome.CAPTURE          # rule 47: no legal move at all
+            return Outcome.CAPTURE  # rule 47: no legal move at all
         return None
 
     def survived(self) -> bool:
@@ -136,5 +138,7 @@ class GameEngine:
         there is none: each side seals what it alone knows.
         """
         barriers = sorted([list(b) for b in self.barriers])
-        return (f"grid={self.board.size}x{self.board.size};"
-                f"self={list(self.position)};barriers={barriers}")
+        return (
+            f"grid={self.board.size}x{self.board.size};"
+            f"self={list(self.position)};barriers={barriers}"
+        )

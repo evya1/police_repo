@@ -34,11 +34,17 @@ def raw_line_count(path: Path) -> int:
     return len(path.read_text(encoding="utf-8").splitlines())
 
 
+def _is_source_line(line: str) -> bool:
+    """Return True if a line is non-blank and not a comment."""
+    stripped = line.strip()
+    return bool(stripped) and not stripped.startswith(("#", "//"))
+
+
 def logical_line_count(path: Path) -> int:
     """Count non-blank, non-comment lines."""
     if path.suffix.lower() != ".py":
         lines = path.read_text(encoding="utf-8").splitlines()
-        return sum(bool(line.strip()) and not line.lstrip().startswith(("#", "//")) for line in lines)
+        return sum(1 for line in lines if _is_source_line(line))
     source_lines: set[int] = set()
     with path.open("rb") as handle:
         for token in tokenize.tokenize(handle.readline):

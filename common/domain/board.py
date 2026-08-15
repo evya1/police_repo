@@ -54,8 +54,11 @@ class Board:
         by `boxed_in` below rather than here.
         """
         blocked = set(barriers)
-        out = [m for m in ORTHOGONAL
-               if self.in_bounds(self.step(cell, m)) and self.step(cell, m) not in blocked]
+        out = [
+            m
+            for m in ORTHOGONAL
+            if self.in_bounds(self.step(cell, m)) and self.step(cell, m) not in blocked
+        ]
         return out + ["STAY"]
 
     def boxed_in(self, cell: Cell, barriers: Iterable[Cell]) -> bool:

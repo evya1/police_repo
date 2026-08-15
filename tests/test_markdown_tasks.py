@@ -32,9 +32,7 @@ def make_valid_task_graph(root: Path) -> None:
 
 def validate(root: Path) -> tuple[list[str], int, int]:
     """Validate the standard test task paths."""
-    return check_task_ids.validate_task_graph(
-        root, ["docs/TODO.md"], ["docs/tasks"], ID_PATTERN
-    )
+    return check_task_ids.validate_task_graph(root, ["docs/TODO.md"], ["docs/tasks"], ID_PATTERN)
 
 
 class MarkdownAndTaskTests(unittest.TestCase):
@@ -58,9 +56,7 @@ class MarkdownAndTaskTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             readme = root / "README.md"
-            readme.write_text(
-                "[Missing](none.md)\n[Escape](../outside.md)\n", encoding="utf-8"
-            )
+            readme.write_text("[Missing](none.md)\n[Escape](../outside.md)\n", encoding="utf-8")
             issues = check_markdown_links.broken_links(root, [readme])
             self.assertEqual(len(issues), 2)
             self.assertIn("does not exist", issues[0])
@@ -69,9 +65,7 @@ class MarkdownAndTaskTests(unittest.TestCase):
     def test_markdown_files_report_missing_input(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            files, issues = check_markdown_links.markdown_files(
-                root, [Path("missing")], set()
-            )
+            files, issues = check_markdown_links.markdown_files(root, [Path("missing")], set())
             self.assertEqual(files, [])
             self.assertEqual(issues, ["Markdown path not found: missing"])
 
@@ -87,9 +81,7 @@ class MarkdownAndTaskTests(unittest.TestCase):
             make_valid_task_graph(root)
             duplicate_dir = root / "docs/tasks/nested"
             duplicate_dir.mkdir()
-            (duplicate_dir / "T001-second-copy.md").write_text(
-                "# duplicate\n", encoding="utf-8"
-            )
+            (duplicate_dir / "T001-second-copy.md").write_text("# duplicate\n", encoding="utf-8")
             issues, _, _ = validate(root)
             self.assertTrue(any("duplicate task ID T001" in issue for issue in issues))
 
@@ -106,8 +98,7 @@ class MarkdownAndTaskTests(unittest.TestCase):
             root = Path(directory)
             make_valid_task_graph(root)
             (root / "docs/TODO.md").write_text(
-                "| ID | Task |\n| --- | --- |\n"
-                "| T001 | [Wrong](tasks/T999-missing.md) |\n",
+                "| ID | Task |\n| --- | --- |\n| T001 | [Wrong](tasks/T999-missing.md) |\n",
                 encoding="utf-8",
             )
             issues, _, _ = validate(root)

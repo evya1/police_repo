@@ -49,9 +49,7 @@ class RepositorySafetyTests(unittest.TestCase):
     def test_secret_check_allows_example_and_flags_token(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repo = initialize_git_repository(Path(directory))
-            (repo / ".env.example").write_text(
-                "API_KEY=replace-me\n", encoding="utf-8"
-            )
+            (repo / ".env.example").write_text("API_KEY=replace-me\n", encoding="utf-8")
             token = "sk-" + "A" * 24
             (repo / "settings.py").write_text(f'KEY = "{token}"\n', encoding="utf-8")
             track(repo, ".env.example", "settings.py")
@@ -83,9 +81,7 @@ class RepositorySafetyTests(unittest.TestCase):
             (repo / "fixture.tar.gz").write_bytes(b"archive")
             track(repo, "fixture.tar.gz")
             self.assertEqual(
-                check_source_archives.unexpected_archives(
-                    repo, archive_config(["fixture.tar.gz"])
-                ),
+                check_source_archives.unexpected_archives(repo, archive_config(["fixture.tar.gz"])),
                 [],
             )
 

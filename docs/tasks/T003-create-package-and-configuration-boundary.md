@@ -81,6 +81,26 @@ The package is greenfield. Shared JSON overrides conflicting local TOML; validat
 - `uv run ruff check src tests/unit/config tests/unit/test_sdk.py`
 - `uv run python scripts/run_quality_gates.py`
 
+## Configuration test vectors
+
+The contract shape validated here is `ADR-001-shared-game-contract-shape.md`; do not hardcode its example values as alternatives to Appendix F, and reject any key not in the canonical register (`docs/spec/CANONICAL_REQUIREMENTS.md` CFG-006–CFG-008).
+
+| Vector | Input | Expected |
+|---|---|---|
+| Minimum status, at floor | `grid_size = 7` | accept |
+| Minimum status, below floor | `grid_size = 6` | reject, names `grid_size` |
+| Minimum status, raised by agreement | `grid_size = 8` | accept |
+| Minimum status, below floor | `max_barriers = 10`, `survival_threshold = 30` | reject, names the offending key |
+| Fixed status, unchanged | `move_set = ["N","S","E","W","STAY"]` | accept |
+| Fixed status, changed | `move_set` reordered or shortened | reject (Fixed is immutable) |
+| Fixed status, changed | `capture_cop`, `capture_thief`, `survival_cop`, `survival_thief`, `tie_score` altered | reject (Fixed is immutable) |
+| Negotiated status, no agreement | `axis_origin_corner` absent | default `top-left` applies |
+| Negotiated status, agreed | `axis_origin_corner = "bottom-right"`, identical at both peers | accept |
+| Renamed/unknown key | any key not in the canonical register (e.g. `board_size` instead of `grid_size`) | reject, names the unrecognized key |
+| Shared/private precedence | `game.toml` sets a key also present in `game.json` | signed JSON value wins; TOML value discarded |
+| Shared/private precedence, weakening attempt | `game.toml` sets a Minimum key below the signed JSON value | reject; TOML cannot weaken a signed condition |
+| Missing section | any Appendix-F-covered section entirely absent | reject, names the missing section |
+
 ## Implementation plan
 
 To be completed immediately before execution.

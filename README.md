@@ -71,6 +71,12 @@ See `config/README.md`. Official reporting templates and the remaining private/t
 
 The two agents act under partial observation: each knows its own position and locally known state, observes opponent scent and natural-language hints, maintains a belief distribution, and selects an action without a central judge. Rewards follow the fixed capture/survival/tie rules. `TODO_BEFORE_SUBMISSION`: relate the implemented state, observation, action, transition, and reward code to this framing with precise file links.
 
+### Discrete pursuit on a bounded graph
+
+There is no external judge: both agents compute the same transition function and terminal conditions from one pre-agreed, byte-identical contract (`config/game.json`, `CFG-001`), so there is no dispute about legality before play starts. One orthogonal step or stay per turn with no diagonal movement (`GAME-004`, `GAME-005`) ties the game to the cops-and-robbers pursuit family studied in graph theory. The board's minimum size of 7×7 (`GAME-001`) keeps the joint state space — the product of both agents' positions and every barrier layout — large enough that brute-force search over it is not a viable strategy, which is why heuristic and learned policies (`STRAT-007`) are the intended approach rather than exhaustive enumeration. The barrier quota (`GAME-008`) makes Police a spatial-resource manager: barriers must squeeze the Thief without accidentally cutting off Police's own reachable cells, since a placed barrier is irreversible for the rest of the game (`GAME-007`).
+
+Scoring is asymmetric by design, not a binary win/lose: every terminal outcome pays both sides differently, and a technical loss zeros both sides regardless of position (`GAME-013`) — so protocol correctness is worth more than winning on the clock alone. `docs/decisions/ADR-001-shared-game-contract-shape.md` records the negotiated (non-official) shape of the contract file that carries these values, and `docs/spec/OPEN_QUESTIONS.md` OPEN-011 tracks the one unresolved ambiguity in the terminal-condition rules (whether the move cap and survival threshold are one event or two).
+
 ### FastMCP and orchestration dilemmas
 
 The planned solution uses symmetric server/client peers, an explicit lifecycle state machine, immutable request deadlines, bounded retry, and audit evidence. `TODO_BEFORE_SUBMISSION`: document the implemented tool surface, public-connectivity procedure, failure handling, and measured interoperability evidence after OPEN-001/OPEN-007 are resolved.

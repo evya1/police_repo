@@ -2,7 +2,7 @@
 artifact: prd
 id: PRD-FINAL-P2P
 status: draft
-version: 0.1
+version: 0.2
 owner: project-team
 source_spec_version: "3.0.0"
 updated: 2026-08-14
@@ -128,7 +128,7 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 
 ## Open questions
 
-- OPEN-001 through OPEN-010 in `docs/spec/OPEN_QUESTIONS.md` are active.
+- OPEN-001 through OPEN-011 in `docs/spec/OPEN_QUESTIONS.md` are active.
 - OPEN-001, OPEN-004, OPEN-006, OPEN-007, and OPEN-009 block production interoperability, scent, or reporting decisions.
 - OPEN-002 and the unresolved fields in OPEN-003 block final submission packaging, not core development.
 
@@ -137,5 +137,6 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 | Version | Date | Status | Change | Approval |
 |---|---|---|---|---|
 | 0.1 | 2026-08-14 | draft | Initial canonical PRD reconstructed from authorized sources | Pending project-team review |
+| 0.2 | 2026-08-15 | draft | Recorded OPEN-011 (move-cap-versus-survival-threshold termination ambiguity), discovered while decomposing stage-1 board logic into T003/T004/T028/T029; no requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
 
 After approval, every material behavior/scope change requires a Change Request naming affected requirement IDs, source/authority, impact, approval, and resulting PRD version, followed by PLAN/task reconciliation.

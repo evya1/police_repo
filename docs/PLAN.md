@@ -71,6 +71,8 @@ data/derived/          # P2 only if T025 produces real data
 
 All live state belongs to this process. The sibling repository exchanges only the approved protocol and never imports this package or shares memory (`ARCH-001`–`ARCH-003`).
 
+**Hidden-position constraint on the domain boundary** (derived from `STRAT-001`, `OBS-002`, `GAME-009`–`GAME-011`): the domain/game-logic boundary holds only this role's own position and never computes or stores the opponent's true position; barriers are public once declared and are held identically by both sides' domain state; a terminal condition that depends on the opponent's position is decided only by the side entitled to know it — the Thief's own domain state detects a barrier on its cell and its own entrapment, and the Police side emits the Capture Claim while the Thief's domain state answers from its own local position. This is enforced in `T004`'s acceptance criteria.
+
 ## Technical decisions
 
 ### TD-01 — Pure domain core with thin adapters
@@ -130,11 +132,18 @@ All live state belongs to this process. The sibling repository exchanges only th
 - **Reason:** The system has multiple external boundaries and substantial rules, but no demonstrated need for transaction-heavy abstractions or a general extension framework.
 - **Consequences:** Use narrow `Protocol`/`Callable` seams at owned boundaries; make mutability and state ownership explicit; bound concurrent work with timeouts, cancellation, and cleanup. A DI container, generic Repository/Unit of Work, domain-event bus, or CQRS requires a concrete need and an approved PLAN update or ADR. This is a derived engineering decision, not a course requirement.
 
+### TD-09 — Negotiated nested shape for the shared game contract
+
+- **Choice:** Adopt the nested-section `config/game.json` layout and canonical Appendix F key names recorded in `docs/decisions/ADR-001-shared-game-contract-shape.md`, authored and validated by `T028`/`T003`.
+- **Alternatives:** A flat key list 1:1 with `docs/spec/CANONICAL_REQUIREMENTS.md`; deferring the shape as an OPEN item.
+- **Reason:** `CFG-001`/`CFG-004` fix which values the contract must carry, not its JSON shape; the reconstructed source material never attests a mandatory field structure, so this is our own negotiable engineering choice, explicitly labeled non-official pending `OPEN-001`.
+- **Consequences:** `T028` owns the example contract file; `T003` validates it against the Appendix F status register regardless of section nesting. If the official schema (once received) differs, only this ADR and `T028`'s output change — no approved requirement is contradicted.
+
 ## Interfaces and data contracts
 
 | Contract | Officially known | Unresolved/derived handling |
 |---|---|---|
-| `config/game.json` | Shared, identical, locked; contains Appendix F terms | Exact attached template is not supplied; T001 records approved form |
+| `config/game.json` | Shared, identical, locked; contains Appendix F terms | Exact attached template is not supplied; T001 records approved form; `ADR-001` fixes our negotiated shape, authored by `T028`, pending official confirmation |
 | `config/game.toml` | Private/local; shared JSON wins conflicts | Local schema is implementation-owned and must not carry secrets |
 | MCP peer exchange | FastMCP server/client; natural-language channel; scent, integrity, barrier/capture lifecycle | Exact tool/envelope schema is negotiated and versioned; no claim that it is official |
 | Commit-Reveal record | SHA-256; State, Move, Intent, Nonce minimum; Commit/Acknowledge/Reveal/Audit | Exact canonical bytes/envelope blocked by OPEN-007 |
@@ -159,6 +168,31 @@ All live state belongs to this process. The sibling repository exchanges only th
 | COMPLETE/TAMPERED/FAILED | Terminal evidence written | none |
 
 The exact event vocabulary is finalized with the wire contract. Any transition not listed in the implemented map is rejected without side effects.
+
+### Domain-layer turn adjudication (T004)
+
+This is the per-turn decision structure inside the `COMPUTING`/`COMMITTED` states above — it operates only on locally available state (`ARCH-001`–`ARCH-003`, the hidden-position constraint above) and is exercised end-to-end by `T029`'s stage-1 gate.
+
+```mermaid
+flowchart TD
+    A[Turn begins: peer reads contract + local state] --> B{Action type}
+    B -->|MOVE N/S/E/W| C{In bounds and cell unblocked?}
+    B -->|STAY| D{Police with quota remaining?}
+    C -->|no| R[Reject: illegal move, no state change]
+    C -->|yes| E[Update own position]
+    D -->|yes, declares barrier| F{Target is own cell or orthogonal neighbor, unblocked?}
+    D -->|no| G[Remain in place]
+    F -->|no| R
+    F -->|yes| H[Place barrier and declare it openly]
+    E --> I{Terminal condition?}
+    G --> I
+    H --> I
+    I -->|Police on Thief cell plus valid Capture Claim| J["CAPTURE: 20 to Police, 5 to Thief (GAME-013)"]
+    I -->|Barrier on Thief cell or Thief has no legal move| J
+    I -->|Step count reaches survival_threshold| K["SURVIVAL: 5 to Police, 10 to Thief (GAME-013)"]
+    I -->|Step count reaches max_moves without survival or capture| L["Blocked by OPEN-011: refuse to score, do not guess"]
+    I -->|none of the above| M[Turn passes to opponent]
+```
 
 ## Failure / retry / recovery
 
@@ -230,10 +264,22 @@ These branches are derived test cases, not requirements or defaults. T001 must r
 ## Execution phases
 
 1. Resolve external inputs and dependency baseline (T001–T002).
-2. Establish package/config and deterministic core (T003–T008).
+2. Establish package/config and deterministic core (T003–T008, T028–T029).
 3. Establish peer lifecycle and resilience (T009–T013).
 4. Build visible/auditable operation and reporting (T014–T020).
 5. Close verification, documentation, optional extensions/excellence, compliance, and release (T021–T027).
+
+### Phase 2 checkpoints — deterministic domain core
+
+The next phase (peer lifecycle, transport, strategy) starts only after these checkpoints pass with recorded evidence; each is a subset of an existing task's acceptance criteria, not a new gate mechanism.
+
+| Checkpoint | Owning task | Exit criteria |
+|---|---|---|
+| CP-1 | T028 | Example `config/game.json`/`config/game.toml.example` committed in the `ADR-001` shape; loads through T003's validator with no error |
+| CP-2 | T003 | Appendix F Fixed/Minimum/Negotiated status validation green for every configuration test vector |
+| CP-3 | T004 | Board/movement/barrier test vectors green (domain test vectors table) |
+| CP-4 | T004 | Capture/terminal-condition/scoring test vectors green, including the OPEN-011 refusal case |
+| CP-5 | T029 | Local two-agent scripted run reaches CAPTURE and SURVIVAL outcomes with correct scores; double-run determinism evidence recorded in `docs/evidence/stage1-gate.md` |
 
 ## Parallel execution waves
 
@@ -241,7 +287,8 @@ These branches are derived test cases, not requirements or defaults. T001 must r
 |---|---|---|---|
 | 0 | T001, T002 | Human input collection; none for dependency research | `config/official`, `docs/inputs`, affected local OPEN records; versus `pyproject.toml`, `uv.lock`, CI |
 | 1 | T003 | T002 | Package facade/config and config-focused tests |
-| 2 | T004, T008, T009, T017 | T003; T009 also T001 | Domain; integrity; transport; reporting Gatekeeper — disjoint |
+| 2 | T004, T008, T009, T017, T028 | T003; T009 also T001 | Domain; integrity; transport; reporting Gatekeeper; shared game contract — disjoint |
+| 2-opt | T029 | T004, T028 | Stage-1 domain gate (scripted two-agent run) — depends on wave 2, runs after it |
 | 3 | T005, T016 | T001; T005 also T004 | Scent/model lock; official reporting schemas — disjoint |
 | 4 | T006, T010 | T005; T010 also T008/T009 | Belief; orchestration — disjoint |
 | 5 | T007, T011, T012, T013, T014 | T006/T010 as declared in task files | Strategy; reliability; inbox; evidence; live UI — disjoint |
@@ -288,4 +335,5 @@ Before each wave, the orchestrator checks dependencies, claims, expiry, and exac
 - OPEN-007: canonical commit/report serialization, signature scope, Unicode behavior, and identifier relation.
 - OPEN-008: game/match/series terminology, role schedule, and tie aggregation.
 - OPEN-009: scent saturation/merge semantics under repeated emission.
+- OPEN-011: move-cap-versus-survival-threshold termination and round-versus-half-turn step counting.
 - PLANQ-001 through PLANQ-008: team-owned implementation choices to resolve during the relevant task-planning step; they do not close official blockers.

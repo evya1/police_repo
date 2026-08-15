@@ -2,16 +2,27 @@
 id: T019
 status: blocked
 priority: P0
+task_type: component
+component: C06
+optional: false
 implements:
   - GAME-013
   - LEAGUE-001
   - LEAGUE-005
   - LEAGUE-006
+context_files:
+  - docs/components/C06-reporting-league/PRD.md
+  - docs/components/C06-reporting-league/PLAN.md
+read_set: []
 depends_on:
-  - T001
   - T004
   - T010
   - T013
+gates:
+  - id: OPEN-008
+    kind: open
+    scope: series_aggregation
+    blocks: criterion
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -40,6 +51,10 @@ A counted series executes exactly six isolated sub-games and derives capture, su
 
 Series aggregation must not become a central judge; each peer derives its own result and later reconciles it with the opponent. OPEN-008 must settle role assignment/alternation and whether the fixed tie score replaces or augments accumulated points. Series-add, series-replace, and per-sub-game behavior are differential cases only; none is authority for a production choice.
 
+## Gates
+
+- `OPEN-008` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `series_aggregation` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -52,7 +67,7 @@ Series aggregation must not become a central judge; each peer derives its own re
 
 - [ ] Exactly six configured sub-games run under the lecturer-approved role schedule, with clean state reset and unique config/log identities.
 - [ ] All fixed score rows and the approved cumulative-tie application match the canonical table and OPEN-008 resolution.
-- [ ] Tests distinguish series-add, series-replace, and per-sub-game tie semantics and prove that only the approved OPEN-008 profile is selectable for counted play.
+- [ ] Tests distinguish series-add, series-replace, and per-sub-game tie semantics and prove that only the approved OPEN-008 profile is selectable for counted play. `{#series_aggregation}`
 - [ ] Diversity reward applies only to a qualifying new-opponent win.
 - [ ] Technical-loss/tamper outcomes cannot be converted to clean scores.
 - [ ] The same verified sub-game list is the single source for totals and report input.

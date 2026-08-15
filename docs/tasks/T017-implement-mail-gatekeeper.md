@@ -2,6 +2,9 @@
 id: T017
 status: blocked
 priority: P0
+task_type: component
+component: C06
+optional: false
 implements:
   - SEC-010
   - REPORT-001
@@ -13,9 +16,18 @@ implements:
   - REPORT-012
   - REPORT-013
   - QR-008
+context_files:
+  - docs/components/C06-reporting-league/PRD.md
+  - docs/components/C06-reporting-league/PLAN.md
+read_set: []
 depends_on:
   - T002
   - T003
+gates:
+  - id: PLANQ-005
+    kind: decision
+    scope: sender_choice
+    blocks: criterion
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -50,6 +62,10 @@ A reusable configuration-driven external-service Gatekeeper provides token bucke
 
 Tests must never contact Gmail or any optional model provider. Live OAuth authorization and delivery are human-gated, local credential files remain ignored, and any external call introduced by T027 must pass through this boundary without changing Gmail behavior. A draft-only adapter or pretty-printed JSON body is not a counted-report sender and must fail the compliance test.
 
+## Gates
+
+- `PLANQ-005` (`decision`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `sender_choice` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -61,7 +77,7 @@ Tests must never contact Gmail or any optional model provider. Live OAuth author
 ## Acceptance criteria
 
 - [ ] OAuth requests only gmail.send and rejects broader granted scopes.
-- [ ] The adapter uses the Gmail send operation and cannot silently substitute draft creation or message-body text for the required JSON attachment.
+- [ ] The adapter uses the Gmail send operation and cannot silently substitute draft creation or message-body text for the required JSON attachment, per the approved PLANQ-005 sender selection. `{#sender_choice}`
 - [ ] All Gmail sends and any later optional model-provider calls pass through the single Gatekeeper; direct service calls are structurally prevented.
 - [ ] Token bucket, concurrency, queue, retry/backoff, DOS lockout, and monitoring use approved configuration.
 - [ ] credentials.json and token.json are ignored, never logged, and absent from fixtures.

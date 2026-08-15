@@ -2,6 +2,9 @@
 id: T016
 status: blocked
 priority: P0
+task_type: component
+component: C06
+optional: false
 implements:
   - CFG-009
   - CFG-010
@@ -10,8 +13,16 @@ implements:
   - REPORT-007
   - REPORT-008
   - REPORT-009
-depends_on:
-  - T001
+context_files:
+  - docs/components/C06-reporting-league/PRD.md
+  - docs/components/C06-reporting-league/PLAN.md
+read_set: []
+depends_on: []
+gates:
+  - id: INPUT-001
+    kind: input
+    scope: schema_adoption
+    blocks: start
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -43,6 +54,10 @@ The four official JSON schemas/templates are adopted without alteration, with va
 OPEN-001 and OPEN-007 are hard blockers. Prose supplies names and broad contents but is not permission to fabricate official attached schemas, consensus-signature bytes, or identifiers. Conflicting flat/nested layouts and differing declaration/log/result fields demonstrate why no auxiliary artifact generator/schema may be relabeled as official.
 
 The runtime instances are built during execution: declaration before the series, configuration before each sub-game, log during/finalized after each sub-game, and result after verified settlement. This task adopts the official contract those builders must follow; it does not pre-create completed match data.
+
+## Gates
+
+- `INPUT-001` (`input`, `blocks: start`) — this task cannot be claimed until the gate resolves.
 
 ## Constraints
 

@@ -23,6 +23,10 @@ The missing input is the official field-level and canonical-signing contract, no
 
 Use `docs/spec/CANONICAL_REQUIREMENTS.md` CFG-004 through CFG-008 as the normalized register; do not substitute a sample number for the Appendix F authority.
 
+## Negotiated contract shape (non-official)
+
+`config/game.example.json` and `config/game.toml.example` (T028) demonstrate the nested-section layout and canonical key names recorded in `docs/decisions/ADR-001-shared-game-contract-shape.md`. This shape is our own negotiable engineering choice, not an attested official schema — no reconstruction of the project specification states a mandatory field structure for `config/game.json`, only that it must carry every Appendix F value (`CFG-004`) and remain byte-identical/locked (`CFG-001`). Both example files are labeled `EXAMPLE — NOT AN OFFICIAL ATTACHED TEMPLATE` and must not be presented as, or replaced by, an actual official template until `OPEN-001` is resolved.
+
 ## Private values and secrets
 
 Runtime secrets belong in environment variables or local files ignored by Git. Never put OAuth credentials, tokens, keys, passwords, personal identifiers, or private member data in either JSON or TOML. `.env.example` contains placeholders only. `credentials.json`, `token.json`, `.env`, and key material are forbidden in commits.

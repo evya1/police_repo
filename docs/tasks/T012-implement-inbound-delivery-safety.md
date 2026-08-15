@@ -2,13 +2,21 @@
 id: T012
 status: blocked
 priority: P1
+task_type: component
+component: C03
+optional: false
 implements:
   - NET-005
   - SEC-002
   - SEC-005
+context_files:
+  - docs/components/C03-peer-protocol-integrity/PRD.md
+  - docs/components/C03-peer-protocol-integrity/PLAN.md
+read_set: []
 depends_on:
   - T009
   - T010
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:

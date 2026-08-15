@@ -2,6 +2,9 @@
 id: T026
 status: blocked
 priority: P0
+task_type: release
+component: system
+optional: false
 implements:
   - SUB-001
   - SUB-002
@@ -14,10 +17,26 @@ implements:
   - SUB-009
   - SUB-010
   - SUB-011
+context_files:
+  - docs/PRD.md
+  - docs/PLAN.md
+read_set: []
 depends_on:
-  - T001
   - T020
   - T024
+gates:
+  - id: INPUT-002
+    kind: input
+    scope: moodle_form
+    blocks: start
+  - id: G-TEAM
+    kind: input_gate
+    scope: public_metadata
+    blocks: start
+  - id: G-LIVE
+    kind: input_gate
+    scope: live_endpoints
+    blocks: start
 parallel_safe: false
 claimed_by:
 claim_expires_at:
@@ -49,6 +68,12 @@ The reviewed repository and official submission artifacts are frozen at annotate
 ## Relevant context
 
 Tagging, remote sharing, Moodle submissions, and the official Word-to-PDF form require human authorization and any private identity values must remain outside public repository artifacts.
+
+## Gates
+
+- `INPUT-002` (`input`, `blocks: start`) — this task cannot be claimed until the gate resolves.
+- `G-TEAM` (`input_gate`, `blocks: start`) — this task cannot be claimed until the gate resolves.
+- `G-LIVE` (`input_gate`, `blocks: start`) — this task cannot be claimed until the gate resolves.
 
 ## Constraints
 

@@ -2,17 +2,30 @@
 id: T022
 status: blocked
 priority: P1
+task_type: integration
+component: system
+optional: false
 implements:
   - NET-001
   - NET-005
   - SEC-002
   - SEC-005
   - REPORT-009
+context_files:
+  - docs/PRD.md
+  - docs/PLAN.md
+  - docs/interop/LEAGUE_COMPATIBILITY.md
+read_set: []
 depends_on:
   - T011
   - T012
   - T018
   - T019
+gates:
+  - id: G-LIVE
+    kind: input_gate
+    scope: live_interop
+    blocks: integration
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -39,7 +52,11 @@ Two-process contract and fault-injection suites prove lifecycle recovery, determ
 
 ## Relevant context
 
-Tests cover derived failure controls without elevating their internal message shapes to official requirements.
+Tests cover derived failure controls without elevating their internal message shapes to official requirements. This task owns the full interoperability/conformance gate named `live_interop` in the bundle-only `planning/INTEGRATION_PLAN.md` (inspect it in the `final_project_spec_prd_plan_todo_bundle` repository if available; it has no repository-local copy). `docs/interop/LEAGUE_COMPATIBILITY.md` (local copy) governs any optional league-kit conformance work this task performs.
+
+## Gates
+
+- `G-LIVE` (`input_gate`, `blocks: integration`) — the task completes locally; it cannot pass the `live_interop` integration gate in `planning/INTEGRATION_PLAN.md` until this resolves.
 
 ## Constraints
 

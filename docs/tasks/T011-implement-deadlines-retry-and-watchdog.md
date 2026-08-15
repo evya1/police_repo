@@ -2,13 +2,21 @@
 id: T011
 status: blocked
 priority: P0
+task_type: component
+component: C04
+optional: false
 implements:
   - ARCH-008
   - NET-005
   - CFG-007
   - CFG-008
+context_files:
+  - docs/components/C04-runtime-reliability/PRD.md
+  - docs/components/C04-runtime-reliability/PLAN.md
+read_set: []
 depends_on:
   - T010
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:

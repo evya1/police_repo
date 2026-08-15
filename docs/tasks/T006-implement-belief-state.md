@@ -2,11 +2,20 @@
 id: T006
 status: blocked
 priority: P0
+task_type: component
+component: C02
+optional: false
 implements:
   - STRAT-001
   - STRAT-006
+context_files:
+  - docs/components/C02-perception-strategy/PRD.md
+  - docs/components/C02-perception-strategy/PLAN.md
+  - docs/mechanisms/M-02-belief-state.md
+read_set: []
 depends_on:
   - T005
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:

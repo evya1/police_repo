@@ -2,6 +2,9 @@
 id: T005
 status: blocked
 priority: P0
+task_type: component
+component: C02
+optional: false
 implements:
   - STRAT-002
   - STRAT-003
@@ -9,9 +12,18 @@ implements:
   - STRAT-005
   - CFG-001
   - CFG-004
+context_files:
+  - docs/components/C02-perception-strategy/PRD.md
+  - docs/components/C02-perception-strategy/PLAN.md
+  - docs/mechanisms/M-01-scent-model.md
+read_set: []
 depends_on:
-  - T001
   - T004
+gates:
+  - id: OPEN-009
+    kind: open
+    scope: model_lock
+    blocks: criterion
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -42,6 +54,10 @@ A deterministic 5x5 emission/decay model and pre-series model-lock contract are 
 
 The source fixes center intensity, field size, the multiplicative update recurrence, decay timing, and anti-forgery behavior. It does not state how repeated emission remains within `[0, 0.9]`; T001 must resolve OPEN-009 before this task selects saturation/merge semantics. Clamp/no-clamp, add/max/replace, decay/deposit order, rounding, and transmitted-versus-recomputed variants are differential tests only. No non-authoritative default model overrides that approval.
 
+## Gates
+
+- `OPEN-009` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `model_lock` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -57,7 +73,7 @@ The source fixes center intensity, field size, the multiplicative update recurre
 - [ ] Decay occurs exactly once after both sides act and never produces forged remote scent.
 - [ ] Each peer exposes only its own emitted field and consumes only the opponent field.
 - [ ] A model document plus numeric examples for new, decaying, and repeatedly emitted cells can be compared and locked before play.
-- [ ] Pre-lock tests demonstrate how each unresolved clamp, merge, order, rounding, and transport variant diverges; the approved profile enables exactly one behavior.
+- [ ] Pre-lock tests demonstrate how each unresolved clamp, merge, order, rounding, and transport variant diverges; the approved profile enables exactly one behavior. `{#model_lock}`
 - [ ] A mismatch refuses start with a diagnostic and no partial game state.
 
 ## Verification

@@ -2,17 +2,25 @@
 id: T021
 status: blocked
 priority: P1
+task_type: verification
+component: system
+optional: false
 implements:
   - QR-005
   - QR-009
   - QR-010
   - QR-011
+context_files:
+  - docs/PRD.md
+  - docs/PLAN.md
+read_set: []
 depends_on:
   - T004
   - T005
   - T006
   - T007
   - T008
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:

@@ -2,16 +2,33 @@
 id: T027
 status: blocked
 priority: P2
+task_type: component
+component: C02
+optional: true
 implements:
   - STRAT-008
   - SEC-009
   - QR-008
   - QR-018
+context_files:
+  - docs/components/C02-perception-strategy/PRD.md
+  - docs/components/C02-perception-strategy/PLAN.md
+  - docs/mechanisms/M-03-police-strategy.md
+read_set: []
 depends_on:
   - T002
   - T007
   - T013
   - T017
+gates:
+  - id: PLANQ-003
+    kind: decision
+    scope: provider_choice
+    blocks: start
+  - id: PLANQ-004
+    kind: decision
+    scope: provider_scope
+    blocks: criterion
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -38,6 +55,11 @@ An explicitly selected provider adapter may generate free-form verbal hints or b
 
 The official specification permits template, local-model, or configured provider modes without selecting a vendor. This P2 task is optional and never blocks release. PLANQ-003 and PLANQ-004 must approve whether a provider is needed and, if so, its model, budget, cadence, rate limits, and text-only scope before any live external call. A provider failure must not block a legal game action.
 
+## Gates
+
+- `PLANQ-003` (`decision`, `blocks: start`) — this task cannot be claimed until the gate resolves.
+- `PLANQ-004` (`decision`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `provider_scope` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -49,7 +71,7 @@ The official specification permits template, local-model, or configured provider
 ## Acceptance criteria
 
 - [ ] The adapter is enabled only by explicit private configuration after provider/model approval; template mode remains valid without network/model dependencies.
-- [ ] A legal Police action is selected and locked before a provider call; provider output cannot select, veto, delay, or mutate that action.
+- [ ] A legal Police action is selected and locked before a provider call; provider output cannot select, veto, delay, or mutate that action, per the approved PLANQ-004 provider scope. `{#provider_scope}`
 - [ ] Timeout, malformed response, 429, provider outage, and token/cost-budget exhaustion produce bounded deterministic template fallback.
 - [ ] Every external call passes through the central Gatekeeper; provider-specific credentials or environment variable names are introduced only after provider selection and never appear in logs, fixtures, exceptions, or artifacts.
 - [ ] Actual token/cost metadata is added to the existing token ledger/report path when available; tests do not fabricate usage as execution evidence.

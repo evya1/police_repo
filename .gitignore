@@ -1,0 +1,39 @@
+# Python and uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.hypothesis/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+service-account.json
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Build/generated outputs
+build/
+dist/
+*.egg-info/
+artifacts/private/
+reports/outbox/
+logs/
+tmp/

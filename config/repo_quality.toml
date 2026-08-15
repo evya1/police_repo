@@ -1,0 +1,46 @@
+python_version = "3.12"
+
+line_limit = 150
+line_mode = "logical"
+source_dirs = []
+test_dirs = ["tests"]
+script_dirs = ["scripts"]
+code_extensions = [".py"]
+exclude_dirs = [".git", ".venv", "__pycache__", ".pytest_cache", ".ruff_cache"]
+
+required_docs = [
+  "README.md",
+  "AGENTS.md",
+  "CONTRIBUTING.md",
+  "config/README.md",
+  "docs/PRD.md",
+  "docs/PLAN.md",
+  "docs/TODO.md",
+  "docs/spec/CANONICAL_REQUIREMENTS.md",
+  "docs/spec/OPEN_QUESTIONS.md",
+  "docs/spec/PRD_PLAN_TODO_AGENT_WORKFLOW.md",
+  "docs/spec/TRACEABILITY.md",
+  "docs/inputs/INPUT_REGISTER.md",
+  "docs/decisions/ADR-000-template.md",
+  "docs/changes/CR-000-template.md",
+]
+markdown_paths = ["README.md", "AGENTS.md", "CONTRIBUTING.md", "config", "docs", ".github"]
+
+todo_paths = ["docs/TODO.md"]
+task_dirs = ["docs/tasks"]
+task_id_pattern = "^T[0-9]{3,}$"
+
+archive_suffixes = [
+  ".zip", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz2",
+  ".tar.xz", ".txz", ".gz", ".bz2", ".xz", ".7z", ".rar",
+]
+archive_allowlist = []
+
+secret_allowed_paths = [".env.example"]
+secret_banned_names = [
+  ".env", "credentials.json", "token.json", "service-account.json",
+]
+secret_banned_globs = [".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "id_rsa", "id_ed25519"]
+
+workflow_dirs = [".github/workflows"]
+workflow_allowed_write_permissions = []

@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff
+        entry: uv run ruff check .
+        language: system
+        pass_filenames: false
+
+      - id: pytest
+        name: pytest with configured coverage
+        entry: uv run pytest
+        language: system
+        pass_filenames: false
+
+      - id: repository-quality-gates
+        name: repository quality gates
+        entry: uv run python scripts/run_quality_gates.py
+        language: system
+        pass_filenames: false

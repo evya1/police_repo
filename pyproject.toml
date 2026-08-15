@@ -1,0 +1,40 @@
+[project]
+name = "p2p-police-peer"
+version = "1.00"
+description = "Greenfield Police peer for the distributed Police/Thief final project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--tb=short -q --cov=scripts --cov-report=term-missing --cov-fail-under=85"
+
+[tool.coverage.run]
+branch = false
+source = ["scripts"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4.0",
+  "pytest>=8.0",
+  "pytest-cov>=6.0",
+  "pyyaml>=6.0",
+  "ruff>=0.8",
+]

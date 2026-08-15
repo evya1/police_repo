@@ -41,3 +41,5 @@ The task file is authoritative for task scope and evidence; this table is the co
 | T025 | blocked | P2 | QR-016 | T022 | yes | — | [task](tasks/T025-run-optional-excellence-study.md) |
 | T026 | blocked | P0 | SUB-001, SUB-002, SUB-003, SUB-004, SUB-005, SUB-006, SUB-007, SUB-008, SUB-009, SUB-010, SUB-011 | T001, T020, T024 | no | — | [task](tasks/T026-prepare-release-and-submission.md) |
 | T027 | blocked | P2 | STRAT-008, SEC-009, QR-008, QR-018 | T002, T007, T013, T017 | yes | — | [task](tasks/T027-implement-optional-language-model-provider-adapter.md) |
+| T028 | blocked | P0 | CFG-001, CFG-009 | T003 | yes | — | [task](tasks/T028-author-shared-game-contract.md) |
+| T029 | blocked | P1 | GAME-013, GAME-014 | T004, T028 | yes | — | [task](tasks/T029-run-stage-one-gate.md) |

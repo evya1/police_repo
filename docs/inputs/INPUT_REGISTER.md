@@ -14,6 +14,7 @@ This register records the arrival and verification state of authoritative extern
 | INPUT-008 | Clarification of scent saturation, merge rule, update order, and rounding | Course staff | MISSING | — | — | OPEN-009 | STRAT-003, STRAT-005 | Require a numeric repeated-emission example before the model lock. |
 | INPUT-009 | Human-approved public team metadata record | Project team | EXPECTED | — | — | OPEN-003, OPEN-010 | SEC-008; REPORT-007; SUB-002, SUB-003 | Record only publication-intended metadata; exclude legal names and private IDs unless an official private form requires them. |
 | INPUT-010 | Verified repository URLs, public MCP endpoints, opponent identifiers, and counted-match agreement | Project team and opponent | EXPECTED | — | — | OPEN-003 | NET-002; REPORT-007, REPORT-008; SUB-002, SUB-003 | Do not record credentials, tokens, or private endpoint secrets. |
+| INPUT-011 | Clarification of move-cap-versus-survival-threshold termination and round-versus-half-turn step counting | Course staff | MISSING | — | — | OPEN-011 | GAME-013, GAME-014, CFG-007 | Neither value may be inferred from a third-party implementation; retain both binding minimums of 35 while unresolved. |
 
 ## Intake workflow
 

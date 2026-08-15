@@ -23,12 +23,20 @@ addopts = "--tb=short -q --cov=scripts --cov-report=term-missing --cov-fail-unde
 
 [tool.coverage.run]
 branch = false
-source = ["scripts"]
+source = ["scripts", "src/police_peer"]
 
 [tool.coverage.report]
 fail_under = 85
 show_missing = true
 skip_covered = true
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.",
+  "raise NotImplementedError",
+  "\"\"\".*\"\"\"",
+]
+
+
 
 [dependency-groups]
 dev = [

@@ -2,15 +2,26 @@
 id: T020
 status: blocked
 priority: P0
+task_type: component
+component: C06
+optional: false
 implements:
   - LEAGUE-002
   - LEAGUE-003
   - LEAGUE-004
   - LEAGUE-007
+context_files:
+  - docs/components/C06-reporting-league/PRD.md
+  - docs/components/C06-reporting-league/PLAN.md
+read_set: []
 depends_on:
-  - T001
   - T018
   - T019
+gates:
+  - id: G-LIVE
+    kind: input_gate
+    scope: pairing_preflight
+    blocks: criterion
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -38,6 +49,10 @@ Preflight guards enforce counted-match eligibility and truthful declarations, wh
 
 The system reports required inputs but never invents lecturer-side normalization. Warm-ups remain explicitly non-counted.
 
+## Gates
+
+- `G-LIVE` (`input_gate`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `pairing_preflight` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -53,6 +68,7 @@ The system reports required inputs but never invents lecturer-side normalization
 - [ ] Prior counted-match declarations are signed, compared, and retained.
 - [ ] Warm-up and counted modes are unambiguous and cannot share report state accidentally.
 - [ ] Hardware/code/token evidence is complete but contains no local fairness score formula.
+- [ ] Preflight eligibility, declaration, and endpoint checks pass against real opponent/endpoint data once `G-LIVE` is satisfied. `{#pairing_preflight}`
 
 ## Verification
 

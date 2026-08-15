@@ -2,15 +2,28 @@
 id: T014
 status: blocked
 priority: P0
+task_type: component
+component: C05
+optional: false
 implements:
   - OBS-001
   - OBS-002
   - OBS-003
   - OBS-004
   - QR-017
+context_files:
+  - docs/components/C05-observability-replay/PRD.md
+  - docs/components/C05-observability-replay/PLAN.md
+  - docs/contracts/CT-05-event-projection.md
+read_set: []
 depends_on:
   - T006
   - T010
+gates:
+  - id: PLANQ-007
+    kind: decision
+    scope: gui_toolkit
+    blocks: start
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -39,6 +52,10 @@ A dedicated Police live GUI renders only local truth, the opponent-belief heatma
 ## Relevant context
 
 The GUI is a thin observer/controller. It must never render objective opponent position or a combined omniscient board.
+
+## Gates
+
+- `PLANQ-007` (`decision`, `blocks: start`) — this task cannot be claimed until the gate resolves.
 
 ## Constraints
 

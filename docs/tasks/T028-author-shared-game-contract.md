@@ -2,11 +2,19 @@
 id: T028
 status: blocked
 priority: P0
+task_type: component
+component: C01
+optional: false
 implements:
   - CFG-001
   - CFG-009
+context_files:
+  - docs/components/C01-game-core/PRD.md
+  - docs/components/C01-game-core/PLAN.md
+read_set: []
 depends_on:
   - T003
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:

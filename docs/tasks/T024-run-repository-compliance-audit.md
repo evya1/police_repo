@@ -2,6 +2,9 @@
 id: T024
 status: blocked
 priority: P1
+task_type: verification
+component: system
+optional: false
 implements:
   - QR-001
   - QR-003
@@ -15,10 +18,15 @@ implements:
   - QR-013
   - QR-014
   - QR-019
+context_files:
+  - docs/PRD.md
+  - docs/PLAN.md
+read_set: []
 depends_on:
   - T021
   - T022
   - T023
+gates: []
 parallel_safe: false
 claimed_by:
 claim_expires_at:

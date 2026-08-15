@@ -2,6 +2,9 @@
 id: T004
 status: blocked
 priority: P0
+task_type: component
+component: C01
+optional: false
 implements:
   - GAME-001
   - GAME-002
@@ -17,8 +20,17 @@ implements:
   - GAME-012
   - GAME-013
   - GAME-014
+context_files:
+  - docs/components/C01-game-core/PRD.md
+  - docs/components/C01-game-core/PLAN.md
+read_set: []
 depends_on:
   - T003
+gates:
+  - id: OPEN-011
+    kind: open
+    scope: terminal_map
+    blocks: criterion
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -59,6 +71,10 @@ Pure deterministic board, movement, barrier, capture, terminal-condition, and sc
 
 Rules must operate only on role-local truth. The fixed scoring table and configured Minimum/Negotiated bounds are inputs, not hard-coded alternative values.
 
+## Gates
+
+- `OPEN-011` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `terminal_map` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -72,7 +88,7 @@ Rules must operate only on role-local truth. The fixed scoring table and configu
 - [ ] Property and example tests cover boundaries, cardinal moves, STAY, and diagonal rejection.
 - [ ] Barrier placement, persistence, quota, collision, and trapped-Thief capture follow the official rules.
 - [ ] A Police capture claim names its current post-move cell; arbitrary-cell claims are rejected, Thief responses are truth-checked, and all fixed scores are deterministic.
-- [ ] Move-cap and survival termination use the signed configuration.
+- [ ] Move-cap and survival termination use the signed configuration; a move-cap-vs-survival-threshold divergence refuses to score rather than guessing a precedence. `{#terminal_map}`
 - [ ] No network, GUI, LLM, clock, or filesystem dependency enters domain logic.
 
 ## Verification

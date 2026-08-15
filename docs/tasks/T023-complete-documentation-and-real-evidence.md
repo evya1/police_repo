@@ -2,6 +2,9 @@
 id: T023
 status: blocked
 priority: P1
+task_type: governance
+component: system
+optional: false
 implements:
   - OBS-007
   - SUB-003
@@ -11,11 +14,20 @@ implements:
   - QR-002
   - QR-015
   - QR-017
+context_files:
+  - docs/PRD.md
+  - docs/PLAN.md
+read_set: []
 depends_on:
   - T014
   - T015
   - T020
   - T022
+gates:
+  - id: G-TEAM
+    kind: input_gate
+    scope: public_metadata
+    blocks: criterion
 parallel_safe: false
 claimed_by:
 claim_expires_at:
@@ -50,6 +62,10 @@ The README and academic evidence describe the system actually built, with genuin
 
 Replace TODO_BEFORE_SUBMISSION markers only with verified implementation evidence. Learning curves appear only if RL was genuinely used.
 
+## Gates
+
+- `G-TEAM` (`input_gate`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `public_metadata` waits.
+
 ## Constraints
 
 - Do not edit the canonical PRD.
@@ -65,6 +81,7 @@ Replace TODO_BEFORE_SUBMISSION markers only with verified implementation evidenc
 - [ ] Implemented strategies, benchmarks, results, token/cost figures, and experiments cite reproducible evidence.
 - [ ] Prompt/decision notes retain useful engineering lessons without secrets or private personal data.
 - [ ] All local Markdown links resolve and all remaining TODO_BEFORE_SUBMISSION markers are justified blockers.
+- [ ] Public team metadata (team name, number, GitHub handles) documented in the README is confirmed against the human-approved record once `G-TEAM` is satisfied. `{#public_metadata}`
 
 ## Verification
 

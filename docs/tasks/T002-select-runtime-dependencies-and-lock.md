@@ -32,6 +32,8 @@ The repository has a reviewed Python/FastMCP/GUI/Gmail dependency baseline and a
 
 This planning scaffold intentionally omits uv.lock because runtime libraries and compatible versions have not yet been approved. Quality-only dependencies already live in pyproject.toml.
 
+This task owns `.github/workflows/ci.yml`, whose uv bootstrap was repaired ahead of it under `docs/decisions/ADR-002-ci-uv-bootstrap.md`: CI installs a pinned, checksum-verified uv release instead of a third-party marketplace action. Inherit that decision rather than reopening it. When the approved lock lands, change `uv sync --all-groups` to `uv sync --locked --all-groups` and leave the bootstrap step unchanged.
+
 ## Constraints
 
 - Do not edit the canonical PRD.

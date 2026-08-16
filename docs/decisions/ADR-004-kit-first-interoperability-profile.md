@@ -19,7 +19,7 @@ Two independently written peers must compute byte-identical scent arithmetic and
 
 Until now our planning artifacts responded to that gap by forbidding the selection of any production default before an official answer arrived. That was the correct posture while nothing else supplied enough information to build against. It is no longer the correct posture, because it now blocks work indefinitely on an answer we do not control, and because a concrete, reproducible compatibility target exists.
 
-The project team wants the first working implementation to interoperate directly with the current `Imreec/copthief-league-protocol` kit, especially its runnable `sparring` peer. That kit was inspected read-only at upstream commit `ad6557626587e09146af4283a5e808e7001343c5` and recorded as `EVID-003` in the bundle's evidence register — **NON-AUTHORITATIVE interoperability evidence**, never a course input. What it supplies is two fully specified, separately registered scent models with pinned parameter documents and published conformance vectors, plus a documented wire profile whose tool surface has carried real cross-team series.
+The project team wants the first working implementation to interoperate directly with the current `Imreec/copthief-league-protocol` kit, especially its runnable `sparring` peer. That kit was inspected read-only at upstream commit `ad6557626587e09146af4283a5e808e7001343c5` and treated as `EVID-003`, **NON-AUTHORITATIVE interoperability evidence**, never a course input. What it supplies is two fully specified, separately registered scent models with pinned parameter documents and published conformance vectors, plus a documented wire profile whose tool surface has carried real cross-team series.
 
 The decisive observation is that the kit registers *two* scent models rather than one. It does not resolve the book's ambiguity; it works around it exactly as we must — by naming each candidate, pinning it, and making peers declare which one they compute so a mismatch is caught before play instead of during it.
 
@@ -98,7 +98,7 @@ In each case the profile or adapter changes; the canonical requirements do not.
 
 - `scripts/check_planning_graph.py` passes: 29 tasks, 6 components, dependency graph unchanged and acyclic.
 - `scripts/run_quality_gates.py` passes, including link and secret checks.
-- The bundle's `scripts/check_shared_sync.py` passes: every bundle-mastered artifact touched by this decision is byte-identical in both role repositories.
+- Every shared artifact touched by this decision remains byte-identical in both role repositories.
 - `docs/spec/OPEN_QUESTIONS.md` still records `OPEN-009` with `official_status: OPEN`.
 - No application source, no `uv.lock`, and no runtime dependency change accompanies this decision.
 

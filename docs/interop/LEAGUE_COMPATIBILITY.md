@@ -46,10 +46,10 @@ The kit's own `GOVERNANCE.md` defines four maturity tiers with an explicit promo
 
 ## What is prohibited
 
-- No strategy is copied from another team via the kit or otherwise.
+- Strategy design is project-native; the kit supplies interoperability wiring only.
 - No kit-defined optional/proposed extension is adopted without explicit team approval.
-- The kit's reference implementation is never vendored into this project (`EVID-001` stays a read-only reference in `EVIDENCE_REGISTER.md`).
-- License notices are preserved if any kit code or vector is ever actually copied (MIT, Team ImreEyal and contributors) — this migration copies none.
+- The kit's reference implementation stays a read-only compatibility reference (`EVID-001` in `EVIDENCE_REGISTER.md`), outside the adapter boundary.
+- Applicable license notices must accompany any kit code or vectors incorporated into this project (MIT, Team ImreEyal and contributors).
 
 ## Task ownership
 

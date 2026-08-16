@@ -24,7 +24,7 @@ Do **not** default to reading the entire System PRD, System PLAN, canonical regi
 
 Wider context is expected only for `governance` and `release`-typed tasks, whose `context_files` may legitimately include the System PRD/PLAN.
 
-A task's `gates:` list distinguishes three levels: `blocks: start` (the task cannot be claimed), `blocks: criterion` (the task proceeds; only the named acceptance criterion waits), and `blocks: integration` (the task completes locally; it cannot pass the named integration gate in the bundle's `planning/INTEGRATION_PLAN.md` yet). Check `blocks: start` gates before claiming; the other two are checked when you reach the criterion or integration gate they name.
+A task's `gates:` list distinguishes three levels: `blocks: start` (the task cannot be claimed), `blocks: criterion` (the task proceeds; only the named acceptance criterion waits), and `blocks: integration` (the task completes locally; it cannot pass the named integration gate in the project-level integration plan yet). Check `blocks: start` gates before claiming; the other two are checked when you reach the criterion or integration gate they name.
 
 ## Architecture map
 

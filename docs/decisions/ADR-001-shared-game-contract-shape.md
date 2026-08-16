@@ -91,7 +91,7 @@ Notes on this decision:
 
 - `T028`'s config loader/validator is written against this exact shape; `T003`'s Appendix F status validator (Fixed/Minimum/Negotiated) operates on the flattened key set regardless of which section a key sits in.
 - Because this is a derived choice, `config/README.md` and any example file must carry the `EXAMPLE — NOT AN OFFICIAL ATTACHED TEMPLATE` label until INPUT-001 is verified; if the official schema differs, this file's shape is amended without a Change Request (no approved requirement is contradicted — `CFG-001`/`CFG-004` only constrain what values the contract carries, not its JSON shape).
-- No third-party code, configuration, or documentation is copied into this repository as part of this decision; the shape above was authored independently from the canonical requirement register only.
+- The shape above is derived solely from the canonical requirement register.
 
 ## Validation
 

@@ -15,6 +15,7 @@ context_files:
   - docs/PRD.md
   - docs/PLAN.md
   - docs/interop/LEAGUE_COMPATIBILITY.md
+  - docs/decisions/ADR-004-kit-first-interoperability-profile.md
 read_set: []
 depends_on:
   - T011
@@ -52,7 +53,9 @@ Two-process contract and fault-injection suites prove lifecycle recovery, determ
 
 ## Relevant context
 
-Tests cover derived failure controls without elevating their internal message shapes to official requirements. This task owns the full interoperability/conformance gate named `live_interop` in the bundle-only `planning/INTEGRATION_PLAN.md` (inspect it in the `final_project_spec_prd_plan_todo_bundle` repository if available; it has no repository-local copy). `docs/interop/LEAGUE_COMPATIBILITY.md` (local copy) governs any optional league-kit conformance work this task performs.
+Tests cover derived failure controls without elevating their internal message shapes to official requirements. This task owns the full interoperability/recovery gate named `live_interop` in the bundle-only `planning/INTEGRATION_PLAN.md` (inspect it in the `final_project_spec_prd_plan_todo_bundle` repository if available; it has no repository-local copy). `docs/interop/LEAGUE_COMPATIBILITY.md` (local copy) governs the league-kit conformance work this task performs.
+
+**This task is not the first place low-level vectors run.** Under `ADR-004`, each owning task proves its own compatibility surface at the point it builds it: T005 proves both scent profiles and the selected-model declaration against their conformance vectors, T008 proves its canonical-byte and commit primitives against the published golden vectors, and T009 proves the `reference-v3` tool/argument/turn-order contract locally. This task re-runs those surfaces as a whole system under fault injection and across a full series. A finding here that a single primitive is wrong means an earlier task's suite was incomplete, and the fix belongs there.
 
 ## Gates
 
@@ -73,6 +76,7 @@ Tests cover derived failure controls without elevating their internal message sh
 - [ ] Audit binds reveals to stored live commitments and rejects fabricated, missing, impossible, or mutated histories.
 - [ ] Cross-peer serialization fixtures include Unicode, floats, compact/spaced separators, Nonce placement, and signature-insertion edge cases; production expectations follow only the approved contract.
 - [ ] Compatibility failures for report-layout, scent-profile, tie-profile, and draft-versus-send mismatches are detected before counted play.
+- [ ] A full series is played end to end against an external uncounted peer — a sparring or friendly run, not self-play — and the mutual audit settles clean in both role directions before any counted play is scheduled.
 - [ ] Both independently derived result artifacts compare consistently before any send call.
 
 ## Verification

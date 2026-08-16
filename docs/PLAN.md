@@ -2,16 +2,18 @@
 artifact: plan
 id: PLAN-POLICE
 status: draft
-version: 0.2
-derived_from: PRD-FINAL-P2P@0.3
+version: 0.3
+derived_from: PRD-FINAL-P2P@0.4
 repository_state: greenfield
 owner: orchestrator
-updated: 2026-08-15
+updated: 2026-08-16
 ---
 
 # Police System PLAN
 
 **Version 0.2** (bounded-context migration, Issue #3; supersedes v0.1). Mechanism-level detail — the turn-adjudication flowchart, state model, compatibility decision matrices, and per-mechanism technical decisions — moved to the six component PLANs under `docs/components/` and the mechanism PRDs under `docs/mechanisms/`. This System PLAN stays concise: system-wide boundaries, dependency direction, shared contracts, security/config ownership, lifecycle, integration order, and system-level gates.
+
+**Version 0.3** (kit-first interoperability profile, Issue #6; supersedes v0.2). Adds TD-06, recording the approved default runtime interoperability profile and the second supported scent model. No component boundary, contract, dependency edge, or execution wave changed.
 
 ## Approach summary
 
@@ -105,7 +107,7 @@ Bootstrap → negotiate → play six sub-games → audit → report → close, g
 
 ## Integration order and component gates
 
-See `planning/INTEGRATION_PLAN.md` (bundle-mastered, synchronized reasoning below) for the full named-gate table. In order: component-local gates (per component PLAN's local test strategy) → `local_mcp_smoke`/`stage1_gate` (C01+C03 local proof) → `orchestration_integration` (C04 sequencing) → `cross_peer_vectors` (gated by OPEN-007) → `live_interop` (T022, the full interoperability/conformance gate) → `pairing_preflight`/`report_reconciliation` (final pre-counted-match gates).
+See `planning/INTEGRATION_PLAN.md` (bundle-mastered, synchronized reasoning below) for the full named-gate table. In order: component-local gates (per component PLAN's local test strategy) → `local_mcp_smoke`/`stage1_gate` (C01+C03 local proof) → `orchestration_integration` (C04 sequencing) → `cross_peer_vectors` (gated by OPEN-007) → `live_interop` (T022, the full interoperability/recovery gate) → `pairing_preflight`/`report_reconciliation` (final pre-counted-match gates). Each owning task proves its own compatibility surface earlier — T005 both scent profiles, T008 its byte-level primitives, T009 the `reference-v3` contract — so `live_interop` re-runs those surfaces as a system rather than exercising them for the first time.
 
 ## System verification
 
@@ -133,7 +135,7 @@ Watchdog-driven checkpoint/recovery is C04's concern (ARCH-008, NET-005); see it
 
 ### TD-03 — Project-native contracts with compatibility evidence (retained from v0.1)
 
-- **Choice:** implement from canonical requirements and approved contracts; derive edge-case and compatibility tests from explicit project ambiguities, using the differential-test pattern in each mechanism PRD's compatibility matrix.
+- **Choice:** implement from canonical requirements and approved contracts; derive edge-case and compatibility tests from explicit project ambiguities, using the differential-test pattern where a mechanism PRD still carries a compatibility matrix (M-05, M-07) and a named implementation profile where one has been approved instead (M-01, CT-03 — see TD-06).
 - **Reason:** preserves artifact authority and exposes interoperability failures without introducing unsupported schemas or hidden assumptions.
 
 ### TD-04 — Minimal Python application shape (retained from v0.1)
@@ -146,6 +148,13 @@ Watchdog-driven checkpoint/recovery is C04's concern (ARCH-008, NET-005); see it
 
 - **Choice:** adopt the nested-section `config/game.json` layout recorded in `docs/decisions/ADR-001-shared-game-contract-shape.md`, authored and validated by T028/T003.
 - **Reason:** CFG-001/CFG-004 fix which values the contract must carry, not its JSON shape; this is our own negotiable engineering choice, explicitly labeled non-official pending OPEN-001.
+
+### TD-06 — Kit-first interoperability profile
+
+- **Choice:** adopt one default runtime interoperability profile — `wire_shape: reference-v3`, `scent_model: subtractive_chebyshev_v1`, `info_mode: belief`, unbound smell behavior, thief-first turn order — with `multiplicative_book_v1` additionally supported, as recorded in `docs/decisions/ADR-004-kit-first-interoperability-profile.md`.
+- **Alternatives:** the book profile as the sole/default model; the reference profile only, dropping the book model; selecting nothing until OPEN-009 is officially answered.
+- **Reason:** the current league kit's sparring peer is our first integration target and the only independently written, byte-pinned opponent runnable on demand. The profile supplies what the source leaves ambiguous without claiming to resolve it.
+- **Consequences:** two scent implementations behind one interface with configuration-driven selection; the selected model is registered, hashed, and declared; both models are vector-tested; OPEN-009 stays officially OPEN but no longer blocks implementation or model locking; no strategy is copied and nothing from the kit is vendored.
 
 ## Requirement coverage
 

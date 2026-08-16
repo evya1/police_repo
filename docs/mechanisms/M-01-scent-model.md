@@ -22,7 +22,7 @@ STRAT-002 (emission), STRAT-003 (recurrence + OPEN-009 boundary), STRAT-004 (no 
 
 ## A. Official / book requirements (authoritative)
 
-This section states what the project book and the canonical requirement register actually require. Nothing in section B or C may contradict it.
+This section states what the project book and the canonical requirement register actually require. Nothing in the implementation-profile sections (B and C) may be presented as the official interpretation of the source where it diverges from the source; where a profile diverges, that divergence is stated plainly rather than hidden.
 
 - On every move or stay, the acting side emits a 5×5 scent field centered on its own cell with fixed center intensity `0.9` and the agreed radial profile (STRAT-002, CFG-006).
 - After a full turn by both sides, each scent cell updates by:
@@ -34,6 +34,17 @@ This section states what the project book and the canonical requirement register
   where `0.10` is the Fixed decay rate and `delta_tau_ij` is the emission contribution for cell `(i,j)` this turn (STRAT-003, CFG-006).
 - A side reads only the opponent's scent field; it never plants or forges scent at a cell it does not occupy (STRAT-004).
 - Before a series, both parties exchange the complete emission-and-decay model with a numeric example, confirm identical interpretation, and cryptographically lock the agreement (STRAT-005).
+
+### Decay-form authority — which profile follows the recurrence above
+
+The recurrence above is the **book-side arithmetic**, and its decay is *multiplicative*: `(1 - rho) * tau` with `rho = 0.10`.
+
+- `multiplicative_book_v1` (§B.2) is the supported profile that follows that multiplicative form.
+- `subtractive_chebyshev_v1` (§B.1) — our default — **intentionally does not implement that decay form**. It decays subtractively, `round(max(0, tau - 0.1), 3)`. These are two different arithmetic rules, not two spellings of one rule: from `tau = 0.6` with no new deposit, the book form gives `0.6 * 0.9 = 0.54` and the subtractive form gives `0.6 - 0.1 = 0.5`.
+
+The subtractive form is adopted because it is the current reference interoperability profile of `copthief-league-protocol`, the peer we intend to spar against first. That adoption is an **engineering/interoperability decision** recorded in `docs/decisions/ADR-004-kit-first-interoperability-profile.md`. It is **not** a lecturer clarification, it is **not** a resolution of OPEN-009, and it must never be presented as the official reading of the book.
+
+OPEN-009 does not make the decay *form* ambiguous — the book states a multiplicative decay. OPEN-009 concerns upper saturation, repeated emission/merge, deposit-vs-decay order, and rounding, as set out next.
 
 ### What is genuinely open (OPEN-009) — still unresolved
 
@@ -105,7 +116,9 @@ The two profiles differ in decay form (subtractive versus multiplicative), updat
 - A refused start produces a diagnostic and no partial game state.
 - The model selection is a runtime/profile choice read through the existing local (private, non-shared) configuration boundary owned by T003; it is not an Appendix F term and never weakens a signed shared value.
 
-## Numeric worked example (profile-independent, non-saturating)
+## Numeric worked example — book recurrence only
+
+Explanatory illustration of the section-A multiplicative recurrence. It is **not a conformance vector for either registered implementation profile**, and the `delta = 0.4` deposit below is an arbitrary illustrative number, not a value either profile emits.
 
 Starting from `tau = 0` at a cell one step from center, under the book recurrence in section A alone:
 
@@ -116,11 +129,16 @@ t=2 (no further emission at this cell): tau = max(0, 0.9*0.4 + 0.0) = 0.36
 t=3 (no further emission): tau = max(0, 0.9*0.36 + 0.0) = 0.324
 ```
 
-This example never approaches the `0.9` ceiling, so it is valid under section A without selecting any section-B profile. Saturating behavior is profile-specific and must be tested against the selected profile's own conformance vector, never asserted as the book's answer.
+This traces the book's multiplicative decay and nothing else. `multiplicative_book_v1` follows this decay form; `subtractive_chebyshev_v1` does not, and would take that `0.4` to `0.3` rather than `0.36`. Conformance truth lives in the registered vectors, never in this example:
+
+- `subtractive_chebyshev_v1` — `vectors/pheromone.json`, plus its `vectors/locked_model.json` registration.
+- `multiplicative_book_v1` — `vectors/scent_book_v3.json`, plus its `vectors/locked_model.json` registration.
+
+The example also stays well below the `0.9` ceiling, so it says nothing about saturation. Saturating behavior is profile-specific, sits inside OPEN-009, and must be tested against the selected profile's own conformance vector, never asserted as the book's answer.
 
 ## Acceptance scenarios
 
-- [ ] The non-saturating recurrence matches the worked example above to floating-point tolerance. {#scent_recurrence}
+- [ ] The book's multiplicative recurrence is demonstrated by the book-compatible profile: `multiplicative_book_v1` reproduces the non-saturating worked example above to floating-point tolerance. The default `subtractive_chebyshev_v1` intentionally diverges from that decay form and is validated instead against its own registered vector and the `{#model_lock}` criteria below. {#scent_recurrence}
 - [ ] Emission never occurs at a cell the emitting side does not occupy. {#no_forged_scent}
 - [ ] Both registered profiles are implemented behind one common interface, each reproduces its own conformance vector exactly, and the selected model is declared and compared as a document hash with the correct refusal behavior. {#model_lock}
 

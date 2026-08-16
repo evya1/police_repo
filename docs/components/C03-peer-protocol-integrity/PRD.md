@@ -5,7 +5,7 @@ component: C03
 status: draft
 shared: true
 owner: orchestrator
-updated: 2026-08-15
+updated: 2026-08-16
 ---
 
 # C03 — Peer Protocol & Integrity
@@ -27,7 +27,8 @@ NET-001…004 (symmetric FastMCP roles, public reachability, free-form natural-l
 
 ## Observable behavior
 
-- Each peer acts simultaneously as FastMCP server and client (NET-001); for league play the server is reachable through a public address, with localhost-only allowed during early development (NET-002).
+- Each peer acts simultaneously as FastMCP server and client (NET-001); each side actively dials the other, so neither peer is purely passive. For league play the server is reachable through a public address, with localhost-only allowed during early development (NET-002).
+- The first and default wire adapter this component implements is the `reference-v3` profile recorded in `planning/contracts/CT-03-peer-wire.md`: four tools with the exact argument-name asymmetry, the required turn-message keys including `smell_grid`, locked-model declarations carried outside the closed signed-terms set, `info_mode: belief`, unbound smell behavior, and the thief-first turn-order convention. This is an engineering profile behind an adapter boundary, not an official schema.
 - The verbal channel is free-form natural language and is never replaced by a direct numeric-position protocol (NET-003, NET-004).
 - Every game step is protected by a SHA-256 Commit-Reveal protocol in the order Commit, Acknowledge, Reveal, then Final Reveal/Audit at game end (SEC-001, SEC-002); the commitment binds at least State, Move, Intent, and Nonce (SEC-003) using a fresh, secret-until-audit Nonce (SEC-004).
 - At game end, both sides perform a complete mutual log audit, reveal all Nonces, and recompute commitments (SEC-005); a single hash mismatch is marked TAMPERED with no retrospective repair (SEC-006).
@@ -70,8 +71,10 @@ Sent/received MCP frames; commitment, acknowledgement, and reveal records; a ver
 
 - [ ] The full Commit → Acknowledge → Reveal → Final Reveal/Audit sequence is exercised end-to-end with a clean run producing Verified OK. {#commit_reveal_happy_path}
 - [ ] A one-byte mutation to any committed field deterministically produces TAMPERED with no repair path. {#tamper_detection}
-- [ ] Cross-peer canonical byte fixtures pass only after OPEN-007 resolves; until then, only the draft contract's differential tests run. {#cross_peer_vectors}
+- [ ] The byte-level primitives this component owns — canonical serialization, the commit construction, and the terms/uid signatures built on it — reproduce the available golden vectors during the task that builds them, not only at the final gate. {#early_byte_vectors}
+- [ ] Cross-peer canonical byte fixtures for the *official* envelope pass only after OPEN-007 resolves; until then, only the draft contract's differential tests run. {#cross_peer_vectors}
 - [ ] A local two-process FastMCP smoke test completes without a public endpoint. {#local_mcp_smoke}
+- [ ] The `reference-v3` compatibility surface in CT-03 is exercised locally end to end, with no real opponent URL required. {#reference_v3_contract}
 - [ ] Public-endpoint reachability is exercised only once `G-LIVE` is satisfied. {#public_endpoint}
 
 ## Relevant contracts
@@ -80,7 +83,7 @@ Sent/received MCP frames; commitment, acknowledgement, and reveal records; a ver
 
 ## Relevant OPEN/input gates
 
-- OPEN-007 — `blocks: criterion` on `{#cross_peer_vectors}` only; local Commit-Reveal primitives (`{#commit_reveal_happy_path}`, `{#tamper_detection}`) are unaffected.
+- OPEN-007 — `blocks: criterion` on `{#cross_peer_vectors}` only, and it stays officially OPEN. Local Commit-Reveal primitives (`{#commit_reveal_happy_path}`, `{#tamper_detection}`) and the early golden-vector proof (`{#early_byte_vectors}`) are unaffected: reproducing a published non-authoritative vector demonstrates our bytes match a known peer, which is not the same as adopting an official envelope.
 - OPEN-006 — Step 0 signing-key procedure; `blocks: criterion` on the final signed-Step-0 provisioning criterion, not on building the Step 0 record structure itself.
 - `G-LIVE` — `blocks: criterion` on `{#public_endpoint}` only; `{#local_mcp_smoke}` is unaffected.
 

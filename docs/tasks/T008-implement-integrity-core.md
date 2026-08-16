@@ -18,6 +18,7 @@ context_files:
   - docs/components/C03-peer-protocol-integrity/PLAN.md
   - docs/mechanisms/M-05-commit-reveal-integrity.md
   - docs/contracts/CT-04-canonical-bytes.md
+  - docs/decisions/ADR-004-kit-first-interoperability-profile.md
 read_set: []
 depends_on:
   - T003
@@ -55,11 +56,15 @@ A single integrity boundary creates fresh nonces, performs SHA-256 Commit-Reveal
 
 ## Relevant context
 
-The minimum committed semantics are State, Move, Intent, and Nonce. OPEN-007 blocks the final byte envelope, including nonce placement, Unicode escaping, separators, and report-consensus scope. Auxiliary serializers and vectors may suggest tests but are not official schema evidence.
+The minimum committed semantics are State, Move, Intent, and Nonce. OPEN-007 blocks the final *official* byte envelope, including nonce placement, Unicode escaping, separators, and report-consensus scope, and it stays open. Auxiliary serializers and vectors are not official schema evidence and never become one.
+
+Two different claims must not be confused. "Our bytes are the officially required bytes" waits on OPEN-007. "Our bytes reproduce a published, independently implemented peer's bytes" does not — it is a checkable property of the primitives this task builds, and published golden vectors for exactly those primitives already exist (`EVID-003`). Under the kit-first decision in `ADR-004`, this task proves the second claim now rather than deferring every byte check to T022. Proving it changes nothing about OPEN-007's official status.
+
+This task does **not** own scent arithmetic. Scent profiles and their vectors belong to T005.
 
 ## Gates
 
-- `OPEN-007` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `cross_peer_vectors` waits.
+- `OPEN-007` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `cross_peer_vectors`, which concerns the official envelope, waits. The early golden-vector criterion below is not gated by it.
 
 ## Constraints
 
@@ -75,6 +80,7 @@ The minimum committed semantics are State, Move, Intent, and Nonce. OPEN-007 blo
 - [ ] Commit, acknowledgement, reveal, and final audit ordering is explicit.
 - [ ] Audit compares reveals to commitments retained from live play, detects missing/extra/mutated steps, and checks legal state progression.
 - [ ] One hash mismatch yields an immutable TAMPERED result and no repair path.
+- [ ] The canonical-serialization and commit primitives this task owns reproduce the published golden vectors for those primitives byte-for-byte, run as part of this task's own suite: canonical JSON (sorted keys, non-escaped non-ASCII, compact separators, UTF-8), the commit construction over a canonical payload with a single-pipe nonce separator, and the same construction applied to the terms/uid signatures built on it. A float that fails shortest round-trip representation must fail this suite here, not at an opponent's audit. `{#early_byte_vectors}`
 - [ ] Differential fixtures cover compact/spaced JSON, Nonce inside/appended, Unicode, floats, key order, signature insertion, replay, step order, and Nonce tampering; only the OPEN-007-approved form is enabled for production. `{#cross_peer_vectors}`
 
 ## Verification

@@ -16,19 +16,21 @@ context_files:
   - docs/components/C02-perception-strategy/PRD.md
   - docs/components/C02-perception-strategy/PLAN.md
   - docs/mechanisms/M-01-scent-model.md
+  - docs/decisions/ADR-004-kit-first-interoperability-profile.md
 read_set: []
 depends_on:
   - T004
 gates:
   - id: OPEN-009
     kind: open
-    scope: model_lock
-    blocks: criterion
+    scope: pairing_preflight
+    blocks: integration
 parallel_safe: true
 claimed_by:
 claim_expires_at:
 write_set:
   - src/police_peer/scent/model.py
+  - src/police_peer/scent/profiles/
   - src/police_peer/scent/lock.py
   - tests/unit/scent/
   - tests/contract/test_scent_agreement.py
@@ -39,7 +41,7 @@ risk: high
 
 ## Expected outcome
 
-A deterministic 5x5 emission/decay model and pre-series model-lock contract are implemented from an explicitly approved interpretation that resolves OPEN-009.
+Two deterministic 5x5 scent profiles are implemented behind one small common interface, selectable at runtime with `subtractive_chebyshev_v1` as the default, and the selected model is registered, hashed, and declared so a peer mismatch is refused before play.
 
 ## Requirements implemented
 
@@ -52,11 +54,15 @@ A deterministic 5x5 emission/decay model and pre-series model-lock contract are 
 
 ## Relevant context
 
-The source fixes center intensity, field size, the multiplicative update recurrence, decay timing, and anti-forgery behavior. It does not state how repeated emission remains within `[0, 0.9]`; T001 must resolve OPEN-009 before this task selects saturation/merge semantics. Clamp/no-clamp, add/max/replace, decay/deposit order, rounding, and transmitted-versus-recomputed variants are differential tests only. No non-authoritative default model overrides that approval.
+The source fixes center intensity, field size, the update recurrence, decay timing, and anti-forgery behavior. It does not state how repeated emission remains within `[0, 0.9]` — that is `OPEN-009`, and it is still **officially OPEN**.
+
+`ADR-004` supplies what the source does not: two named, separately registered profiles with pinned parameters, and a default. That is a human-approved engineering decision, not an official reading of section 4.3, and nothing in this task may describe it as one. It is nevertheless sufficient to implement, select, declare, and lock a model — so this task no longer waits on an official OPEN-009 answer, and its `{#model_lock}` criterion is no longer gated.
+
+The exact arithmetic of both profiles is stated once, in `docs/mechanisms/M-01-scent-model.md` §B, and must not be re-derived or re-interpreted here. The two profiles genuinely differ in decay form, update order, rounding, upper clamp, and transport; implementing one and adapting it into the other is a defect, not a simplification.
 
 ## Gates
 
-- `OPEN-009` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `model_lock` waits.
+- `OPEN-009` (`open`, `blocks: integration`) — the task is implemented and completed locally against the `ADR-004` profile, including model locking. What still waits on an official answer is confirmation, before the `pairing_preflight` gate in `planning/INTEGRATION_PLAN.md`, that the locked profile is acceptable for counted play.
 
 ## Constraints
 
@@ -68,13 +74,18 @@ The source fixes center intensity, field size, the multiplicative update recurre
 
 ## Acceptance criteria
 
-- [ ] Emission at center, edge, and corner is deterministic and bounded to the board.
-- [ ] Each full-turn update applies the official recurrence with `rho=0.10`; repeated emission follows the approved OPEN-009 resolution and remains in the approved range.
-- [ ] Decay occurs exactly once after both sides act and never produces forged remote scent.
-- [ ] Each peer exposes only its own emitted field and consumes only the opponent field.
-- [ ] A model document plus numeric examples for new, decaying, and repeatedly emitted cells can be compared and locked before play.
-- [ ] Pre-lock tests demonstrate how each unresolved clamp, merge, order, rounding, and transport variant diverges; the approved profile enables exactly one behavior. `{#model_lock}`
-- [ ] A mismatch refuses start with a diagnostic and no partial game state.
+- [ ] A small common scent-model interface exists, and every consumer reaches scent only through it. Adding or changing a profile requires no edit outside the scent module.
+- [ ] `subtractive_chebyshev_v1` is implemented exactly as specified in M-01 §B.1: maximum-merge, deposit-then-decay, subtractive decay, rounding to 3 places, lower clamp only, transmitted, receiver-side decay.
+- [ ] `multiplicative_book_v1` is implemented exactly as specified in M-01 §B.2: verbatim printed kernel lookup, multiplicative decay, decay-then-deposit, no rounding, `[0, 0.9]` clamp, recomputed rather than transmitted.
+- [ ] The active profile is selected by runtime configuration through the existing local private-configuration seam, with no scent code reachable that hardcodes one model.
+- [ ] The default selection with no explicit configuration is `subtractive_chebyshev_v1`.
+- [ ] The selected model is registered as a pinned parameter document, hashed, and declared for the handshake; the same input document always produces the same hash, and the declaration is carried outside the closed signed-terms set. `{#model_lock}`
+- [ ] Vector/golden tests cover **both** registered models against their own conformance vectors, not just the default.
+- [ ] Repeated-emission and saturation tests exist for both profiles and assert their genuinely different behavior — no upper clamp under the reference profile, clamping at `0.9` under the book profile.
+- [ ] Edge, corner, and out-of-board clipping are deterministic and bounded to the board for both profiles.
+- [ ] Emission never occurs at a cell the emitting side does not occupy; each peer exposes only its own field and consumes only the opponent's.
+- [ ] A declared-model mismatch refuses start with a diagnostic and no partial game state, at the handshake boundary — never inside the scent module. A peer that declares nothing is not a mismatch and must still play.
+- [ ] No strategy, belief, or transport logic exists inside the scent module.
 
 ## Verification
 

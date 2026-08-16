@@ -28,7 +28,7 @@ These are active blockers and confirmations, not permission to guess. T001 recor
 | OPEN-006 | MISSING OFFICIAL INPUT | The pre-supplied key for signing Step 0 and its distribution mechanism are absent. | Blocks final Step 0 signing-key provisioning and counted play. | Obtain the authorized key-distribution procedure; do not invent or commit keys. Locally generated Nonces, hashes, or example signature fields do not supply the missing authorized key. | orchestrator + project team/lecturer |
 | OPEN-007 | SCHEMA AMBIGUITY | The book binds at least State/Move/Intent/Nonce but mentions a richer record; nonce placement, Unicode escaping, canonical separators, report-consensus signature scope/form, and the game_uid/game_id relationship depend on missing official files. | Blocks cross-peer canonical hash fixtures and final integrity/report envelopes; does not block local Commit-Reveal primitives built against the internal draft contract (`docs/mechanisms/M-05-commit-reveal-integrity.md`, `docs/contracts/CT-04-canonical-bytes.md`). | Implement only after OPEN-001 is resolved; meanwhile define an internal draft contract explicitly labeled non-official. Test compact versus spaced JSON, nonce-inside versus nonce-appended constructions, Unicode/float behavior, and sign-then-insert scope without selecting any as official. | orchestrator + project team/lecturer |
 | OPEN-008 | TERMINOLOGY / SERIES SEMANTICS | The terms game, match, series, and sub-game overlap; Appendix F fixes six sub-games but does not state role assignment/alternation, and the cumulative-tie wording does not unambiguously say whether the score of 2 replaces or is added to accumulated points. | Blocks exact role schedule, aggregation labels, tie settlement, and report fields but not the binding count of six or tie value 2; series mechanics (T019) may be built and tested against the fixed GAME-013 score table. | Confirm these semantics from the official reporting files or lecturer before counted play; retain the binding numeric values. Series-add, series-replace, and per-sub-game tie handling are test candidates, not approved defaults. | orchestrator + project team/lecturer |
-| OPEN-009 | SOURCE AMBIGUITY | Section 4.3 states that scent intensity is in `[0, 0.9]` and gives `tau_ij(t+1)=max(0,(1-rho)tau_ij(t)+delta_tau_ij)`. Repeated emission can exceed 0.9, but no upper clamp, replacement, or merge rule is stated. | Blocks only the pre-series model **lock** (the byte-identical saturation/merge agreement) and repeated-emission tests; does not block implementing the specified recurrence itself (T005). | Obtain lecturer confirmation of saturation/merge and update order; record a numeric repeated-emission example and lock the approved model before counted play. Until then compare clamp/no-clamp, add/max/replace, update order, rounding, and transmitted-versus-recomputed behavior only as differential tests. | orchestrator + project team/lecturer |
+| OPEN-009 | SOURCE AMBIGUITY | Section 4.3 states that scent intensity is in `[0, 0.9]` and gives `tau_ij(t+1)=max(0,(1-rho)tau_ij(t)+delta_tau_ij)`. Repeated emission can exceed 0.9, but no upper clamp, replacement, or merge rule is stated. **Reclassified by the kit-first interoperability decision — see "OPEN-009 reclassification" below; official_status remains OPEN.** | Narrowed: blocks only the claim that any implemented profile is the *officially correct* reading of section 4.3, and the confirmation step required before counted play. Does not block implementing scent (T005), selecting the default interoperability scent model, generating or declaring the selected model lock, local testing, or sparring against a non-counted peer. | Obtain lecturer confirmation of saturation/merge and update order; record a numeric repeated-emission example and confirm the approved model before counted play. Until then implement the profiles named in the kit-first interoperability ADR, keep both registered models supported and vector-tested, and never label either as the official reading. | orchestrator + project team/lecturer |
 | OPEN-010 | HUMAN CONFIRMATION | Confirm the public team metadata and GitHub handles before the first public repository push. | Blocks the first public push only; it does not block local planning or implementation. | Verify the recorded team name `ZeroOne`, team number `01`, and GitHub handles `evya1` and `Us5rName` against a human-approved team record. Preserve the values until confirmation; do not guess replacements or add private identity data. | project team |
 | OPEN-011 | SOURCE AMBIGUITY | GAME-014 fixes a move cap and a survival threshold that both default to 35, but no source states whether they are one termination event or two, which outcome and score a move-cap exhaustion produces, or whether one counted move is a full round in which both sides act or a single half-turn. | Blocks the terminal-outcome map, sub-game settlement, and any counted play whose two values diverge; the binding minimum of 35 for each value and the GAME-013 score table are unaffected. | Ask the lecturer whether reaching the move cap yields the GAME-013 survival score or a technical loss, and whether the count is per round or per half-turn. Until then treat cap-versus-threshold ordering and round-versus-half-turn counting as differential tests only, and refuse to start a sub-game whose two values diverge rather than guessing a precedence. | orchestrator + project team/lecturer |
 
@@ -41,6 +41,48 @@ These are active blockers and confirmations, not permission to guess. T001 recor
 **What remains genuinely open:** only the semantic label itself — whether "harder" is stated for descriptive clarity in a future negotiation record, not whether a change is legal. `official_status` therefore **stays OPEN**; the authoritative material does not define the directional semantics, and this reference-material analysis does not close an official question. Supporting/reference material alone must not close it, and none is treated as doing so here.
 
 **Resolution applied:** `implementation_status` moves from an effective task-level blocker to `RESOLVED_LOCALLY`; `latest_safe_resolution_gate` is set to `before-negotiated-change-to-a-Minimum-parameter`; `blocks` is narrowed to labeling/approving such a proposed change. The original question text, ID, owner, and required next action above are unchanged from the pre-migration register — this note is additive.
+
+## OPEN-009 reclassification (kit-first interoperability decision, dated 2026-08-16)
+
+**What did not change.** The official question is untouched. Section 4.3 still states an
+intensity range of `[0, 0.9]` and the recurrence `tau_ij(t+1)=max(0,(1-rho)tau_ij(t)+delta_tau_ij)`
+without stating an upper clamp, a replacement or merge rule for repeated emission, or the
+order of decay against a same-turn deposit. No official Moodle artifact and no written
+lecturer clarification has answered it. `official_status` therefore **stays OPEN**.
+
+**Evidence examined.** `EVID-003` in `requirements/EVIDENCE_REGISTER.md` — the current
+`Imreec/copthief-league-protocol` upstream at commit `ad6557626587e09146af4283a5e808e7001343c5`,
+inspected read-only. It registers two *distinct, separately named* scent models rather than one
+resolved reading: `subtractive_chebyshev_v1` (what `wire_shape: reference-v3` actually carries,
+`vectors/pheromone.json`, status `CORE`) and `multiplicative_book_v1` (a verbatim reading of the
+book's printed figure-4 kernel, `vectors/scent_book_v3.json`, status `PROMOTED`). Each has a
+pinned parameter document whose hash is comparable across implementations.
+
+**Finding.** This evidence is NON-AUTHORITATIVE and settles nothing about the book. What it does
+supply is two fully specified, independently reproducible profiles — enough to build, test, and
+declare a model without guessing, and enough for a peer to detect a profile mismatch before play
+rather than diverging silently mid-game. The fact that the kit registers *both* is itself the
+clearest confirmation that the ambiguity is real and remains unresolved.
+
+**Human-approved engineering decision.** The project team has selected
+`subtractive_chebyshev_v1` as the default interoperability scent profile and
+`multiplicative_book_v1` as the additionally supported book-oriented profile, recorded in the
+kit-first interoperability ADR in each role repository (`docs/decisions/`). That is an
+engineering choice about what we build, not a reading of the book.
+
+**Explicitly not claimed.** This reclassification does not state that OPEN-009 was "resolved by
+the kit", that a lecturer clarified it, or that the official model is subtractive. None of those
+statements is permitted anywhere in project artifacts.
+
+**Resolution applied.** `implementation_status` moves from an effective blocker on the model lock
+to `DRAFT_CONTRACT_NONOFFICIAL` — the ADR profile is the internal, explicitly-labeled-non-official
+contract that implementation, default selection, model-lock generation and declaration, local
+testing, and uncounted sparring may all proceed against.
+`latest_safe_resolution_gate` is set to `before-counted-play`. `blocks` narrows to the claim of
+official correctness and to that pre-counted-play confirmation; `does_not_block` now covers T005
+implementation in full, including the `{#model_lock}` criterion. The original question text, ID,
+owner, and impact class are otherwise unchanged; this note is additive, and follows the same
+pattern as the OPEN-005 reclassification above.
 
 ## Input gates (bounded-context migration)
 
@@ -70,4 +112,4 @@ The following items are implementation-planning decisions, not official requirem
 
 ## Resolution rule
 
-An official-input question closes only after the file or answer is registered and verified, private values remain outside public artifacts, affected IDs are named, and the orchestrator reconciles the necessary derived artifacts. If the input fills an existing contract without changing approved normative meaning, no Change Request is opened. If it materially changes an approved requirement or PRD contract, use an approved Change Request and resulting PRD version. A durable technical choice may use an ADR; newly discovered implementation work receives a new task. Silence, sample code, or a convenience draft is not resolution. A reclassification of `implementation_status` performed with cited authoritative evidence (as with OPEN-005 above) is not an official closure and does not change `official_status`.
+An official-input question closes only after the file or answer is registered and verified, private values remain outside public artifacts, affected IDs are named, and the orchestrator reconciles the necessary derived artifacts. If the input fills an existing contract without changing approved normative meaning, no Change Request is opened. If it materially changes an approved requirement or PRD contract, use an approved Change Request and resulting PRD version. A durable technical choice may use an ADR; newly discovered implementation work receives a new task. Silence, sample code, or a convenience draft is not resolution. A reclassification of `implementation_status` performed with cited authoritative evidence (as with OPEN-005 above) is not an official closure and does not change `official_status`. Neither is a reclassification performed on the strength of an approved implementation-profile decision plus non-authoritative interoperability evidence (as with OPEN-009 above): it states what we may build, never what the source means, and the official question stays open until an official answer is registered and verified.

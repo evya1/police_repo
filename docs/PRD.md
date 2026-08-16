@@ -2,10 +2,10 @@
 artifact: prd
 id: PRD-FINAL-P2P
 status: draft
-version: 0.3
+version: 0.4
 owner: project-team
 source_spec_version: "3.0.0"
-updated: 2026-08-15
+updated: 2026-08-16
 ---
 
 # Product Requirements: Distributed Police/Thief System
@@ -141,9 +141,10 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 ## Open questions
 
 - OPEN-001 through OPEN-011 in `docs/spec/OPEN_QUESTIONS.md` are active; each now carries both an `official_status` and an `implementation_status`, so an unresolved question blocks only the scope it actually governs.
-- OPEN-001, OPEN-004, OPEN-006, OPEN-007, and OPEN-009 block production interoperability, scent-lock, or reporting decisions at specific criteria, not whole components.
+- OPEN-001, OPEN-004, OPEN-006, and OPEN-007 block production interoperability or reporting decisions at specific criteria, not whole components.
 - OPEN-002 and the unresolved fields in OPEN-003 block final submission packaging, not core development.
 - OPEN-005's directional ambiguity is reclassified `implementation_status: RESOLVED_LOCALLY`; `official_status` remains OPEN. See the reclassification note in `docs/spec/OPEN_QUESTIONS.md`.
+- OPEN-009's saturation/merge ambiguity is reclassified `implementation_status: DRAFT_CONTRACT_NONOFFICIAL` by the kit-first interoperability decision; `official_status` remains OPEN. Scent implementation, default-profile selection, and model-lock declaration proceed against the approved profile; the official reading is confirmed before counted play. See the reclassification note in `docs/spec/OPEN_QUESTIONS.md`.
 
 ## Approval and change history
 
@@ -152,5 +153,6 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 | 0.1 | 2026-08-14 | draft | Initial canonical PRD reconstructed from authorized sources | Pending project-team review |
 | 0.2 | 2026-08-15 | draft | Recorded OPEN-011 (move-cap-versus-survival-threshold termination ambiguity), discovered while decomposing stage-1 board logic into T003/T004/T028/T029; no requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
 | 0.3 | 2026-08-15 | draft | Bounded-context migration (Issue #1 / Issue #3): moved mechanism-level detail out to component/mechanism PRDs, added G-007/NG-009/US-008/SC-011, reclassified OPEN-005's implementation-side scope. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
+| 0.4 | 2026-08-16 | draft | Kit-first interoperability profile: recorded the team-approved default runtime profile (`reference-v3`, `subtractive_chebyshev_v1`, `belief`, unbound smell) with `multiplicative_book_v1` additionally supported, and reclassified OPEN-009's implementation-side scope. `official_status` for OPEN-009 is unchanged and still OPEN. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
 
 After approval, every material behavior/scope change requires a Change Request naming affected requirement IDs, source/authority, impact, approval, and resulting PRD version, followed by PLAN/task reconciliation.

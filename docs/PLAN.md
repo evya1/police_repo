@@ -107,7 +107,7 @@ Bootstrap → negotiate → play six sub-games → audit → report → close, g
 
 ## Integration order and component gates
 
-See `planning/INTEGRATION_PLAN.md` (bundle-mastered, synchronized reasoning below) for the full named-gate table. In order: component-local gates (per component PLAN's local test strategy) → `local_mcp_smoke`/`stage1_gate` (C01+C03 local proof) → `orchestration_integration` (C04 sequencing) → `cross_peer_vectors` (gated by OPEN-007) → `live_interop` (T022, the full interoperability/recovery gate) → `pairing_preflight`/`report_reconciliation` (final pre-counted-match gates). Each owning task proves its own compatibility surface earlier — T005 both scent profiles, T008 its byte-level primitives, T009 the `reference-v3` contract — so `live_interop` re-runs those surfaces as a system rather than exercising them for the first time.
+See the project-level integration plan (not part of this repository; reasoning synchronized below) for the full named-gate table. In order: component-local gates (per component PLAN's local test strategy) → `local_mcp_smoke`/`stage1_gate` (C01+C03 local proof) → `orchestration_integration` (C04 sequencing) → `cross_peer_vectors` (gated by OPEN-007) → `live_interop` (T022, the full interoperability/recovery gate) → `pairing_preflight`/`report_reconciliation` (final pre-counted-match gates). Each owning task proves its own compatibility surface earlier — T005 both scent profiles, T008 its byte-level primitives, T009 the `reference-v3` contract — so `live_interop` re-runs those surfaces as a system rather than exercising them for the first time.
 
 ## System verification
 
@@ -154,7 +154,7 @@ Watchdog-driven checkpoint/recovery is C04's concern (ARCH-008, NET-005); see it
 - **Choice:** adopt one default runtime interoperability profile — `wire_shape: reference-v3`, `scent_model: subtractive_chebyshev_v1`, `info_mode: belief`, unbound smell behavior, thief-first turn order — with `multiplicative_book_v1` additionally supported, as recorded in `docs/decisions/ADR-004-kit-first-interoperability-profile.md`.
 - **Alternatives:** the book profile as the sole/default model; the reference profile only, dropping the book model; selecting nothing until OPEN-009 is officially answered.
 - **Reason:** the current league kit's sparring peer is our first integration target and the only independently written, byte-pinned opponent runnable on demand. The profile supplies what the source leaves ambiguous without claiming to resolve it.
-- **Consequences:** two scent implementations behind one interface with configuration-driven selection; the selected model is registered, hashed, and declared; both models are vector-tested; OPEN-009 stays officially OPEN but no longer blocks implementation or model locking; no strategy is copied and nothing from the kit is vendored.
+- **Consequences:** two scent implementations behind one interface with configuration-driven selection; the selected model is registered, hashed, and declared; both models are vector-tested; OPEN-009 stays officially OPEN but no longer blocks implementation or model locking; strategy and domain logic remain project-native, limited to interoperability wiring at the adapter boundary.
 
 ## Requirement coverage
 

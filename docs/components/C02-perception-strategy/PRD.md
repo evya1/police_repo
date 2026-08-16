@@ -28,8 +28,11 @@ ARCH-007 (strategy is a separate module from communication/orchestration/logging
 ## Observable behavior
 
 - On every move or stay, the role emits a 5×5 scent field around its position with fixed center intensity 0.9 and the agreed radial profile (STRAT-002).
-- After a full turn by both sides, each scent cell updates by the recurrence `tau_ij(t+1) = max(0, (1-0.10)*tau_ij(t) + delta_tau_ij)` (STRAT-003). The saturation/merge/update-order detail the source leaves open (OPEN-009) is supplied by the *selected implementation profile*, not by this component inventing one — see M-01 §B.
-- Two scent profiles are supported behind one small common interface: `subtractive_chebyshev_v1` (default) and `multiplicative_book_v1`. The active profile is chosen once, by configuration, at the component boundary; no conditional on model identity is spread through belief or strategy code.
+- After a full turn by both sides, each scent cell decays and absorbs new emission. The **selected scent profile supplies the complete emission-and-decay arithmetic** used at runtime — not merely the saturation/merge/update-order details the source leaves open (OPEN-009). See M-01 §B.
+  - `multiplicative_book_v1` follows the book-style multiplicative recurrence `tau_ij(t+1) = max(0, (1-0.10)*tau_ij(t) + delta_tau_ij)` (STRAT-003).
+  - `subtractive_chebyshev_v1` uses the kit-reference subtractive arithmetic `round(max(0, tau - 0.1), 3)` and therefore **intentionally diverges from the book's multiplicative decay form**.
+  - The project supports both behind one interface, defaulting to `subtractive_chebyshev_v1` for immediate interoperability with the current sparring peer. That default is an engineering/interoperability decision (ADR-004): it does not modify the official/canonical requirement and does not close OPEN-009.
+- The active profile is chosen once, by configuration, at the component boundary; no conditional on model identity is spread through belief or strategy code.
 - The role reads only the opponent's scent field and its own hints, never plants scent it does not occupy (STRAT-004).
 - The belief map updates from scent and hints and materially influences legal move selection for both roles (STRAT-006) — see M-02 for the invariants this update must hold.
 - Verbal text uses the recommended zero-token template mode by default, or an optionally configured provider limited to text/behavioral analysis unless movement use is explicitly, mutually agreed and algorithmically validated for legality (STRAT-008).
@@ -67,7 +70,7 @@ An emitted scent field (own turn); an updated belief distribution; a selected le
 
 ## Acceptance scenarios
 
-- [ ] Scent emission and the recurrence match the numeric vectors in M-01 for the non-saturating range. {#scent_recurrence}
+- [ ] Mirrors M-01 `{#scent_recurrence}`: the book's multiplicative recurrence is demonstrated by `multiplicative_book_v1` against M-01's non-saturating worked example, while the default `subtractive_chebyshev_v1` intentionally diverges from that decay form and is validated against its own registered vector and the `{#model_lock}` criteria. {#scent_recurrence}
 - [ ] Both registered scent profiles are implemented behind one interface, each reproduces its own conformance vector, the default is `subtractive_chebyshev_v1`, and the selected model is declared and compared with the correct refusal behavior. {#model_lock}
 - [ ] Belief invariants (normalization, zero mass on impossible/barrier cells, never learns hidden truth) hold under the property tests in M-02. {#belief_invariants}
 - [ ] Movement policy always selects from C01's legal-action set; no LLM output can bypass this. {#strategy_legality}

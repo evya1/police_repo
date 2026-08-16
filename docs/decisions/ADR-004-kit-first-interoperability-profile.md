@@ -81,7 +81,7 @@ The same principle applies generally: where a non-authoritative interoperability
 - Default sparring compatibility: a run against the current kit peer needs no physics renegotiation.
 - `T005`'s scope grows slightly — a second model and a selection seam — but stays one bounded task. It is not split, and it is not renumbered.
 - `T009` gains a concrete, locally provable wire target instead of an invented envelope. `T008` gains published golden vectors to prove its own byte-level primitives against early rather than deferring every check to `T022`.
-- **No strategy is copied.** The kit's policies, heuristics, and search behaviour are out of scope of this decision and are not read for reuse. Nothing from the kit is vendored into either public repository; adapters and profile documents only.
+- This ADR is limited to protocol-level interoperability. Gameplay policy, heuristics, search behaviour, and strategy design remain independent; compatibility is implemented through local adapters, profile definitions, and conformance tests.
 - Negative: two arithmetic implementations to maintain, and a declared profile that must stay consistent between our configuration, our lock document, and our documentation. Mitigated by both models being pinned to published vectors, so drift fails a test rather than a match.
 
 ## Revisit conditions

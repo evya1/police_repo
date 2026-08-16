@@ -12,7 +12,7 @@ updated: 2026-08-15
 
 ## Why this mechanism has its own PRD
 
-Pursuit/barrier/capture-claim decision policy is genuinely role-specific and must never leak into the Thief repository (that is what makes it worth separating from the shared C02 component PRD, and worth keeping out of the bundle entirely — this file exists only in `police_repo`).
+Pursuit/barrier/capture-claim decision policy is genuinely role-specific and must never leak into the Thief repository (that is what makes it worth separating from the shared C02 component PRD, and worth keeping fully role-specific — this file exists only in `police_repo`).
 
 ## Governing requirements
 

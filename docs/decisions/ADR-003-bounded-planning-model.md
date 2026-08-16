@@ -38,7 +38,7 @@ Every requirement now has exactly one primary-owning component, recorded in `doc
 
 Positive: T004, T008, T009, T017, T028 can now open in parallel once T003 completes, with nothing waiting on T001; local Game Core, strategy-against-fakes, and local peer/MCP work all proceed while official artifacts and opponent endpoints remain outstanding. A `component`-typed task's bounded context is now a handful of files instead of the whole repository. `check_planning_graph.py` can mechanically verify that a task's declared context exists and that no requirement is claimed by two components.
 
-Negative: more files to keep in sync — mitigated by `docs/components/*/PRD.md`, `docs/mechanisms/`, and `docs/contracts/` being bundle-mastered and verified by the bundle's `check_shared_sync.py`. C04–C06 PLANs are intentionally incomplete until their owning task claims them, which means a worker reading ahead of schedule will find a shallow document — this is by design, not an oversight, per `docs/spec/PRD_PLAN_TODO_AGENT_WORKFLOW.md` §10's prohibition on micro-planning stale detail.
+Negative: more files to keep in sync — mitigated by `docs/components/*/PRD.md`, `docs/mechanisms/`, and `docs/contracts/` being shared and verified byte-identical between role repositories. C04–C06 PLANs are intentionally incomplete until their owning task claims them, which means a worker reading ahead of schedule will find a shallow document — this is by design, not an oversight, per `docs/spec/PRD_PLAN_TODO_AGENT_WORKFLOW.md` §10's prohibition on micro-planning stale detail.
 
 Interoperability and migration: no canonical requirement text changed; `docs/spec/TRACEABILITY.md` and `docs/spec/OPEN_QUESTIONS.md` gained columns/fields but no row was removed. Every pre-existing task frontmatter field (`id`, `status`, `priority`, `implements`, `depends_on`, `parallel_safe`, `claimed_by`, `claim_expires_at`, `write_set`, `risk`) keeps its exact name and meaning.
 
@@ -48,7 +48,7 @@ Interoperability and migration: no canonical requirement text changed; `docs/spe
 - `scripts/check_planning_graph.py` passes: 29 tasks, 6 components, every `context_files` path exists, every requirement has exactly one primary owner, dependency graph acyclic.
 - `diff docs/PRD.md` against the sibling Thief repository is empty (byte-identical System PRD preserved).
 - `diff -r docs/spec` against the sibling repository is empty (five shared registers byte-identical).
-- Full exact command output is recorded in the bundle's `PLANNING_WORKFLOW_MIGRATION.md`.
+- Full exact command output is recorded in the project's migration validation record.
 
 ## Approval
 

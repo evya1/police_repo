@@ -1,4 +1,4 @@
-"""Tests for TOML overlay rules.
+"""Tests for TOML overlay merging.
 
 Covers BL-07.
 """
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from common.config import load_config
+from common.config import overlay_toml
 
 
 @pytest.fixture
@@ -67,26 +67,26 @@ def valid_config() -> dict[str, object]:
 
 
 class TestOverlayToml:
-    """BL-07: TOML overlay rules."""
+    """Tests for overlay_toml merging TOML-only keys."""
 
-    def test_toml_overlay_json_wins(self, valid_config: dict[str, object], tmp_path: Path) -> None:
-        """BL-07: JSON value wins over TOML on conflict."""
+    def test_overlay_toml_merges_new_keys(
+        self, valid_config: dict[str, object], tmp_path: Path
+    ) -> None:
+        """TOML-only keys are merged into the config."""
         config_file = tmp_path / "game.json"
-        toml_file = tmp_path / "game.toml"
-
         config_file.write_text(json.dumps(valid_config))
-        toml_file.write_text("board_and_agents = { grid_size = 9 }")
 
-        result = load_config(config_file)
-        assert result["board_and_agents"]["grid_size"] == 7  # JSON wins
-
-    def test_toml_adds_local_only(self, valid_config: dict[str, object], tmp_path: Path) -> None:
-        """BL-07: TOML can add local-only settings."""
-        config_file = tmp_path / "game.json"
         toml_file = tmp_path / "game.toml"
+        toml_file.write_text(
+            '[strategy]\nthief_class = "x"\n'
+            '[board_and_agents]\ngrid_size = 9\n'
+            '[movement_and_barriers]\nmax_barriers = 10\n'
+        )
 
-        config_file.write_text(json.dumps(valid_config))
-        toml_file.write_text("[local]\nmy_setting = 42")
+        result = overlay_toml(config_file, toml_file)
 
-        result = load_config(config_file)
+        # TOML-only keys should be added
+        assert result["strategy"]["thief_class"] == "x"
+        # JSON values should win on conflicts
         assert result["board_and_agents"]["grid_size"] == 7
+        assert result["movement_and_barriers"]["max_barriers"] == 14

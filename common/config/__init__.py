@@ -159,6 +159,7 @@ def validate_config(data: dict[str, Any]) -> None:
     """
     _validate_sections(data)
     _validate_fields(data)
+    _validate_axis_and_starts(data)
     _validate_fixed_values(data)
     _validate_minimums(data)
     _validate_num_agents(data)
@@ -223,6 +224,54 @@ def _validate_num_agents(data: dict[str, Any]) -> None:
         raise ConfigError(f"num_agents must be exactly 2, got {num_agents}")
 
 
+def _validate_axis_and_starts(data: dict[str, Any]) -> None:
+    """Validate axis origin corner, start index, and agent start positions."""
+    board = data.get("board_and_agents", {})
+    grid_size = board.get("grid_size")
+
+    # Validate axis_origin_corner
+    axis_origin_corner = board.get("axis_origin_corner")
+    valid_corners = {"top-left", "top-right", "bottom-left", "bottom-right"}
+    if axis_origin_corner not in valid_corners:
+        raise FieldError(
+            f"board_and_agents.axis_origin_corner must be one of {sorted(valid_corners)}, got '{axis_origin_corner}'"
+        )
+
+    # Validate axis_start_index (int, not bool, must be 0 or 1)
+    axis_start_index = board.get("axis_start_index")
+    if isinstance(axis_start_index, bool) or not isinstance(axis_start_index, int):
+        raise FieldError(
+            f"board_and_agents.axis_start_index must be an integer (0 or 1), got {type(axis_start_index).__name__}"
+        )
+    if axis_start_index not in (0, 1):
+        raise FieldError(
+            f"board_and_agents.axis_start_index must be 0 or 1, got {axis_start_index}"
+        )
+
+    # Validate thief_start and cop_start
+    for key in ("thief_start", "cop_start"):
+        start = board.get(key)
+        if not isinstance(start, list) or len(start) != 2:
+            raise FieldError(
+                f"board_and_agents.{key} must be a list of exactly 2 integers, got {type(start).__name__}"
+            )
+        for i, val in enumerate(start):
+            if isinstance(val, bool) or not isinstance(val, int):
+                raise FieldError(
+                    f"board_and_agents.{key}[{i}] must be an integer, got {type(val).__name__}"
+                )
+            if val < 0 or val >= grid_size:
+                raise FieldError(
+                    f"board_and_agents.{key}[{i}] must be 0 <= v < {grid_size}, got {val}"
+                )
+
+    # Validate thief_start != cop_start
+    if board.get("thief_start") == board.get("cop_start"):
+        raise FieldError(
+            "board_and_agents.thief_start and board_and_agents.cop_start must be different"
+        )
+
+
 def overlay_toml(json_path: Path | str, toml_path: Path | str) -> dict[str, Any]:
     """Load JSON config and overlay TOML local settings.
 
@@ -249,13 +298,31 @@ def overlay_toml(json_path: Path | str, toml_path: Path | str) -> dict[str, Any]
     return data
 
 
+def _deepcopy(value: Any) -> Any:
+    """Simple recursive deepcopy for TOML values (avoids importing copy module)."""
+    if isinstance(value, dict):
+        return {k: _deepcopy(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [_deepcopy(v) for v in value]
+    return value
+
+
 def _overlay_toml(base: dict[str, Any], toml: dict[str, Any]) -> None:
     """Recursively overlay TOML values onto base dict.
 
     JSON values take precedence on conflicts. TOML may add new keys but
     must not weaken existing signed values.
+
+    - Key in base, both values are dicts → recurse (unchanged).
+    - Key in base, any scalar/other conflict → keep base value (JSON wins).
+    - Key in base, different types (dict vs scalar) → keep base value.
+    - Key not in base → deepcopy value into base.
     """
     for key, value in toml.items():
-        if key in base and isinstance(value, dict) and isinstance(base[key], dict):
-            _overlay_toml(base[key], value)
-            # JSON wins on scalar conflicts — do not overwrite
+        if key in base:
+            if isinstance(value, dict) and isinstance(base[key], dict):
+                _overlay_toml(base[key], value)
+            # JSON wins on scalar conflicts and type mismatches — do not overwrite
+        else:
+            # New key: deepcopy to avoid mutating the original TOML data
+            base[key] = _deepcopy(value)

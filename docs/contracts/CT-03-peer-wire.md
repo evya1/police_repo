@@ -4,7 +4,7 @@ id: CT-03
 status: draft
 owner_component: C03
 shared: true
-updated: 2026-08-15
+updated: 2026-08-16
 ---
 
 # CT-03 — Peer Wire Envelope & Tool Surface
@@ -38,6 +38,59 @@ Expiry: the envelope's deadline field is what C04 reads to decide retry vs. tech
 ## Version / compatibility
 
 Negotiated and versioned per CFG-001's locked shared contract; the exact tool names/envelope fields are this project's own engineering choice (non-official pending OPEN-001/OPEN-007), versioned so an eventual official schema can be adopted without an incompatible break.
+
+## Default interoperability profile — `reference-v3`
+
+Our first and default adapter profile, adopted by the kit-first interoperability ADR (`docs/decisions/`). The surface below is recorded from `EVID-003` in `requirements/EVIDENCE_REGISTER.md`: the current `Imreec/copthief-league-protocol` upstream at commit `ad6557626587e09146af4283a5e808e7001343c5`, inspected read-only. It is **NON-AUTHORITATIVE compatibility evidence**, not an official schema — it does not resolve OPEN-001 or OPEN-007, and a non-kit officially compliant peer stays a valid opponent behind the same adapter boundary.
+
+### Required tool surface and argument names
+
+| Tool | Required | Argument name | Carries |
+|---|---|---|---|
+| `negotiate` | yes | `message` | The pre-game gate: flat terms, nonce, signature, identity. Either side may open |
+| `receive_turn` | yes | `message` | One turn message per half-turn. **Each side calls the other's `receive_turn`** — the transport is symmetric push, so neither peer can be purely passive |
+| `submit_audit` | yes | **`payload`** | One audit payload per sub-game: the full sealed chain plus nonces, for the opponent to re-hash |
+| `receive_control` | optional | `message` | A status channel that touches no game state and is never sealed or scored |
+
+**The argument-name asymmetry is load-bearing and must be preserved.** `submit_audit` takes `payload`; the other three take `message`. A peer that sends `message` to `submit_audit` fails schema validation at the exact moment both sides are trying to agree on a result.
+
+There is no step-0 tool and no step-0 turn on this profile: the hardware/model declaration rides in `negotiate` under `identity`, and the sealed step-0 record is disclosed inside `submit_audit`. There is no `hello` tool; liveness is a tool listing, not a tool call.
+
+### Turn-message requirements
+
+Required keys: `step`, `sender`, `hint`, `smell_grid`, `commit`, `timestamp`. Optional: `barrier_placed`, `capture_claim`, `claim_response`, `win_claim`.
+
+- **`smell_grid` is a required key on this profile and must be preserved.** Its shape is `{'r,c': number}`; a stringified intensity is refused. Under `reference-v3` the grid is transmitted, which is why the default scent profile in M-01 §B.1 is the transmitted one.
+- `commit` is 64-char lowercase hex; uppercase is a divergence because the value is compared as a string.
+- `timestamp` is decorative in content but must be non-empty.
+- A missing required key is refused, never defaulted.
+- An unknown key is tolerated and ignored — that is the extension seam.
+- Every one of these decisions is made **before** any state change; a partially applied bad turn cannot be rolled back.
+
+### Locked-model declarations
+
+Profile choices are declared as a hash over a pinned parameter document, sent at negotiate time as `<family>_sha256`, for the families `scent_model`, `wire_shape`, `info_mode`, and `smell_binding`. The document itself never crosses the wire — only the hash — so the pinned field set is what makes two independent implementations' declarations comparable.
+
+These declarations sit **outside** the closed signed-terms set. The signed terms are a flat, closed key list; adding a profile key to them would break the signature, which is precisely why the separate declaration mechanism exists.
+
+**Refusal rule:** refuse only when both peers declare a family and the declared hashes disagree. Omission is never refusal — one side declaring while the other is silent still plays.
+
+### Our declared profile values
+
+| Family | Our value |
+|---|---|
+| `wire_shape` | `reference-v3` |
+| `scent_model` | `subtractive_chebyshev_v1` (default; `multiplicative_book_v1` also supported and selectable) |
+| `info_mode` | `belief` — the rival's position is outside the observation space; under `reference-v3` this is structural, because the rival's position never crosses the wire |
+| `smell_binding` | current/unbound. The proposed `commit_grid_v1` extension is **not** on our critical path: it is `PROPOSED` upstream, no implementation has shipped it, and it changes a commit preimage |
+
+### Turn order
+
+`reference-v3` inherits the reference implementation's behavior: **the thief takes the first game turn.** The `wire_shape` declaration does not cover turn order, so a matching lock can actively confirm agreement while hiding this exact disagreement — two peers that each expect the other to move first both wait forever after a fully successful handshake. This convention is therefore recorded here explicitly and must be preserved.
+
+### Sender / receiver roles and local operation
+
+Each peer runs its own server and dials the other's; a peer that only listens never plays. The whole profile is exercisable as two local processes with no public endpoint, no tunnel, and no real opponent URL. Live endpoint and tunnel selection remain PLANQ-006 and later tasks.
 
 ## Governing requirement IDs
 

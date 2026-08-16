@@ -63,6 +63,10 @@ class Task:
         return self.frontmatter.get("status")
 
     @property
+    def implementation_state(self) -> str | None:
+        return self.frontmatter.get("implementation_state")
+
+    @property
     def anchors(self) -> set[str]:
         return set(_ANCHOR.findall(self.body))
 

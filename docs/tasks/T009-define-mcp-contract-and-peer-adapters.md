@@ -1,6 +1,7 @@
 ---
 id: T009
 status: blocked
+implementation_state: not_started
 priority: P0
 task_type: component
 component: C03
@@ -15,7 +16,7 @@ context_files:
   - docs/components/C03-peer-protocol-integrity/PLAN.md
   - docs/mechanisms/M-06-peer-protocol-surface.md
   - docs/contracts/CT-03-peer-wire.md
-  - docs/decisions/ADR-004-kit-first-interoperability-profile.md
+  - docs/decisions/ADR-004-operational-interoperability-profile.md
 read_set: []
 depends_on:
   - T003
@@ -53,7 +54,7 @@ Thin FastMCP server/client adapters implement the `reference-v3` peer contract a
 
 The official material fixes FastMCP/MCP behavior but does not supply a complete attached wire schema, and OPEN-001/OPEN-007 stay open. Do not register guessed fields as official.
 
-`ADR-004` selects `reference-v3` as the first and default adapter profile, and `docs/contracts/CT-03-peer-wire.md` records its exact currently verified surface. That profile is a human-approved engineering choice evidenced by a non-authoritative compatibility target — implement it as a profile behind the adapter boundary, never as an official schema, and keep a non-kit officially compliant peer a valid opponent.
+`ADR-004` selects `reference-v3` as the default adapter profile, and `docs/contracts/CT-03-peer-wire.md` records its exact surface. That profile is an operational convention — implement it behind the adapter boundary, never as an official schema, and keep any officially compliant peer a valid opponent.
 
 The entire contract is provable with two local processes. A real opponent URL, a tunnel, or a public endpoint must **not** block this task; endpoint and tunnel selection remain PLANQ-006 and later tasks.
 
@@ -78,11 +79,12 @@ The entire contract is provable with two local processes. A real opponent URL, a
 - [ ] Selected-profile declarations for `scent_model`, `wire_shape`, `info_mode`, and `smell_binding` are sent as document hashes at negotiate time, outside the closed signed-terms set, and refusal fires only when both peers declare a family and disagree — silence on either side is never refusal.
 - [ ] `info_mode: belief` is declared and structurally honored: the rival's position never crosses the wire.
 - [ ] The `reference-v3` turn-order convention is implemented and asserted — the thief takes the first game turn — with a diagnostic that names a turn-order disagreement rather than reporting a bare timeout. `{#reference_v3_contract}`
-- [ ] Tool discovery and contract mismatch diagnostics fail before game start.
+- [ ] Tool discovery and contract mismatch diagnostics fail before game start, naming the mismatching element.
+- [ ] Role, sub-game, and configuration identifiers are checked at negotiate time: a peer declaring the same role, a mismatched sub-game identifier, or a configuration hash that differs from the locked shared contract is refused before any state change.
 - [ ] Natural-language hints remain free-form and no direct numeric-position side channel exists.
-- [ ] Endpoint, tunnel, request timeout, and retry limits come from configuration; no value is required to be a real opponent's for the local suite to pass.
-- [ ] Contract tests exercise two independent local processes with no public endpoint and no opponent URL, and reject incompatible role/sub-game/config identifiers. `{#local_mcp_smoke}`
-- [ ] Public-endpoint reachability over a real or simulated tunnel is exercised only once `G-LIVE` is satisfied; the local smoke test above does not require it. `{#public_endpoint}`
+- [ ] Endpoint, tunnel, request-timeout, and retry-limit values all come from configuration with documented defaults; no value is required to be a real opponent's for the local suite to pass, and no timeout or retry count is hardcoded in transport code.
+- [ ] Contract tests exercise two genuinely independent local processes — separate interpreters, separate configuration, no shared in-process state — with no public endpoint and no opponent URL, completing a full turn cycle and rejecting incompatible role, sub-game, and configuration identifiers. This is the smoke test that must pass before any live endpoint is required. `{#local_mcp_smoke}`
+- [ ] An explicit network-readiness test exercises public-endpoint reachability and tunnel stability over a real or simulated tunnel. It runs only once `G-LIVE` supplies real endpoint values; until then it is skipped with a named reason rather than passing vacuously, and the local smoke test above does not require it. `{#public_endpoint}`
 
 ## Verification
 

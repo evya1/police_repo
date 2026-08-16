@@ -1,6 +1,7 @@
 ---
 id: T004
 status: blocked
+implementation_state: implementation_present
 priority: P0
 task_type: component
 component: C01
@@ -71,6 +72,21 @@ Pure deterministic board, movement, barrier, capture, terminal-condition, and sc
 
 Rules must operate only on role-local truth. The fixed scoring table and configured Minimum/Negotiated bounds are inputs, not hard-coded alternative values.
 
+### Current state (verified 2026-08-16)
+
+Board geometry, movement legality, barrier placement and quota, capture detection, and the fixed scoring table are implemented on the integration branch with unit tests. `implementation_state` is `implementation_present`; the task is **not** complete, because three acceptance areas are unmet.
+
+| Acceptance area | State | Evidence |
+|---|---|---|
+| Boundaries, cardinal moves, STAY, diagonal rejection | implemented | `common/domain/board.py`; `tests/unit/domain/test_board_*.py` |
+| Barrier placement, persistence, quota, collision, trapped-Thief capture | implemented | `common/domain/rules.py`; `tests/unit/domain/test_rules_barriers.py`, `test_rules_capture.py` |
+| Fixed score table and zeroed-outcome handling | implemented | `common/domain/scoring.py`; `tests/unit/domain/test_scoring.py` |
+| Police capture claim names its own post-move cell; arbitrary-cell claims rejected | **missing** | `GameEngine` exposes `answer_capture_claim` for the Thief side only; no Police-side claim construction or validation exists |
+| Move-cap termination and the divergence refusal | **missing** | `GameEngine.max_steps` is declared but never read; only `survived()` (survival threshold) terminates |
+| Canonical Appendix F key naming | **defect** | the engine field is `max_steps`, while the canonical key and `config/game.json` use `max_moves` |
+
+Close these three before proposing `done`. Do not mark the task complete on the strength of the implemented areas alone.
+
 ## Gates
 
 - `OPEN-011` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `terminal_map` waits.
@@ -87,8 +103,8 @@ Rules must operate only on role-local truth. The fixed scoring table and configu
 
 - [ ] Property and example tests cover boundaries, cardinal moves, STAY, and diagonal rejection.
 - [ ] Barrier placement, persistence, quota, collision, and trapped-Thief capture follow the official rules.
-- [ ] A Police capture claim names its current post-move cell; arbitrary-cell claims are rejected, Thief responses are truth-checked, and all fixed scores are deterministic.
-- [ ] Move-cap and survival termination use the signed configuration; a move-cap-vs-survival-threshold divergence refuses to score rather than guessing a precedence. `{#terminal_map}`
+- [ ] A Police capture claim is constructed from, and validated against, the claiming side's own post-move cell; a claim naming any other cell is rejected before it reaches the opponent. Thief responses are truth-checked against the sealed state, and all fixed scores are deterministic.
+- [ ] Move-cap and survival termination both read the signed configuration under their canonical Appendix F names (`max_moves`, `survival_threshold`) with no synonym field; a move-cap exhaustion below the survival threshold refuses to score, and a sub-game whose two configured values diverge refuses to start, rather than guessing a precedence. `{#terminal_map}`
 - [ ] No network, GUI, LLM, clock, or filesystem dependency enters domain logic.
 
 ## Verification

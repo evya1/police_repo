@@ -1,6 +1,7 @@
 ---
 id: T012
 status: blocked
+implementation_state: not_started
 priority: P1
 task_type: component
 component: C03

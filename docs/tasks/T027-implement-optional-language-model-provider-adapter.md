@@ -1,6 +1,7 @@
 ---
 id: T027
 status: blocked
+implementation_state: not_started
 priority: P2
 task_type: component
 component: C02

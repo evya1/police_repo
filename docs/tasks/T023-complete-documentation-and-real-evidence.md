@@ -1,6 +1,7 @@
 ---
 id: T023
 status: blocked
+implementation_state: not_started
 priority: P1
 task_type: governance
 component: system

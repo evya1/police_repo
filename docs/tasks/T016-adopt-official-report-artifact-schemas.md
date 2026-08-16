@@ -1,6 +1,7 @@
 ---
 id: T016
-status: blocked
+status: ready
+implementation_state: not_started
 priority: P0
 task_type: component
 component: C06
@@ -21,8 +22,8 @@ depends_on: []
 gates:
   - id: INPUT-001
     kind: input
-    scope: schema_adoption
-    blocks: start
+    scope: official_schema_compliance
+    blocks: criterion
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -51,13 +52,17 @@ The four official JSON schemas/templates are adopted without alteration, with va
 
 ## Relevant context
 
-OPEN-001 and OPEN-007 are hard blockers. Prose supplies names and broad contents but is not permission to fabricate official attached schemas, consensus-signature bytes, or identifiers. Conflicting flat/nested layouts and differing declaration/log/result fields demonstrate why no auxiliary artifact generator/schema may be relabeled as official.
+The official templates have not arrived (OPEN-001, INPUT-001), and no locally defined schema may be presented as one of them. Prose supplies names and broad contents but is not permission to fabricate official attached schemas, consensus-signature bytes, or identifiers.
 
-The runtime instances are built during execution: declaration before the series, configuration before each sub-game, log during/finalized after each sub-game, and result after verified settlement. This task adopts the official contract those builders must follow; it does not pre-create completed match data.
+Development proceeds against the **project artifact contract** recorded under OPEN-001 in `docs/spec/OPEN_QUESTIONS.md`: the four lifecycle artifacts are produced by dedicated builders against a project-defined schema held in `config/official/reporting/`, serialized with the canonical form recorded in `docs/contracts/CT-04-canonical-bytes.md`, and validated by schema, signature, and cross-artifact identifier checks. That contract is sufficient for builders, validators, and their tests; it is not sufficient for counted reporting.
+
+When the official templates arrive they replace the project schema at the same boundary, and the same suite is re-run against them.
+
+The runtime instances are built during execution: declaration before the series, configuration before each sub-game, log during and finalized after each sub-game, and result after verified settlement. This task defines the contract those builders follow; it does not pre-create completed match data.
 
 ## Gates
 
-- `INPUT-001` (`input`, `blocks: start`) — this task cannot be claimed until the gate resolves.
+- `INPUT-001` (`input`, `blocks: criterion`) — the task may be claimed and implemented now against the project artifact contract; only the acceptance criterion scoped `official_schema_compliance` waits for the official templates.
 
 ## Constraints
 
@@ -69,12 +74,13 @@ The runtime instances are built during execution: declaration before the series,
 
 ## Acceptance criteria
 
-- [ ] Official template receipt, authority, version, safe hash, and verification status are recorded in the input register without secret contents.
+- [ ] Builders, validators, and cross-artifact reconciliation are implemented and tested against the project artifact contract, with committed fixtures for all four lifecycle artifacts.
+- [ ] Official template receipt, authority, version, safe hash, and verification status are recorded in the input register without secret contents, and the official schemas replace the project schema at the same boundary with the same suite re-run against them. `{#official_schema_compliance}`
 - [ ] Validators distinguish schema failure, signature failure, and cross-artifact identifier mismatch.
 - [ ] Per-game config filenames and reported Git commits are deterministic and replayable.
 - [ ] Artifact generation contains only schema-supported fields and no private secrets.
 - [ ] Builders expose the four approved lifecycle points without creating a declaration/result prematurely or mutating a finalized log.
-- [ ] Golden tests are built from sanitized official templates, not invented examples.
+- [ ] Golden tests are built from the project artifact contract while the official templates are absent, and from sanitized official templates once they arrive. No fixture is labelled official before an official file is registered and verified.
 - [ ] Test-only candidate layouts are quarantined from production configuration and used, if retained, only to prove rejection/difference against the official contract.
 
 ## Verification

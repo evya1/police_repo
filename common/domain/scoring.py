@@ -38,10 +38,9 @@ SCORES: dict[Outcome, tuple[int, int]] = {
     Outcome.TAMPER_FORFEIT: (0, 0),
 }
 
-#: Outcomes that zero BOTH sides. Their 0–0 score is a sanction, not a tie: the published
-#: technical-loss row shape (PAIRING-PLAYBOOK stage 7, agreed by the first league pairing) pins
-#: `tie: false` with `winner_group: null` — two zeroes mean nobody won, not that both did equally
-#: well. A row builder that computes `tie = (score_a == score_b)` silently violates it.
+#: Outcomes that zero BOTH sides. Their 0-0 score is a sanction, not a tie: the result row pins
+#: `tie: false` with `winner_group: null`, because two zeroes mean nobody won, not that both did
+#: equally well. A row builder that computes `tie = (score_a == score_b)` silently violates it.
 ZEROED = frozenset({Outcome.TIMEOUT, Outcome.TECHNICAL_LOSS, Outcome.TAMPER_FORFEIT})
 
 
@@ -55,20 +54,17 @@ def settled_outcome(
 ) -> tuple[Outcome, bool]:
     """(final outcome, settled?) — ONE settlement rule for both drivers.
 
-    Before this function existed the two drivers disagreed ('s B4: selfplay kept a
-    failed-audit capture settled; netplay refused any unverified sub-game) and — the sharper
-    corollary — nothing anywhere ever ASSIGNED ``TAMPER_FORFEIT``: the outcome the book defines
-    for a failed audit could not occur. The published model, now in one place:
+    Settlement lives here and nowhere else, so that no driver can reach a different verdict on
+    the same evidence and so that ``TAMPER_FORFEIT`` is actually assignable. The rules:
 
     - audits exchanged and clean → the played outcome stands, settled;
     - audits exchanged and FAILED → **``TAMPER_FORFEIT``**, settled: the failed audit *is* the
       settlement, zeroing both sides (book ch.5 — the iron rule has no partial verdicts);
     - no audit on a **zeroed** outcome (timeout / technical loss) → settled: a classified dead
       sub-game owes no reveal, and the pair-agreed technical-loss row shape
-      (PAIRING-PLAYBOOK stage 7) is exactly this case — reportable, `log_verified: false`,
-      `tampered: false`;
+      is exactly this case — reportable, `log_verified: false`, `tampered: false`;
     - no audit on a **played** outcome (capture / survival) → NOT settled: a game someone won
-      but nobody can verify is the report WARNINGS §1 refuses to send.
+      but nobody can verify must not be reported as a result.
     """
     if audits_present:
         return (outcome, True) if audits_passed else (Outcome.TAMPER_FORFEIT, True)
@@ -88,15 +84,12 @@ def score_for(outcome: Outcome, role: Role) -> int:
 
 
 def role_for(natural: Role, sub_game_number: int) -> Role:
-    """Odd sub-games play your natural role; even ones play the opposite.
+    """Odd sub-games play this peer's natural role; even ones play the opposite.
 
-    Worth knowing where this comes from: **role alternation is not stated anywhere in the book's
-    body.** It appears only in the reference implementation and in the sample artifacts' own
-    schema text ("roles switch across the sub-games, so no role and no sub_game_number appear
-    here"). It is followed because both sides of a real series followed it and because the
-    reference defines it. *Who starts as what* is now a published default too:
-    docs/PAIRING-PLAYBOOK.md stage 3 — the alphabetically-first group (the game_id sort) plays
-    cop in the odd sub-games. State it with your opponent anyway; nothing in the binding table
-    would settle an argument about it.
+    Role alternation is **not** stated in the binding table — that gap is OPEN-008. Alternation
+    starting from the natural role is the recorded operational convention (see the OPEN-008
+    series execution convention), chosen so a six-sub-game series gives each side three sub-games
+    in each role. It governs local execution only: the schedule is confirmed with the opponent,
+    and against an official answer, before counted play.
     """
     return natural if sub_game_number % 2 == 1 else natural.other

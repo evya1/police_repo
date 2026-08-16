@@ -14,6 +14,7 @@ _CHECKS = (
     "check_no_secrets.py",
     "check_markdown_links.py",
     "check_docs_present.py",
+    "check_doc_language.py",
     "check_task_ids.py",
     "check_source_archives.py",
     "check_workflow_permissions.py",

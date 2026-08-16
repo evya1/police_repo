@@ -44,7 +44,7 @@ A validated game state; a legal/illegal action verdict with no side effects on i
 
 ## Invariants
 
-- **Hidden-position constraint** (derived from STRAT-001, OBS-002, GAME-009…011): the domain boundary holds only this role's own position and never computes or stores the opponent's true position. Barriers are public once declared and held identically by both sides' domain state. A terminal condition depending on the opponent's position is decided only by the side entitled to know it — the Thief's own domain state detects a barrier on its cell and its own entrapment; the Police side emits the Capture Claim while the Thief's domain state answers from its own local position.
+- **Hidden-position constraint** (constrained by STRAT-001, OBS-002, GAME-009…011): the domain boundary holds only this role's own position and never computes or stores the opponent's true position. Barriers are public once declared and held identically by both sides' domain state. A terminal condition depending on the opponent's position is decided only by the side entitled to know it — the Thief's own domain state detects a barrier on its cell and its own entrapment; the Police side emits the Capture Claim while the Thief's domain state answers from its own local position.
 - Shared JSON always takes precedence over private TOML on a shared key; TOML cannot weaken a signed condition (CFG-003).
 - A placed barrier is irreversible and impassable to both agents until the game ends (GAME-007).
 - Diagonal movement is always rejected (GAME-005).

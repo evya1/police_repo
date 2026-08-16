@@ -12,7 +12,7 @@ updated: 2026-08-16
 
 ## Why this mechanism has its own PRD
 
-This is the interoperability boundary itself — the FastMCP tool/envelope surface and the natural-language rule that let two independently written peers actually talk. It is also the anchor for the league-kit adapter described in `planning/interop/LEAGUE_COMPATIBILITY.md`, so it needs to be addressable on its own rather than folded into the general C03 PRD.
+This is the interoperability boundary itself — the FastMCP tool/envelope surface and the natural-language rule that let two independently written peers actually talk. It is also the anchor for the profile adapter described in `planning/interop/LEAGUE_COMPATIBILITY.md`, so it needs to be addressable on its own rather than folded into the general C03 PRD.
 
 ## Governing requirements
 
@@ -30,11 +30,11 @@ The exact tool names, request/response envelope fields, and versioning scheme ar
 
 ## First implemented profile — `reference-v3` (engineering decision, non-official)
 
-The first and default interoperability adapter we intend to implement is `wire_shape: reference-v3`, per the kit-first interoperability ADR (`docs/decisions/`) and the compatibility surface recorded in `planning/contracts/CT-03-peer-wire.md`. Evidence is `EVID-003` in `requirements/EVIDENCE_REGISTER.md` — NON-AUTHORITATIVE interoperability evidence at a recorded upstream SHA, not a course requirement and not an official schema. Adopting it does not resolve OPEN-001 or OPEN-007.
+The default interoperability adapter is `wire_shape: reference-v3`, recorded as an operational convention in `docs/decisions/ADR-004-operational-interoperability-profile.md` with its full surface in `planning/contracts/CT-03-peer-wire.md`. It is a project decision, not a course requirement and not an official schema, and recording it does not resolve OPEN-001 or OPEN-007.
 
 The compatibility surface this adapter must eventually meet is stated once, in CT-03, so it is not restated here. In summary it comprises: the four tool names (`negotiate`, `receive_turn`, `submit_audit`, `receive_control`), the argument-name asymmetry between them, the required turn-message keys including `smell_grid`, the locked-model declarations carried outside the closed signed-terms set, `info_mode: belief`, unbound smell behavior, and the reference-v3 turn-order convention in which the thief takes the first game turn.
 
-A non-kit, officially compliant peer remains a fully valid opponent. `reference-v3` is one profile behind an adapter boundary, not this component's internal architecture.
+Any officially compliant peer remains a fully valid opponent. `reference-v3` is one profile behind an adapter boundary, not this component's internal architecture.
 
 ## Local vs. live testing
 

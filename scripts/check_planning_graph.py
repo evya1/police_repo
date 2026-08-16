@@ -31,6 +31,8 @@ from quality_common import QualityError, load_config, safe_repo_path, string_lis
 _TASK_TYPES = {"foundation", "component", "integration", "verification", "governance", "release"}
 _GATE_KINDS = {"open", "input", "input_gate", "decision"}
 _BLOCK_LEVELS = {"start", "criterion", "integration"}
+# Evidence-based implementation state, independent of the claimability `status`.
+_IMPL_STATES = {"not_started", "partial", "implementation_present", "review_pending", "complete"}
 
 
 def check_component(task: Task, component_ids: set[str], issues: Issues) -> None:
@@ -38,6 +40,12 @@ def check_component(task: Task, component_ids: set[str], issues: Issues) -> None
         issues.add(f"{task.task_id}: unknown component {task.component!r}")
     if task.task_type not in _TASK_TYPES:
         issues.add(f"{task.task_id}: unknown task_type {task.task_type!r}")
+    if task.implementation_state not in _IMPL_STATES:
+        issues.add(f"{task.task_id}: unknown implementation_state {task.implementation_state!r}")
+    if task.implementation_state == "complete" and task.status != "done":
+        issues.add(f"{task.task_id}: implementation_state 'complete' requires status 'done'")
+    if task.status == "done" and task.implementation_state != "complete":
+        issues.add(f"{task.task_id}: status 'done' requires implementation_state 'complete'")
 
 
 def check_context_files(task: Task, repo: Path, issues: Issues) -> None:

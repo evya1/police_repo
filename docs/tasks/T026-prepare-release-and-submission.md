@@ -1,6 +1,7 @@
 ---
 id: T026
 status: blocked
+implementation_state: not_started
 priority: P0
 task_type: release
 component: system
@@ -67,7 +68,7 @@ The reviewed repository and official submission artifacts are frozen at annotate
 
 ## Relevant context
 
-Tagging, remote sharing, Moodle submissions, and the official Word-to-PDF form require human authorization and any private identity values must remain outside public repository artifacts.
+Tagging, remote sharing, submissions, and the official Word-to-PDF form require human authorization, and private identity values must remain outside every repository artifact.
 
 ## Gates
 

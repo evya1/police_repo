@@ -93,7 +93,7 @@ def check_readiness_consistency(tasks: list[Task], issues: Issues) -> None:
 
 def check_todo_consistency(tasks: list[Task], repo: Path, todo_paths: list[str], issues: Issues) -> None:
     """Verify each TODO.md row agrees with its task file on ID, status,
-    component, and task type, using the current TODO column headers."""
+    implementation state, component, and task type, using the current headers."""
     by_id = {t.task_id: t for t in tasks}
     for relative in todo_paths:
         todo = repo / relative
@@ -114,7 +114,13 @@ def check_todo_consistency(tasks: list[Task], repo: Path, todo_paths: list[str],
             if task_id not in by_id:
                 continue
             task = by_id[task_id]
-            for field, actual in (("component", task.component), ("type", task.task_type), ("status", task.status)):
+            columns = (
+                ("component", task.component),
+                ("type", task.task_type),
+                ("status", task.status),
+                ("impl state", task.implementation_state),
+            )
+            for field, actual in columns:
                 if field in row and row[field] != str(actual):
                     issues.add(f"TODO row {task_id}: {field} {row[field]!r} disagrees with task file {actual!r}")
 

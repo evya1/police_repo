@@ -65,6 +65,30 @@ class PlanningGraphCliTests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertIn("FAIL", output)
 
+    def test_main_reports_unknown_implementation_state(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold(root)
+            write(root, "docs/tasks/T001-a.md", task_text("T001", implementation_state="nearly"))
+            code, output = captured_main(check_planning_graph.main, ["--repo", str(root)])
+            self.assertEqual(code, 1)
+            self.assertIn("unknown implementation_state", output)
+
+    def test_main_requires_done_and_complete_to_agree(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scaffold(root)
+            write(root, "docs/tasks/T001-a.md", task_text("T001", status="done"))
+            write(
+                root,
+                "docs/tasks/T002-b.md",
+                task_text("T002", implementation_state="complete", deps="depends_on:\n  - T001\n"),
+            )
+            code, output = captured_main(check_planning_graph.main, ["--repo", str(root)])
+            self.assertEqual(code, 1)
+            self.assertIn("status 'done' requires implementation_state 'complete'", output)
+            self.assertIn("implementation_state 'complete' requires status 'done'", output)
+
 
 if __name__ == "__main__":
     unittest.main()

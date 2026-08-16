@@ -47,12 +47,14 @@ def task_text(
     gates: str = "gates: []\n",
     deps: str = "depends_on: []\n",
     status: str = "blocked",
+    implementation_state: str = "not_started",
 ) -> str:
     """Render one synthetic task file's full text."""
     lines = [
         "---",
         f"id: {task_id}",
         f"status: {status}",
+        f"implementation_state: {implementation_state}",
         "priority: P0",
         "task_type: component",
         f"component: {component}",

@@ -1,6 +1,7 @@
 ---
 id: T018
 status: blocked
+implementation_state: not_started
 priority: P0
 task_type: integration
 component: C06
@@ -58,7 +59,11 @@ A settled legal series produces mutually consistent, signed JSON artifacts and t
 
 ## Relevant context
 
-The unresolved missing/conflicting-report sanction must follow the approved OPEN-004 resolution. Plaintext and partially settled reports are invalid.
+The missing/conflicting-report sanction is unresolved (OPEN-004) and no punishment beyond the authoritative requirements may be implemented. Until it resolves, apply the conservative settlement guard recorded under OPEN-004: a series result is finalized automatically **only** when both required reports exist and are mutually consistent. Missing, incomplete, or conflicting required reports produce an explicit unsettled state with preserved evidence — never an automatically settled valid result, and never a self-selected sanction.
+
+Plaintext and partially settled reports are invalid.
+
+Artifact development proceeds against the project artifact contract that T016 defines; final authoritative compliance stays gated on the official templates.
 
 Artifact instances are produced in lifecycle order: one declaration before the series, one locked configuration and one incrementally recorded/finalized log per sub-game, and one result only after verified settlement. T016 must first supply the official schema/canonical contract.
 
@@ -76,11 +81,12 @@ Artifact instances are produced in lifecycle order: one declaration before the s
 
 ## Acceptance criteria
 
-- [ ] Artifact totals are derived from verified sub-game records and the fixed scoring table.
+- [ ] Artifact totals are computed from verified sub-game records and the fixed scoring table.
 - [ ] Declaration, configuration, log, and result instances are created only at their approved lifecycle points; finalized evidence is immutable.
 - [ ] Common identifiers, repositories, commits, hardware/model, token totals, and timestamps reconcile across all four artifact families.
 - [ ] The sender is idempotent and cannot silently send a second counted report.
-- [ ] An unsettled, tampered, schema-invalid, or peer-inconsistent result follows the approved refusal/sanction path once OPEN-004 resolves. `{#sanction_settlement}`
+- [ ] Missing, incomplete, and conflicting required reports each reach an explicit unsettled state with preserved evidence, and none of them produces an automatically settled result or a locally chosen sanction.
+- [ ] An unsettled, tampered, schema-invalid, or peer-inconsistent result follows the authoritative refusal/sanction path once OPEN-004 resolves. `{#sanction_settlement}`
 - [ ] Integration tests assert the exact attachment bytes passed to a mock Gmail service.
 
 ## Verification

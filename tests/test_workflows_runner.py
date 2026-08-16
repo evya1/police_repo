@@ -87,7 +87,7 @@ class WorkflowAndRunnerTests(unittest.TestCase):
             with mock.patch.object(run_quality_gates.subprocess, "run", fake_run):
                 failed = run_quality_gates.run_checks(root, root / "quality.toml", "python")
         self.assertEqual(failed, ["check_task_ids.py"])
-        self.assertEqual(len(calls), 7)
+        self.assertEqual(len(calls), len(run_quality_gates._CHECKS))
         self.assertTrue(all("--repo" in command and "--config" in command for command in calls))
 
 

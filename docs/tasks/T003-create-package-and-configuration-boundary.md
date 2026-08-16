@@ -1,6 +1,7 @@
 ---
 id: T003
 status: blocked
+implementation_state: partial
 priority: P0
 task_type: foundation
 component: C01
@@ -64,7 +65,21 @@ A role-local installable package, thin programmatic facade, and validated shared
 
 ## Relevant context
 
-The package is greenfield. Shared JSON overrides conflicting local TOML; validation must distinguish Fixed, Minimum, Negotiated, and private values.
+Shared JSON overrides conflicting local TOML; validation must distinguish Fixed, Minimum, Negotiated, and private values.
+
+### Current state (verified 2026-08-16)
+
+The configuration boundary is implemented and tested on the integration branch, but it does not yet satisfy this task. `implementation_state` is `partial`.
+
+| Acceptance area | State | Evidence |
+|---|---|---|
+| Shared JSON / private TOML load and precedence | implemented | `common/config/__init__.py`; `tests/unit/domain/test_config_loading.py`, `test_config_overlay.py` |
+| Fixed / Minimum / Negotiated validation with explicit errors | implemented | `common/config/__init__.py`; `tests/unit/domain/test_config_axis_validation.py` and the other `test_config_*` modules |
+| One documented programmatic facade | **missing** | no `src/police_peer/sdk.py` exists |
+| Code/config version compatibility checked at startup | **missing** | no startup compatibility check exists |
+| Coverage configuration includes the new source package | **missing** | `pyproject.toml` sets `source = ["scripts", "src/police_peer"]`; `common/` is not measured |
+
+Two placement questions must be settled by this task rather than inherited silently: the implementation currently lives at `common/config/` while this task's `write_set` declares `src/police_peer/config/`, and `src/police_peer/__init__.py` is not consistently present across the two role repositories. Resolve both explicitly — either by moving the modules into the declared write set or by requesting an orchestrator-approved write-set change — and record which was chosen.
 
 ## Constraints
 
@@ -81,7 +96,8 @@ The package is greenfield. Shared JSON overrides conflicting local TOML; validat
 - [ ] Known Appendix F defaults and status classes validate with explicit errors.
 - [ ] Code/config version compatibility is checked at startup.
 - [ ] Tests prove there is no cross-role live-state module or secret-bearing default.
-- [ ] Quality/coverage configuration includes the new source package and test paths.
+- [ ] Quality/coverage configuration includes every source package that carries application code — including any shared module directory outside `src/` — and the unit test paths.
+- [ ] The package layout and the declared `write_set` agree, and both role repositories expose the same package entry points.
 
 ## Verification
 

@@ -1,6 +1,7 @@
 ---
 id: T019
 status: blocked
+implementation_state: not_started
 priority: P0
 task_type: component
 component: C06
@@ -49,7 +50,16 @@ A counted series executes exactly six isolated sub-games and derives capture, su
 
 ## Relevant context
 
-Series aggregation must not become a central judge; each peer derives its own result and later reconciles it with the opponent. OPEN-008 must settle role assignment/alternation and whether the fixed tie score replaces or augments accumulated points. Series-add, series-replace, and per-sub-game behavior are differential cases only; none is authority for a production choice.
+Series aggregation must not become a central judge; each peer derives its own result and later reconciles it with the opponent.
+
+Every explicitly required behavior is preserved: exactly six sub-games per series, the fixed tie value of 2, and the GAME-013 score table. What the source does not fix is role assignment and alternation, and whether the tie score replaces or augments accumulated points. Those are recorded as the **series execution convention** under OPEN-008 in `docs/spec/OPEN_QUESTIONS.md`:
+
+- roles alternate across the six sub-games starting from this peer's natural role, so each side plays each role three times;
+- each sub-game runs from a clean state with its own configuration and log identity, and no state carries across sub-games;
+- series totals accumulate per sub-game and the tie value is **added** to the accumulated total rather than replacing it;
+- a technical-loss or tampered outcome scores zero for both sides and can never become a clean or tie outcome.
+
+This convention governs local execution only. It is an operational convention, not an official rule, and it is never described as one. Role assignment, alternation, and tie aggregation materially affect counted scoring, so the schedule and the tie rule are confirmed against the official reporting files or a lecturer answer **before counted play**.
 
 ## Gates
 
@@ -65,9 +75,9 @@ Series aggregation must not become a central judge; each peer derives its own re
 
 ## Acceptance criteria
 
-- [ ] Exactly six configured sub-games run under the lecturer-approved role schedule, with clean state reset and unique config/log identities.
-- [ ] All fixed score rows and the approved cumulative-tie application match the canonical table and OPEN-008 resolution.
-- [ ] Tests distinguish series-add, series-replace, and per-sub-game tie semantics and prove that only the approved OPEN-008 profile is selectable for counted play. `{#series_aggregation}`
+- [ ] Exactly six configured sub-games run under the recorded alternation schedule, with clean state reset and unique configuration and log identities per sub-game.
+- [ ] All fixed score rows match the canonical GAME-013 table, and the cumulative tie value of 2 is added to accumulated totals rather than replacing them.
+- [ ] Tests distinguish series-add, series-replace, and per-sub-game tie semantics, assert the recorded convention is what executes, and keep series-replace as an explicit rejected alternative. Counted play is refused until the schedule and tie rule are confirmed against an authoritative answer. `{#series_aggregation}`
 - [ ] Diversity reward applies only to a qualifying new-opponent win.
 - [ ] Technical-loss/tamper outcomes cannot be converted to clean scores.
 - [ ] The same verified sub-game list is the single source for totals and report input.

@@ -37,11 +37,13 @@ Expiry: the envelope's deadline field is what C04 reads to decide retry vs. tech
 
 ## Version / compatibility
 
-Negotiated and versioned per CFG-001's locked shared contract; the exact tool names/envelope fields are this project's own engineering choice (non-official pending OPEN-001/OPEN-007), versioned so an eventual official schema can be adopted without an incompatible break.
+Negotiated and versioned per CFG-001's locked shared contract; the exact tool names and envelope fields are this project's own operational convention (non-official pending OPEN-001/OPEN-007), versioned so an eventual official schema can be adopted at the adapter boundary without an incompatible break.
 
 ## Default interoperability profile — `reference-v3`
 
-Our first and default adapter profile, adopted by the kit-first interoperability ADR (`docs/decisions/`). The surface below is recorded from `EVID-003` in `requirements/EVIDENCE_REGISTER.md`: the current `Imreec/copthief-league-protocol` upstream at commit `ad6557626587e09146af4283a5e808e7001343c5`, inspected read-only. It is **NON-AUTHORITATIVE compatibility evidence**, not an official schema — it does not resolve OPEN-001 or OPEN-007, and a non-kit officially compliant peer stays a valid opponent behind the same adapter boundary.
+The project's default adapter profile, recorded as an operational convention in `docs/decisions/ADR-004-operational-interoperability-profile.md`. The official requirements fix that peers communicate over FastMCP but do not fix tool names, argument names, turn-message keys, or turn order; this section states the one deterministic choice the implementation uses for each.
+
+This profile is **not** an official schema. It does not resolve OPEN-001 or OPEN-007, and any officially compliant peer remains a valid opponent behind the same adapter boundary. `reference-v3` is a machine-readable protocol literal compared as an exact string; it is never renamed or re-cased.
 
 ### Required tool surface and argument names
 
@@ -75,18 +77,18 @@ These declarations sit **outside** the closed signed-terms set. The signed terms
 
 **Refusal rule:** refuse only when both peers declare a family and the declared hashes disagree. Omission is never refusal — one side declaring while the other is silent still plays.
 
-### Our declared profile values
+### Declared profile values
 
-| Family | Our value |
+| Family | Selected value |
 |---|---|
 | `wire_shape` | `reference-v3` |
 | `scent_model` | `subtractive_chebyshev_v1` (default; `multiplicative_book_v1` also supported and selectable) |
 | `info_mode` | `belief` — the rival's position is outside the observation space; under `reference-v3` this is structural, because the rival's position never crosses the wire |
-| `smell_binding` | current/unbound. The proposed `commit_grid_v1` extension is **not** on our critical path: it is `PROPOSED` upstream, no implementation has shipped it, and it changes a commit preimage |
+| `smell_binding` | current/unbound. The `commit_grid_v1` extension is **not** adopted: it changes a commit preimage and nothing in this project depends on it, so it must not sit on the critical path |
 
 ### Turn order
 
-`reference-v3` inherits the reference implementation's behavior: **the thief takes the first game turn.** The `wire_shape` declaration does not cover turn order, so a matching lock can actively confirm agreement while hiding this exact disagreement — two peers that each expect the other to move first both wait forever after a fully successful handshake. This convention is therefore recorded here explicitly and must be preserved.
+Under `reference-v3`, **the thief takes the first game turn.** The `wire_shape` declaration does not carry turn order, so a matching set of declarations can confirm agreement while hiding this exact disagreement — two peers that each expect the other to move first both wait forever after a fully successful handshake. The convention is therefore recorded here explicitly, asserted by a test in T009, and reported as a named turn-order disagreement rather than a bare timeout.
 
 ### Sender / receiver roles and local operation
 

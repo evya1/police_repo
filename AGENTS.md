@@ -12,9 +12,11 @@ This repository is the autonomous Police peer of a two-process P2P hidden-state 
 4. `docs/PLAN.md` for repository system-level technical strategy; `docs/components/*/PRD.md` and `docs/components/*/PLAN.md` for one component's contract and design; `docs/mechanisms/*.md` for a dedicated algorithm; `docs/contracts/*.md` for a cross-component boundary.
 5. `docs/TODO.md` plus `docs/tasks/T###-*.md` for execution scope/state/evidence.
 
-Stop and escalate contradictions. Never convert an example, recommendation, default, or derived design into a mandatory requirement.
+Stop and escalate contradictions. Never convert an example, recommendation, default, or project decision into a mandatory requirement.
 
-In the packaged bundle, the files under `requirements/` and `planning/` are package masters and the files under `docs/spec/`, `docs/inputs/`, `docs/components/*/PRD.md`, `docs/mechanisms/` (shared ones), and `docs/contracts/` are synchronized repository-local execution copies. When this repository is used alone, resolve every requirement, OPEN item, traceability entry, and input record from the local copies; never require a path above the repository root.
+Three kinds of statement are kept distinct throughout this repository. An **official requirement** is behavior the authoritative specification, an official course artifact, the official software-quality guide, or a written lecturer clarification actually requires. An **operational convention** is a project decision made because the official requirements leave a detail undefined while implementation needs one deterministic choice; it is binding here, carries a precise contract and verification, is never presented as a course requirement, and is replaced if an authoritative clarification requires other behavior. An **implementation decision** is an ordinary internal engineering choice that interprets no unresolved rule. Do not relabel one as another.
+
+The files under `docs/spec/`, `docs/inputs/`, `docs/components/*/PRD.md`, the shared files under `docs/mechanisms/`, `docs/contracts/`, and `docs/interop/` are shared documents: they are byte-identical in the Police and Thief repositories and are changed in both together. Everything else in `docs/` is owned by this repository alone. Resolve every requirement, OPEN item, traceability entry, and input record from the local copies; never require a path above the repository root.
 
 ## Bounded task context (read this before claiming any task)
 
@@ -41,20 +43,19 @@ The tree in PLAN is proposed. Create only paths owned by the active task.
 
 ## Commands
 
-When the approved lock is present:
-
 ```sh
-uv sync --locked --all-groups
+uv sync --all-groups
 uv run ruff check .
 uv run pytest
 uv run python scripts/run_quality_gates.py
+uv run python scripts/check_planning_graph.py
 ```
 
-When the approved lock is absent, use `uv sync --all-groups` only for infrastructure validation and do not commit a provisional lock as a release dependency baseline.
+Once T002 commits the validated lock, use `uv sync --locked --all-groups` instead of `uv sync --all-groups`.
 
 ## Coding conventions
 
-- Python 3.12 baseline until T002 approves otherwise; type public boundaries.
+- Python 3.12 is the CI/runtime baseline over a declared `>=3.12` range (PLANQ-002); type public boundaries.
 - Pure deterministic domain functions; inject clocks, randomness, filesystem, network, and external services.
 - Prefer a plain function for stateless behavior; use a class only when it owns state, invariants, or lifecycle.
 - Compose dependencies manually through narrow `Protocol`/`Callable` seams; do not add a DI container, generic Repository/Unit of Work, domain-event bus, or CQRS without a concrete need and approved PLAN/ADR change.
@@ -85,6 +86,7 @@ Run every task-specific command plus the repository gates. A handoff reports fil
 - No shared live memory/module with the sibling peer and no central judge.
 - No direct numeric-position replacement for the natural-language channel.
 - No guessed official JSON/Word schema, hidden barrier, fabricated evidence, or silent sanction choice.
+- No documentation that narrates where an idea came from, defends the repository's originality, or describes how the planning structure evolved. State what the system requires, what the project decided, why the decision is useful, how it is verified, and what remains unresolved.
 - Do not add third-party code or configuration without orchestrator approval, verification of license obligations, and preservation of required notices.
 - No direct Gmail/model API call outside Gatekeeper and no live external call in tests.
 - No secrets, private IDs, credentials, tokens, keys, or passwords in Git/logs/examples.

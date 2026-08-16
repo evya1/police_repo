@@ -1,6 +1,7 @@
 ---
 id: T025
 status: blocked
+implementation_state: not_started
 priority: P2
 task_type: verification
 component: system

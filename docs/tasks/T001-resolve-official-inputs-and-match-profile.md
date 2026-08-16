@@ -1,6 +1,7 @@
 ---
 id: T001
 status: ready
+implementation_state: not_started
 priority: P0
 task_type: governance
 component: system

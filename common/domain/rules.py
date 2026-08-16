@@ -93,8 +93,8 @@ class GameEngine:
             raise IllegalMoveError(f"declared barrier {cell} is off the board")
         if cell not in self.barriers:
             # The signed quota binds the OPPONENT's declarations exactly as it binds our own
-            # placements — an earlier revision absorbed 20 declared barriers against a quota of
-            # 14 without noticing ('s A3).
+            # placements: absorbing more declared barriers than the quota allows would let the
+            # opponent exceed GAME-008 without either side noticing.
             if self.opponent_barriers >= self.barriers_max:
                 raise IllegalMoveError(
                     f"opponent barrier #{self.opponent_barriers + 1} at {cell} exceeds the "
@@ -133,9 +133,10 @@ class GameEngine:
     def state_string(self) -> str:
         """The sealed ``state`` field — **our own** position only, never the rival's.
 
-        Format pinned by SPEC section 3 to the reference's own spelling, including the space after
-        the comma that Python's list repr produces. It carries no shared board frame because
-        there is none: each side seals what it alone knows.
+        The exact byte form is an operational convention (CT-04): the literal layout below,
+        including the space after each comma, is what both peers hash, so it must not be
+        reformatted. It carries no shared board frame because there is none: each side seals
+        what it alone knows.
         """
         barriers = sorted([list(b) for b in self.barriers])
         return (

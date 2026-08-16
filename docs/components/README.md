@@ -8,7 +8,7 @@ updated: 2026-08-15
 
 # Component Register
 
-Six major system areas, adopted after inspecting the current PRD, PLANs, canonical requirements, task graph, and OPEN questions (bounded-context migration, Issue #1 / Issue #3). Submission/compliance/release work is deliberately **not** folded into C06; it stays at System scope with task types `governance`/`verification`/`release`, so C06 remains focused on reporting and league mechanics rather than becoming a catch-all.
+Six major system areas, traced to the PRD, PLANs, canonical requirements, task graph, and OPEN questions. Submission/compliance/release work is deliberately **not** folded into C06; it stays at System scope with task types `governance`/`verification`/`release`, so C06 remains focused on reporting and league mechanics rather than becoming a catch-all.
 
 Each component has exactly one PRD (what must be true) and one PLAN (how it is currently built) per role repository. Component PRDs are shared and byte-identical between Police and Thief, because what each component must observably do is shared. Component PLANs are role-owned, because how each role builds it may differ even when the contract is shared.
 

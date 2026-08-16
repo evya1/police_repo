@@ -2,7 +2,7 @@
 
 > Repository execution copy of the approved planning methodology. This file contains the repository-facing rules needed for standalone work and preserves the methodology's artifact ownership, stable-ID, change-control, task, orchestration, and verification semantics.
 
-**Version 2.0** (bounded-context migration, Issue #1 / Issue #3; supersedes v1.0). The lifecycle, stable-ID discipline, claiming rules, parallel-execution rules, safety rules, and prohibited patterns from v1.0 are unchanged and repeated below. What is new is §1a (two-level planning), the `Primary component` relation in §1, the `context_files`/`read_set`/`write_set` and `gates:` semantics in §5–§6, and the master/local-copy/submodule rule in §12.
+**Version 2.0** (supersedes v1.0). The lifecycle, stable-ID discipline, claiming rules, parallel-execution rules, safety rules, and prohibited patterns from v1.0 are unchanged and repeated below. Version 2.0 adds §1a (two-level planning), the `Primary component` relation in §1, the `context_files`/`read_set`/`write_set` and `gates:` semantics in §5–§6, and the shared-document synchronization rule in §12.
 
 ## 1. Artifact ownership
 
@@ -152,7 +152,7 @@ Before implementation and after material changes, verify:
 
 Do not duplicate requirements across artifacts, maintain competing status ledgers, create vague mega-tasks, code before required approval, micro-plan stale future details, run false parallel work, share mutable state without isolation, expand scope silently, guess missing requirements, mark unverified work done, hide failure, retry without bounds, keep decisions only in conversation memory, or model a criterion-scoped ambiguity as a whole-task `depends_on` edge when a `gates:` entry with `blocks: criterion` or `blocks: integration` is the honest representation.
 
-## 12. Bundle/submodule-aware synchronization (added in v2.0)
+## 12. Shared-document synchronization
 
 Where the general planning repository packages multiple repositories via Git submodules:
 
@@ -160,7 +160,7 @@ Where the general planning repository packages multiple repositories via Git sub
 - Each role repository's `docs/spec/`, `docs/inputs/`, `docs/components/`, `docs/mechanisms/`, and `docs/contracts/` contain **synchronized repository-local execution copies**, so the repository remains usable when cloned alone.
 - Role-specific content (component/mechanism PLANs, role-specific mechanism PRDs, ADRs, tasks, TODO) is **role-owned**; the bundle reads it through the pinned submodule commit and never keeps a second raw copy.
 - Repository workers use only paths inside their own repository; the package orchestrator is the only actor that synchronizes master and execution copies, and it does so only after the reviewed child-repository commits exist.
-- A submodule gitlink is updated only to a specific reviewed commit (normal pinned-commit semantics); submodules are not converted into copied directories and are not configured to permanently track a temporary planning branch without an already-approved repository policy.
+- A submodule gitlink is updated only to a specific reviewed commit (normal pinned-commit semantics); a submodule is never replaced by a directory of duplicated files, and is never configured to permanently track a temporary planning branch without an already-approved repository policy.
 
 ## 13. Final operating questions
 

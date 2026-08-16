@@ -27,7 +27,7 @@ STRAT-001 (own-position-only knowledge, opponent belief map), STRAT-006 (belief 
 
 1. **Normalization**: the belief distribution sums to 1 over all cells at every point after initialization.
 2. **Impossible-cell exclusion**: a cell known to be a barrier, or otherwise ruled out by local evidence (e.g. this role's own position, if mutually exclusive), carries zero probability mass, and mass removed from an excluded cell is redistributed rather than lost.
-3. **No hidden-truth leakage**: the belief update never reads the opponent's actual position; it is inference over scent and hints only (derived from ARCH-003, STRAT-001, OBS-002).
+3. **No hidden-truth leakage**: the belief update never reads the opponent's actual position; it is inference over scent and hints only (per ARCH-003, STRAT-001, OBS-002).
 4. **Monotonic evidence incorporation**: a new scent reading or hint updates the distribution; it is never silently discarded once received.
 
 ## Inputs

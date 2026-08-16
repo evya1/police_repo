@@ -2,26 +2,29 @@
 artifact: plan
 id: PLAN-POLICE
 status: draft
-version: 0.3
-derived_from: PRD-FINAL-P2P@0.4
-repository_state: greenfield
+version: 0.4
+derived_from: PRD-FINAL-P2P@0.5
 owner: orchestrator
 updated: 2026-08-16
 ---
 
 # Police System PLAN
 
-**Version 0.2** (bounded-context migration, Issue #3; supersedes v0.1). Mechanism-level detail — the turn-adjudication flowchart, state model, compatibility decision matrices, and per-mechanism technical decisions — moved to the six component PLANs under `docs/components/` and the mechanism PRDs under `docs/mechanisms/`. This System PLAN stays concise: system-wide boundaries, dependency direction, shared contracts, security/config ownership, lifecycle, integration order, and system-level gates.
+**Version 0.2** (supersedes v0.1). Mechanism-level detail — the turn-adjudication flowchart, state model, compatibility decision matrices, and per-mechanism technical decisions — moved to the six component PLANs under `docs/components/` and the mechanism PRDs under `docs/mechanisms/`. This System PLAN stays concise: system-wide boundaries, dependency direction, shared contracts, security/config ownership, lifecycle, integration order, and system-level gates.
 
-**Version 0.3** (kit-first interoperability profile, Issue #6; supersedes v0.2). Adds TD-06, recording the approved default runtime interoperability profile and the second supported scent model. No component boundary, contract, dependency edge, or execution wave changed.
+**Version 0.3** (supersedes v0.2). Adds TD-06, recording the selected runtime interoperability profile and the second supported scent model. No component boundary, contract, dependency edge, or execution wave changed.
+
+**Version 0.4** (supersedes v0.3). Records the runtime baseline decision (PLANQ-002), the verification ladder, and the current implementation state of the C01 foundation. No component boundary, contract, dependency edge, or execution wave changed.
 
 ## Approach summary
 
-Build one autonomous Police peer as six components (`docs/components/README.md`) around a pure local domain core (C01), perception/strategy (C02), peer protocol/integrity (C03), a thin runtime orchestrator (C04), local-truth observability (C05), and reporting/league (C06), connected only through the six boundary contracts (`docs/contracts/`). The repository begins greenfield. Requirement IDs refer to `docs/spec/CANONICAL_REQUIREMENTS.md`; this PLAN selects system-level technical strategy and does not redefine intent.
+Build one autonomous Police peer as six components (`docs/components/README.md`) around a pure local domain core (C01), perception/strategy (C02), peer protocol/integrity (C03), a thin runtime orchestrator (C04), local-truth observability (C05), and reporting/league (C06), connected only through the six boundary contracts (`docs/contracts/`). Requirement IDs refer to `docs/spec/CANONICAL_REQUIREMENTS.md`; this PLAN selects system-level technical strategy and does not redefine intent.
 
-## Proposed repository structure
+## Repository structure
 
-The following tree is proposed, not evidence of existing implementation. Directories are created only by the task that owns them.
+The tree below is the target layout. A path in it is not evidence that the path exists; directories are created only by the task that owns them.
+
+What exists today on the integration branch is the C01 foundation: shared domain and configuration modules under `common/`, a role re-export surface under `src/police_peer/domain/`, and the committed shared game contract at `config/game.json`, with unit tests under `tests/unit/domain/`. See `docs/TODO.md` for the per-task implementation state.
 
 ```text
 src/police_peer/
@@ -113,6 +116,22 @@ See the project-level integration plan (not part of this repository; reasoning s
 
 Full-series verification is the union of every named integration gate passing plus the System-scope tasks: T021 (property/coverage closure), T023 (documentation/evidence), T024 (compliance audit), T026 (release). No task is treated as a trusted integration dependency before its component-local gate passes.
 
+## Verification ladder
+
+Confidence is earned in this order; a stage is entered only after the stage before it passes. Gate names refer to the project-level integration plan; task IDs refer to `docs/tasks/`.
+
+| Stage | What it proves | Owning tasks | Gate |
+|---|---|---|---|
+| 1. Deterministic unit and golden-vector verification | Domain rules, scent profiles, canonical bytes, and commitments are correct and reproducible in one process | T004, T005, T008, T019, T021 | component-local |
+| 2. Independent local two-process protocol smoke test | Two separate processes complete a turn cycle over the real adapter with no endpoint, tunnel, or opponent | T009, T029 | `local_mcp_smoke`, `stage1_gate` |
+| 3. Practice-peer full-series test | A complete six-sub-game series sequences, settles, and audits end to end | T010, T011, T019, T022 | `orchestration_integration` |
+| 4. Artifact validation | Declaration, configuration, log, and result artifacts validate, reconcile, and carry consistent identifiers | T016, T018 | `report_reconciliation` |
+| 5. Network reachability and readiness | The public endpoint and tunnel procedure are reachable and stable, using real values once `G-LIVE` is satisfied | T009, T020 | `pairing_preflight` |
+| 6. Friendly external game | An uncounted series against an independently written external peer settles clean in both role directions | T022 | `live_interop` |
+| 7. Counted game | A counted match runs only after every stage above passes and every counted-play confirmation is recorded | T020, T026 | `pairing_preflight` + human authorization |
+
+Stages 6 and 7 additionally require the counted-play confirmations named in `docs/spec/OPEN_QUESTIONS.md`: the scent profile (OPEN-009), the series schedule and tie rule (OPEN-008), the termination reading (OPEN-011), the report sanction (OPEN-004), and the team/runtime/submission metadata (OPEN-010).
+
 ## Recovery
 
 Watchdog-driven checkpoint/recovery is C04's concern (ARCH-008, NET-005); see its component PLAN once T011 claims it. At system level: a recovered peer re-enters the state machine at the last safe checkpoint, never silently repairs a TAMPERED verdict, and never resumes past an expired deadline without the configured retry/technical-loss policy.
@@ -149,12 +168,19 @@ Watchdog-driven checkpoint/recovery is C04's concern (ARCH-008, NET-005); see it
 - **Choice:** adopt the nested-section `config/game.json` layout recorded in `docs/decisions/ADR-001-shared-game-contract-shape.md`, authored and validated by T028/T003.
 - **Reason:** CFG-001/CFG-004 fix which values the contract must carry, not its JSON shape; this is our own negotiable engineering choice, explicitly labeled non-official pending OPEN-001.
 
-### TD-06 — Kit-first interoperability profile
+### TD-06 — Operational interoperability profile
 
-- **Choice:** adopt one default runtime interoperability profile — `wire_shape: reference-v3`, `scent_model: subtractive_chebyshev_v1`, `info_mode: belief`, unbound smell behavior, thief-first turn order — with `multiplicative_book_v1` additionally supported, as recorded in `docs/decisions/ADR-004-kit-first-interoperability-profile.md`.
-- **Alternatives:** the book profile as the sole/default model; the reference profile only, dropping the book model; selecting nothing until OPEN-009 is officially answered.
-- **Reason:** the current league kit's sparring peer is our first integration target and the only independently written, byte-pinned opponent runnable on demand. The profile supplies what the source leaves ambiguous without claiming to resolve it.
-- **Consequences:** two scent implementations behind one interface with configuration-driven selection; the selected model is registered, hashed, and declared; both models are vector-tested; OPEN-009 stays officially OPEN but no longer blocks implementation or model locking; strategy and domain logic remain project-native, limited to interoperability wiring at the adapter boundary.
+- **Choice:** one selected runtime interoperability profile — `wire_shape: reference-v3`, `scent_model: subtractive_chebyshev_v1`, `info_mode: belief`, unbound smell behavior, thief-first turn order — with `multiplicative_book_v1` additionally supported, recorded in `docs/decisions/ADR-004-operational-interoperability-profile.md`.
+- **Alternatives:** the multiplicative profile as the sole or default model; the subtractive profile only, dropping the multiplicative one; selecting nothing until OPEN-009 is officially answered.
+- **Reason:** the official requirements leave scent saturation, merge, update order, wire keys, and turn order undefined, and each needs one deterministic value before two peers can exchange a first message. `subtractive_chebyshev_v1` is the arithmetic `reference-v3` transmits, so a run starts without renegotiating scent physics.
+- **Consequences:** two scent implementations behind one interface with configuration-driven selection; the selected model is registered, hashed, and declared; both models are vector-tested; OPEN-009 stays officially OPEN but does not block implementation or model locking; strategy and domain logic stay behind the adapter boundary.
+
+### TD-07 — Runtime dependency baseline
+
+- **Choice:** Python 3.12 as the CI/runtime baseline with the declared range `>=3.12`; FastMCP as a direct runtime dependency at `fastmcp>=3.4,<4`; the existing `pytest`/`pytest-cov`/`ruff`/`pre-commit`/`pyyaml` tooling preserved; `uv` as the package/dependency manager and not an application dependency. Recorded as PLANQ-002 in `docs/spec/OPEN_QUESTIONS.md`.
+- **Alternatives:** an unpinned FastMCP dependency; adopting the unreleased 4.x line; widening or narrowing the Python range speculatively.
+- **Reason:** the `<4` bound keeps the runtime on the current stable major line while its successor is still prereleased, and the range was verified to resolve against `requires-python = ">=3.12"`.
+- **Consequences:** T002 executes this baseline and commits the validated lock; GUI, Gmail, and any optional model-provider dependency stay owned by PLANQ-007, PLANQ-005, and PLANQ-003 respectively.
 
 ## Requirement coverage
 
@@ -185,7 +211,7 @@ Full per-task dependency/gate detail lives in each task file (`docs/tasks/T###-*
 
 ## Human approval gates
 
-Unchanged from v0.1: approve PRD before implementation scope is stable; supply/verify official inputs in T001 (now scoped by named gate class); approve dependency lock in T002; authorize public endpoint exposure and cross-team terms before live play; authorize Gmail OAuth/first real report; approve PLANQ-003/004 before a live external call; verify submission evidence in T026.
+Approve the PRD before implementation scope is stable; supply and verify official inputs in T001 (scoped by named gate class); review the dependency lock produced by T002 against the recorded PLANQ-002 baseline; authorize public endpoint exposure and cross-team terms before live play; authorize Gmail OAuth and the first real report; approve the provider and budget under PLANQ-003 before any live external call; confirm the team, runtime, and submission metadata under OPEN-010 before counted play and submission; verify submission evidence in T026.
 
 ## Risks
 
@@ -193,4 +219,4 @@ Unchanged in substance from v0.1 (byte-level integrity mismatch, local-truth lea
 
 ## Unresolved decisions
 
-OPEN-001, 002, 004, 006, 007, 008, 009, 011 (all `official_status: OPEN`); OPEN-003, 010 (`LATE_RUNTIME_INPUT`); OPEN-005 (`RESOLVED_LOCALLY`, narrowed scope — see `docs/spec/OPEN_QUESTIONS.md`); PLANQ-001…008 (team-owned implementation choices).
+OPEN-001, 002, 004, 006, 007, 008, 009, 011 remain `official_status: OPEN`. OPEN-001, 004, 006, 007, 008, and 009 carry recorded operational conventions and so do not block implementation; OPEN-011 stays differential-tests-only; OPEN-005 is `RESOLVED_LOCALLY`; OPEN-002, 003, and 010 are late runtime inputs. PLANQ-002 and PLANQ-004 are resolved, PLANQ-001, 003, and 006 partially; PLANQ-005, 007, and 008 remain team-owned and open. Full detail in `docs/spec/OPEN_QUESTIONS.md`.

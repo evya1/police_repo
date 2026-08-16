@@ -29,7 +29,7 @@ Either an updated game state (own position, own barrier set, board, step count) 
 
 - An illegal action never mutates state (GAME-004…008, GAME-012).
 - A placed barrier is irreversible and impassable to both agents until game end (GAME-007).
-- The domain boundary never computes or returns the opponent's true position (hidden-position constraint, derived from STRAT-001/OBS-002/GAME-009…011).
+- The domain boundary never computes or returns the opponent's true position (hidden-position constraint, per STRAT-001/OBS-002/GAME-009…011).
 - All numeric parameters come from the validated `config/game.json`/`.toml` (CFG-001…008), never a hardcoded literal outside the CFG-006 Fixed set.
 
 ## Failure/error behavior

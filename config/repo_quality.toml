@@ -27,6 +27,69 @@ required_docs = [
   "docs/components/README.md",
   "docs/interop/LEAGUE_COMPATIBILITY.md",
 ]
+# Documentation-language gate (scripts/check_doc_language.py).
+# Scope: current project-facing documentation. Tracked files only, so `.git/`,
+# `.venv/`, and caches are never scanned. Official-source snapshots preserved
+# verbatim are allowlisted; exact protocol literals are masked before matching.
+doc_language_paths = [
+  "README.md",
+  "AGENTS.md",
+  "CONTRIBUTING.md",
+  "docs",
+  "config/README.md",
+  "scripts",
+  "common",
+]
+doc_language_allowlist = [
+  "docs/spec/CANONICAL_REQUIREMENTS.md",
+  "scripts/check_doc_language.py",
+  "scripts/check_source_archives.py",
+]
+doc_language_allowed_literals = [
+  "reference-v3",
+  "subtractive_chebyshev_v1",
+  "multiplicative_book_v1",
+  "commit_grid_v1",
+]
+doc_language_patterns = [
+  "\\bpublic repositor\\w*",
+  "\\bprivate repositor\\w*",
+  "\\beither public\\b",
+  "\\btwo public repositor\\w*",
+  "\\bcopied\\b",
+  "\\bcopy from\\b",
+  "\\bvendored\\b",
+  "\\bborrowed\\b",
+  "\\bported\\b",
+  "\\badapted from\\b",
+  "\\bderived from\\b",
+  "\\binspired by\\b",
+  "\\breference implementation\\w*",
+  "\\breference repositor\\w*",
+  "\\bprior implementation\\w*",
+  "\\breuse\\b",
+  "\\bprovenance\\b",
+  "\\bsource archive\\w*",
+  "sources\\.zip",
+  "\\brepo[12]\\b",
+  "\\bplanning migration\\b",
+  "bounded-context migration",
+  "\\bgenerated from\\b",
+  "did not copy",
+  "nothing from",
+  "not read for reuse",
+  "\\bgreenfield\\b",
+  "\\bkits?\\b",
+  "\\bkit-first\\b",
+  "\\bsparring\\b",
+  "\\bcopthief\\w*",
+  "\\bimre\\w*",
+  "\\banrbj\\w*",
+  "EVIDENCE_REGISTER",
+  "\\bEVID-[0-9]",
+  "PAIRING-PLAYBOOK",
+]
+
 markdown_paths = ["README.md", "AGENTS.md", "CONTRIBUTING.md", "config", "docs", ".github"]
 
 todo_paths = ["docs/TODO.md"]

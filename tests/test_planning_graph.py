@@ -142,6 +142,24 @@ class GraphCheckTests(unittest.TestCase):
             self.assertIn("conflicting primary owners", joined)
             self.assertIn("no primary component", joined)
 
+    def test_todo_consistency_checks_the_implementation_state_column(self) -> None:
+        header = "| ID | Component | Type | Status | Impl state |\n|---|---|---|---|---|\n"
+        frontmatter = {
+            "status": "blocked",
+            "component": "C01",
+            "task_type": "component",
+            "implementation_state": "implementation_present",
+        }
+        for row_state, expect_issue in (("implementation_present", False), ("complete", True)):
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                write(root, "docs/TODO.md", header + f"| T001 | C01 | component | blocked | {row_state} |\n")
+                task = common.Task("T001", Path(), dict(frontmatter), "")
+                issues = common.Issues()
+                checks.check_todo_consistency([task], root, ["docs/TODO.md"], issues)
+                found = any("impl state" in item and "disagrees" in item for item in issues.items)
+                self.assertEqual(found, expect_issue, issues.items)
+
 
 if __name__ == "__main__":
     unittest.main()

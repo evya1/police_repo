@@ -1,70 +1,80 @@
 ---
 artifact: interop-policy
 id: LEAGUE-COMPATIBILITY
-status: draft
+status: active
 owner: orchestrator
 updated: 2026-08-16
 ---
 
-# League Compatibility Policy
+# League Interoperability Policy
 
 ## Purpose
 
-State how this project relates to the `copthief-league-protocol` interoperability kit (`EVID-001` and `EVID-003` in `requirements/EVIDENCE_REGISTER.md`), a commonly-used third-party kit many participants may adopt. The project team has approved it as our **first integration target**: the first working implementation should interoperate directly with the current kit's runnable sparring peer. That is a decision about integration sequence, not about authority or architecture — compatibility is never the project's purpose, and the kit defines no part of our internal design.
+State how this project reaches byte-level and turn-level agreement with an independently written opponent, and where that agreement is allowed to touch the codebase.
 
-## Authority
+## Authority order
 
-1. The kit is a **compatibility target, not an authority**. The official project specification and the official software-quality guide outrank it in every conflict.
-2. The kit's own documentation records that its reference behavior and the official book sometimes differ (`WARNINGS.md` in the kit, per read-only inspection of `sources.zip:repo2/`). Compatibility evidence from the kit **never** overrides the official book, and never silently resolves an OPEN item.
-3. The kit defines **no part of this project's internal architecture**. C01–C06 and their contracts are derived from the canonical requirements, not from the kit's structure.
+1. The official project specification and the official software-quality guide govern in every conflict.
+2. The canonical requirements (`requirements/CANONICAL_REQUIREMENTS.md`) govern below them.
+3. The operational conventions recorded in `docs/decisions/ADR-004-operational-interoperability-profile.md` and the contracts it references govern only where the two levels above leave a detail undefined.
 
-## Compatibility surface
+No interoperability convention overrides an official requirement, and none closes an `OPEN-*` item. Where a convention and the source diverge, the divergence is stated plainly in the owning mechanism or contract document rather than hidden.
 
-Limited to the interoperability boundary: canonical bytes (`planning/contracts/CT-04-canonical-bytes.md`), the peer wire envelope (`planning/contracts/CT-03-peer-wire.md`), `game_uid`/declaration shape, and report-consensus signatures — the same surface OPEN-001/OPEN-007/OPEN-008/OPEN-009 already govern. An adapter, not internal redesign, is the only acceptable integration shape.
+## Interoperability surface
+
+Interoperability is confined to a named boundary:
+
+- canonical bytes and the commitment preimage — `planning/contracts/CT-04-canonical-bytes.md`;
+- the peer wire envelope, tool surface, and turn-message keys — `planning/contracts/CT-03-peer-wire.md`;
+- the scent model and its declared lock — `planning/mechanisms/M-01-scent-model.md`;
+- the `game_uid`/declaration shape and report-consensus signatures — `planning/mechanisms/M-07-report-reconciliation.md`.
+
+Everything else — component boundaries C01–C06, domain rules, belief, strategy, orchestration, observability — follows from the canonical requirements and is not part of the interoperability surface.
 
 ## Adapters, not lock-in
 
-Where a kit vector or fixture is used — as a conformance vector for an adopted profile (M-01 §B, CT-03) or as a differential test case (per the compatibility decision matrices still in M-05 and M-07) — it lives behind the same adapter boundary the official contract would occupy once resolved. A non-kit, officially-compliant peer must remain a fully valid opponent — the kit is optional, not a dependency, and no adopted profile is written into the domain core.
+Every interoperability convention is implemented behind an adapter. The domain core and the strategy modules never branch on a profile value, never import a transport module, and never read a wire key. An officially compliant peer that declares a different profile remains a fully valid opponent: the adapter changes, not the core.
 
-## Adopted profile (human-approved, non-official)
+## Selected profile
 
-The project team has approved one default interoperability profile, recorded in the kit-first interoperability ADR in each role repository (`docs/decisions/`) and detailed in `planning/contracts/CT-03-peer-wire.md` and `planning/mechanisms/M-01-scent-model.md`:
+The selected operational conventions are recorded once, in `docs/decisions/ADR-004-operational-interoperability-profile.md`:
 
-| Axis | Adopted value | Upstream maturity at the inspected SHA |
-|---|---|---|
-| `wire_shape` | `reference-v3` | tool surface `PROMOTED`; locked-model schema `CORE` |
-| `scent_model` | `subtractive_chebyshev_v1` (default) | `CORE` |
-| `scent_model` | `multiplicative_book_v1` (additionally supported) | `PROMOTED` |
-| `info_mode` | `belief` | `PROMOTED` |
-| `smell_binding` | current/unbound | the unbound state is registered; `commit_grid_v1` is `PROPOSED` and **not adopted** |
-
-Adopting this profile is an engineering decision. It does not close OPEN-009, OPEN-007, or OPEN-001, does not override the book, and does not promote the kit above the official sources in the authority order above.
-
-## Governance and maturity
-
-The kit's own `GOVERNANCE.md` defines four maturity tiers with an explicit promotion bar. Registrations under the kit are therefore **not uniformly mature**, and this project does not adopt a kit profile or proposed extension merely because it exists — each requires explicit team approval before any task treats it as more than a differential test case. The profile table above records that approval and the maturity tier each adopted item carried when inspected; nothing at `PROPOSED` status is on our critical path.
-
-## What is prohibited
-
-- Strategy design is project-native; the kit supplies interoperability wiring only.
-- No kit-defined optional/proposed extension is adopted without explicit team approval.
-- The kit's reference implementation stays a read-only compatibility reference (`EVID-001` in `EVIDENCE_REGISTER.md`), outside the adapter boundary.
-- Applicable license notices must accompany any kit code or vectors incorporated into this project (MIT, Team ImreEyal and contributors).
-
-## Task ownership
-
-Each task proves the compatibility surface **it actually owns**, at the point it builds that surface. T022 is the later full-system gate, not the first place a vector is ever run.
-
-| Task | Interop responsibility |
+| Family | Selected value |
 |---|---|
-| T005 | Owns the two registered scent profiles and their conformance vectors; proves both models and the selected-model declaration/lock during T005 itself |
-| T008 | Owns canonical bytes and commit-reveal; proves its own byte-level primitives against the relevant golden vectors during T008 itself |
-| T009 | Owns the `reference-v3` local peer adapter: tool/argument surface, turn-message keys, locked-model declaration, turn order — all provable locally |
-| T012 | Delivery-safety behavior a kit-compatible peer would also need |
-| T016, T018 | Schema adoption and reporting reconciliation touchpoints |
-| T019, T020 | League/series and pairing conformance touchpoints |
-| **T022** | **Full interoperability/recovery gate** — full two-process series, fault injection, and external sparring/friendly proof before counted play. It re-runs the surfaces above end-to-end; it is not where they are first proven |
+| `wire_shape` | `reference-v3` |
+| `scent_model` | `subtractive_chebyshev_v1` (default) |
+| `scent_model` | `multiplicative_book_v1` (additionally supported) |
+| `info_mode` | `belief` |
+| `smell_binding` | current/unbound; `commit_grid_v1` not adopted |
+| turn order | the thief takes the first game turn |
 
-## Non-kit peers
+These are exact protocol literals, compared across peers as strings. They are never renamed, re-cased, or translated.
 
-Every C03/C06 contract is written from the canonical requirements first; a kit-compatible adapter is additive. Nothing in this policy or in T022's scope requires the counted opponent to use the kit.
+## Declaration and refusal
+
+Each family's active value is declared at negotiate time as a SHA-256 hash over a pinned parameter document. Refusal fires only when both peers declare a family and the declared hashes disagree; omission by either side is never refusal. A refused start produces a diagnostic naming the disagreeing family and leaves no partial game state.
+
+## Verification ownership
+
+Each task proves the part of the surface it owns, at the point it builds that surface.
+
+| Task | Interoperability responsibility |
+|---|---|
+| T005 | Both scent profiles, their vectors, and the model declaration/lock |
+| T008 | Canonical bytes, the commitment preimage, and their golden vectors |
+| T009 | The `reference-v3` adapter: tool/argument surface, turn-message keys, profile declarations, turn order |
+| T012 | Inbound delivery safety on the same envelope |
+| T016, T018 | Artifact schema adoption and reporting reconciliation |
+| T019, T020 | Series and pairing conformance |
+| **T022** | **Full interoperability/recovery gate** — a complete two-process series, fault injection, and an uncounted external run. It re-runs the surfaces above end to end; it is not where any of them is first proven |
+
+## Third-party material
+
+No external code, fixture, or vector is incorporated into either role repository without orchestrator approval, a recorded license review, and preservation of every legally required copyright, license, and NOTICE text. Where such material is incorporated, its required notices ship with the repository that distributes it. Removing or omitting a required notice is prohibited regardless of how small the incorporated material is.
+
+## Prohibited
+
+- Treating any non-official profile, vector, or peer behavior as authority for an `OPEN-*` answer.
+- Writing a profile value into the domain core, the strategy modules, or the scoring table.
+- Adopting an extension that changes a commit preimage without an explicit team decision recorded in an ADR.
+- Requiring a counted opponent to use any particular profile; a mutually agreed alternative is negotiated, not assumed.

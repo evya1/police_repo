@@ -90,13 +90,9 @@ def score_for(outcome: Outcome, role: Role) -> int:
 def role_for(natural: Role, sub_game_number: int) -> Role:
     """Odd sub-games play your natural role; even ones play the opposite.
 
-    Worth knowing where this comes from: **role alternation is not stated anywhere in the book's
-    body.** It appears only in the reference implementation and in the sample artifacts' own
-    schema text ("roles switch across the sub-games, so no role and no sub_game_number appear
-    here"). It is followed because both sides of a real series followed it and because the
-    reference defines it. *Who starts as what* is now a published default too:
-    docs/PAIRING-PLAYBOOK.md stage 3 — the alphabetically-first group (the game_id sort) plays
-    cop in the odd sub-games. State it with your opponent anyway; nothing in the binding table
-    would settle an argument about it.
+    Operational convention: role alternation across a series is not stated in the official
+    book. This function implements the project's alternation rule directly; it does not decide
+    the natural role for sub-game 1, which the caller supplies and must still agree with the
+    opponent — nothing in the binding rule table settles that on its own.
     """
     return natural if sub_game_number % 2 == 1 else natural.other

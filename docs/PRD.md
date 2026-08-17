@@ -38,7 +38,7 @@ Two mutually distrustful implementations must interoperate under partial observa
 - G-004: Survive bounded network/model failures without silent deadlock or lost evidence.
 - G-005: Produce submission-ready repositories, documentation, and independently sent machine-readable reports.
 - G-006: Meet the authorized software-quality thresholds without confusing excellence criteria with project validity.
-- G-007 *(added in the bounded-context migration)*: Let a human or agent worker implement one bounded task from its declared context alone, without loading the full System PRD, System PLAN, canonical register, and task graph.
+- G-007: Let a human or agent worker implement one bounded task from its declared context alone, without loading the full System PRD, System PLAN, canonical register, and task graph.
 
 ## Non-goals
 
@@ -50,7 +50,7 @@ Two mutually distrustful implementations must interoperate under partial observa
 - NG-006: Fabricating screenshots, benchmark results, league outcomes, token costs, or completed-task evidence.
 - NG-007: Defining the lecturer's league-normalization formula.
 - NG-008: Treating this planning scaffold as application implementation or completion evidence.
-- NG-009 *(added in the bounded-context migration)*: Replacing this file-based planning system with a third-party workflow framework, ticketing tool, or orchestration engine.
+- NG-009: Replacing this file-based planning system with a third-party workflow framework, ticketing tool, or orchestration engine.
 
 ## Major system areas
 
@@ -86,7 +86,7 @@ Given a completed, mutually audited match, when both teams agree on the result, 
 
 Given implementation evidence exists, when the team prepares both repositories, then each contains the required academic/user documentation, sibling link, safe configuration history, and annotated submission tag, and each member submits the official form separately. (system scope)
 
-### US-008: Implement one bounded task *(added in the bounded-context migration)*
+### US-008: Implement one bounded task
 
 Given a claimed task, when a worker reads `AGENTS.md`, the task file, and only the task's declared `context_files`/requirement/OPEN/input IDs, then the worker has everything needed to implement and verify the task's `write_set` without reading the System PRD, System PLAN, or unrelated component documents.
 
@@ -110,7 +110,7 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 - SC-008: At least two counted matches against different teams are documented, with no more than one counted match per opponent and no more than ten overall.
 - SC-009: Both repositories pass Ruff, tests, at least 85% coverage, repository audits, secret checks, and the 150-code-line threshold at submission.
 - SC-010: Both submission READMEs contain only real screenshots/results and link to one another; the annotated `v1.0-submission` tags resolve to the reported commits.
-- SC-011 *(added in the bounded-context migration)*: A `component`-typed task's declared `context_files` fully suffice for implementation, verified by `scripts/check_planning_graph.py` finding zero missing-context issues across all 29 tasks in both repositories.
+- SC-011: A `component`-typed task's declared `context_files` fully suffice for implementation, verified by `scripts/check_planning_graph.py` finding zero missing-context issues across all 29 tasks in both repositories.
 
 ## Constraints
 
@@ -144,7 +144,7 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 - OPEN-001, OPEN-004, OPEN-006, and OPEN-007 block production interoperability or reporting decisions at specific criteria, not whole components.
 - OPEN-002 and the unresolved fields in OPEN-003 block final submission packaging, not core development.
 - OPEN-005's directional ambiguity is reclassified `implementation_status: RESOLVED_LOCALLY`; `official_status` remains OPEN. See the reclassification note in `docs/spec/OPEN_QUESTIONS.md`.
-- OPEN-009's saturation/merge ambiguity is reclassified `implementation_status: DRAFT_CONTRACT_NONOFFICIAL` by the kit-first interoperability decision; `official_status` remains OPEN. Scent implementation, default-profile selection, and model-lock declaration proceed against the approved profile; the official reading is confirmed before counted play. See the reclassification note in `docs/spec/OPEN_QUESTIONS.md`.
+- OPEN-009's saturation/merge ambiguity is reclassified `implementation_status: DRAFT_CONTRACT_NONOFFICIAL` by an operational convention (`ADR-004`); `official_status` remains OPEN. Scent implementation, default-profile selection, and model-lock declaration proceed against the approved profile; the official reading is confirmed before counted play. See the reclassification note in `docs/spec/OPEN_QUESTIONS.md`.
 
 ## Approval and change history
 
@@ -152,7 +152,7 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 |---|---|---|---|---|
 | 0.1 | 2026-08-14 | draft | Initial canonical PRD reconstructed from authorized sources | Pending project-team review |
 | 0.2 | 2026-08-15 | draft | Recorded OPEN-011 (move-cap-versus-survival-threshold termination ambiguity), discovered while decomposing stage-1 board logic into T003/T004/T028/T029; no requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
-| 0.3 | 2026-08-15 | draft | Bounded-context migration (Issue #1 / Issue #3): moved mechanism-level detail out to component/mechanism PRDs, added G-007/NG-009/US-008/SC-011, reclassified OPEN-005's implementation-side scope. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
-| 0.4 | 2026-08-16 | draft | Kit-first interoperability profile: recorded the team-approved default runtime profile (`reference-v3`, `subtractive_chebyshev_v1`, `belief`, unbound smell) with `multiplicative_book_v1` additionally supported, and reclassified OPEN-009's implementation-side scope. `official_status` for OPEN-009 is unchanged and still OPEN. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
+| 0.3 | 2026-08-15 | draft | Moved mechanism-level detail out to component/mechanism PRDs, added G-007/NG-009/US-008/SC-011, reclassified OPEN-005's implementation-side scope. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
+| 0.4 | 2026-08-16 | draft | Operational interoperability profile: recorded the team-approved default runtime profile (`reference-v3`, `subtractive_chebyshev_v1`, `belief`, unbound smell) with `multiplicative_book_v1` additionally supported, and reclassified OPEN-009's implementation-side scope. `official_status` for OPEN-009 is unchanged and still OPEN. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
 
 After approval, every material behavior/scope change requires a Change Request naming affected requirement IDs, source/authority, impact, approval, and resulting PRD version, followed by PLAN/task reconciliation.

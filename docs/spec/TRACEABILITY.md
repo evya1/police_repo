@@ -2,7 +2,7 @@
 
 Every canonical ID is referenced by the canonical PRD's Functional Requirements section. This table continues the chain into each role PLAN/task graph and a measurable verification class. Only official course sources appear in the source column; planning methodology and derived architecture are deliberately kept out of it.
 
-`Primary component` (added in the bounded-context migration, Issue #1 / Issue #3) names the single component that owns the requirement per `planning/COMPONENTS.md`. `system` means the requirement is owned at System-PRD scope (submission, cross-cutting quality, or a repository-wide prohibition) rather than by one component. A requirement's `Police tasks` / `Thief tasks` columns may still list several tasks; primary ownership is a stricter, single-valued relation used by the planning-graph validator, not a restatement of task assignment.
+`Primary component` names the single component that owns the requirement per `planning/COMPONENTS.md`. `system` means the requirement is owned at System-PRD scope (submission, cross-cutting quality, or a repository-wide prohibition) rather than by one component. A requirement's `Police tasks` / `Thief tasks` columns may still list several tasks; primary ownership is a stricter, single-valued relation used by the planning-graph validator, not a restatement of task assignment.
 
 | Canonical ID | Primary component | Official source | Police design | Police tasks | Thief design | Thief tasks | Verification |
 |---|---|---|---|---|---|---|---|

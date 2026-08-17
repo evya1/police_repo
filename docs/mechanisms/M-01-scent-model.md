@@ -42,7 +42,7 @@ The recurrence above is the **book-side arithmetic**, and its decay is *multipli
 - `multiplicative_book_v1` (§B.2) is the supported profile that follows that multiplicative form.
 - `subtractive_chebyshev_v1` (§B.1) — our default — **intentionally does not implement that decay form**. It decays subtractively, `round(max(0, tau - 0.1), 3)`. These are two different arithmetic rules, not two spellings of one rule: from `tau = 0.6` with no new deposit, the book form gives `0.6 * 0.9 = 0.54` and the subtractive form gives `0.6 - 0.1 = 0.5`.
 
-The subtractive form is adopted because it is the current reference interoperability profile of `copthief-league-protocol`, the peer we intend to spar against first. That adoption is an **engineering/interoperability decision** recorded in `docs/decisions/ADR-004-kit-first-interoperability-profile.md`. It is **not** a lecturer clarification, it is **not** a resolution of OPEN-009, and it must never be presented as the official reading of the book.
+The subtractive form is adopted as the project's default interoperability profile. That adoption is an **engineering/operational-convention decision** recorded in `docs/decisions/ADR-004-operational-interoperability-profile.md`. It is **not** a lecturer clarification, it is **not** a resolution of OPEN-009, and it must never be presented as the official reading of the book.
 
 OPEN-009 does not make the decay *form* ambiguous — the book states a multiplicative decay. OPEN-009 concerns upper saturation, repeated emission/merge, deposit-vs-decay order, and rounding, as set out next.
 
@@ -56,7 +56,7 @@ Section 4.3 states scent intensity is bounded in `[0, 0.9]`, but no official sou
 
 ## B. Supported implementation profiles (engineering decision, non-official)
 
-Two profiles are implemented behind one common interface. Both are registered models with pinned parameter documents, so a peer can declare which one it computes and a mismatch is detectable before play rather than mid-game. Selection is a decision recorded in the kit-first interoperability ADR (`docs/decisions/`), evidenced by `EVID-003` in `requirements/EVIDENCE_REGISTER.md` — NON-AUTHORITATIVE interoperability evidence, never a course requirement.
+Two profiles are implemented behind one common interface. Both are registered models with pinned parameter documents, so a peer can declare which one it computes and a mismatch is detectable before play rather than mid-game. Selection is an operational convention recorded in `ADR-004` (`docs/decisions/`); it is never a course requirement.
 
 ### B.1 Default — `subtractive_chebyshev_v1`
 

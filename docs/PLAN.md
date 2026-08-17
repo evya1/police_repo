@@ -11,9 +11,9 @@ updated: 2026-08-16
 
 # Police System PLAN
 
-**Version 0.2** (bounded-context migration, Issue #3; supersedes v0.1). Mechanism-level detail — the turn-adjudication flowchart, state model, compatibility decision matrices, and per-mechanism technical decisions — moved to the six component PLANs under `docs/components/` and the mechanism PRDs under `docs/mechanisms/`. This System PLAN stays concise: system-wide boundaries, dependency direction, shared contracts, security/config ownership, lifecycle, integration order, and system-level gates.
+Mechanism-level detail — the turn-adjudication flowchart, state model, compatibility decision matrices, and per-mechanism technical decisions — is defined in the six component PLANs under `docs/components/` and the mechanism PRDs under `docs/mechanisms/`. This System PLAN stays concise: system-wide boundaries, dependency direction, shared contracts, security/config ownership, lifecycle, integration order, and system-level gates.
 
-**Version 0.3** (kit-first interoperability profile, Issue #6; supersedes v0.2). Adds TD-06, recording the approved default runtime interoperability profile and the second supported scent model. No component boundary, contract, dependency edge, or execution wave changed.
+**Version 0.3** (operational interoperability profile, Issue #6; supersedes v0.2). Adds TD-06, recording the approved default runtime interoperability profile and the second supported scent model. No component boundary, contract, dependency edge, or execution wave changed.
 
 ## Approach summary
 
@@ -149,11 +149,11 @@ Watchdog-driven checkpoint/recovery is C04's concern (ARCH-008, NET-005); see it
 - **Choice:** adopt the nested-section `config/game.json` layout recorded in `docs/decisions/ADR-001-shared-game-contract-shape.md`, authored and validated by T028/T003.
 - **Reason:** CFG-001/CFG-004 fix which values the contract must carry, not its JSON shape; this is our own negotiable engineering choice, explicitly labeled non-official pending OPEN-001.
 
-### TD-06 — Kit-first interoperability profile
+### TD-06 — Operational interoperability profile
 
-- **Choice:** adopt one default runtime interoperability profile — `wire_shape: reference-v3`, `scent_model: subtractive_chebyshev_v1`, `info_mode: belief`, unbound smell behavior, thief-first turn order — with `multiplicative_book_v1` additionally supported, as recorded in `docs/decisions/ADR-004-kit-first-interoperability-profile.md`.
+- **Choice:** adopt one default runtime interoperability profile — `wire_shape: reference-v3`, `scent_model: subtractive_chebyshev_v1`, `info_mode: belief`, unbound smell behavior, thief-first turn order — with `multiplicative_book_v1` additionally supported, as recorded in `docs/decisions/ADR-004-operational-interoperability-profile.md`.
 - **Alternatives:** the book profile as the sole/default model; the reference profile only, dropping the book model; selecting nothing until OPEN-009 is officially answered.
-- **Reason:** the current league kit's sparring peer is our first integration target and the only independently written, byte-pinned opponent runnable on demand. The profile supplies what the source leaves ambiguous without claiming to resolve it.
+- **Reason:** the project needs one concrete, deterministic profile that both peers can build and test against now, without waiting on an official answer to OPEN-009. The profile supplies what the specification leaves ambiguous without claiming to resolve it.
 - **Consequences:** two scent implementations behind one interface with configuration-driven selection; the selected model is registered, hashed, and declared; both models are vector-tested; OPEN-009 stays officially OPEN but no longer blocks implementation or model locking; strategy and domain logic remain project-native, limited to interoperability wiring at the adapter boundary.
 
 ## Requirement coverage

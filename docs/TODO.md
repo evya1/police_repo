@@ -3,14 +3,14 @@ artifact: todo
 id: TODO-POLICE
 status: active
 derived_from: PLAN-POLICE@0.3
-repository_state: greenfield
+repository_state: early_implementation
 owner: orchestrator
 updated: 2026-08-16
 ---
 
 # Police execution ledger
 
-The task file is authoritative for task scope, bounded context, and evidence; this table is the compact execution index. `ready` means every `depends_on` task is `done` and no `gates:` entry has `blocks: start` (see `docs/spec/PRD_PLAN_TODO_AGENT_WORKFLOW.md` §6a). `blocked` names the concrete dependency or gate. No implementation task is complete at generation time. `Component` and `Type` are added in the bounded-context migration (Issue #3); full gate detail lives in each task file, not here.
+The task file is authoritative for task scope, bounded context, and evidence; this table is the compact execution index. `ready` means every `depends_on` task is `done` and no `gates:` entry has `blocks: start` (see `docs/spec/PRD_PLAN_TODO_AGENT_WORKFLOW.md` §6a). `blocked` names the concrete dependency or gate. Core domain logic (`common/domain/`) has been implemented ahead of formal task claim and has a passing test suite. A scent-model implementation for T005 exists on the separate `feature/issue-8-t005-scent-model-lock` branch, not merged into this integration baseline. No task below is marked `done` until its own acceptance criteria and verification are completed against this table. `Component` and `Type` classify each task; full gate detail lives in each task file, not here.
 
 | ID | Component | Type | Status | Priority | Requirement | Depends on | Parallel | Claimed by | Task |
 |---|---|---|---|---|---|---|---|---|---|

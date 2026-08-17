@@ -41,7 +41,7 @@ Negotiated and versioned per CFG-001's locked shared contract; the exact tool na
 
 ## Default interoperability profile — `reference-v3`
 
-Our first and default adapter profile, adopted by the kit-first interoperability ADR (`docs/decisions/`). The surface below is recorded from `EVID-003` in `requirements/EVIDENCE_REGISTER.md`: the current `Imreec/copthief-league-protocol` upstream at commit `ad6557626587e09146af4283a5e808e7001343c5`, inspected read-only. It is **NON-AUTHORITATIVE compatibility evidence**, not an official schema — it does not resolve OPEN-001 or OPEN-007, and a non-kit officially compliant peer stays a valid opponent behind the same adapter boundary.
+This project's default adapter profile, adopted as an operational convention by `ADR-004` (`docs/decisions/`). It is not an official schema — it does not resolve OPEN-001 or OPEN-007, and any officially compliant peer stays a valid opponent behind the same adapter boundary.
 
 ### Required tool surface and argument names
 
@@ -82,11 +82,11 @@ These declarations sit **outside** the closed signed-terms set. The signed terms
 | `wire_shape` | `reference-v3` |
 | `scent_model` | `subtractive_chebyshev_v1` (default; `multiplicative_book_v1` also supported and selectable) |
 | `info_mode` | `belief` — the rival's position is outside the observation space; under `reference-v3` this is structural, because the rival's position never crosses the wire |
-| `smell_binding` | current/unbound. The proposed `commit_grid_v1` extension is **not** on our critical path: it is `PROPOSED` upstream, no implementation has shipped it, and it changes a commit preimage |
+| `smell_binding` | current/unbound. The `commit_grid_v1` extension is **not** on our critical path: it is not implemented anywhere the project can verify today, and it changes a commit preimage |
 
 ### Turn order
 
-`reference-v3` inherits the reference implementation's behavior: **the thief takes the first game turn.** The `wire_shape` declaration does not cover turn order, so a matching lock can actively confirm agreement while hiding this exact disagreement — two peers that each expect the other to move first both wait forever after a fully successful handshake. This convention is therefore recorded here explicitly and must be preserved.
+`reference-v3` fixes the turn-order convention explicitly: **the thief takes the first game turn.** The `wire_shape` declaration does not cover turn order, so a matching lock can actively confirm agreement while hiding this exact disagreement — two peers that each expect the other to move first both wait forever after a fully successful handshake. This convention is therefore recorded here explicitly and must be preserved.
 
 ### Sender / receiver roles and local operation
 

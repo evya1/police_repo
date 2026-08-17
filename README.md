@@ -1,6 +1,6 @@
 # P2P Police Peer
 
-> **Status:** greenfield planning scaffold. No game implementation, screenshots, benchmarks, league results, or passing application-test claim exists yet.
+> **Status:** early implementation. Core board/movement/barrier/capture/scoring logic exists in `common/domain/` with a passing local test suite; FastMCP transport, strategy, integrity, reporting, and GUI layers are not yet implemented. No screenshots, benchmarks, league results, or end-to-end application-test evidence exists yet.
 
 This repository will implement the autonomous Police side of a two-peer Police/Thief system. It owns only its local truth and communicates with the sibling peer through FastMCP/MCP. The shared intent is in `docs/PRD.md`; the role-specific strategy is in `docs/PLAN.md`; execution state lives in `docs/TODO.md` and individual task files.
 
@@ -103,7 +103,7 @@ uv run pytest
 uv run python scripts/run_quality_gates.py
 ```
 
-The quality configuration enforces Ruff zero, 85% global coverage, a 150 logical-code-line limit, required docs, task-ID/TODO consistency, local Markdown links, secret/archive protection, and least-privilege workflow permissions. Application coverage becomes meaningful when T003 and component tasks add `src/` and tests.
+The quality configuration enforces Ruff zero, 85% global coverage, a 150 logical-code-line limit, required docs, task-ID/TODO consistency, local Markdown links, secret/archive protection, and least-privilege workflow permissions. The coverage gate currently measures `scripts/`; it extends to `src/` and `common/` as component tasks land tests there.
 
 ## Troubleshooting
 

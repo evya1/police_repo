@@ -56,7 +56,7 @@ The official templates have not arrived (OPEN-001, INPUT-001), and no locally de
 
 Development proceeds against the **project artifact contract** recorded under OPEN-001 in `docs/spec/OPEN_QUESTIONS.md`: the four lifecycle artifacts are produced by dedicated builders against a project-defined schema held in `config/official/reporting/`, serialized with the canonical form recorded in `docs/contracts/CT-04-canonical-bytes.md`, and validated by schema, signature, and cross-artifact identifier checks. That contract is sufficient for builders, validators, and their tests; it is not sufficient for counted reporting.
 
-When the official templates arrive they replace the project schema at the same boundary, and the same suite is re-run against them.
+When the official templates arrive they replace the project schema at the same boundary, and the same suite is re-run against them. That replacement is only cheap if the project contract stays *behind* that boundary: no consumer may import the project schema, branch on it, or embed its field names. Consumers read artifacts through the validator and builder interfaces only, so swapping the schema changes one module rather than every caller.
 
 The runtime instances are built during execution: declaration before the series, configuration before each sub-game, log during and finalized after each sub-game, and result after verified settlement. This task defines the contract those builders follow; it does not pre-create completed match data.
 
@@ -75,6 +75,7 @@ The runtime instances are built during execution: declaration before the series,
 ## Acceptance criteria
 
 - [ ] Builders, validators, and cross-artifact reconciliation are implemented and tested against the project artifact contract, with committed fixtures for all four lifecycle artifacts.
+- [ ] The project artifact contract is reachable only through the builder and validator interfaces. A test asserts that no module outside `src/police_peer/reporting/schemas.py` imports it or hardcodes one of its field names, so an official schema can replace it without touching a consumer.
 - [ ] Official template receipt, authority, version, safe hash, and verification status are recorded in the input register without secret contents, and the official schemas replace the project schema at the same boundary with the same suite re-run against them. `{#official_schema_compliance}`
 - [ ] Validators distinguish schema failure, signature failure, and cross-artifact identifier mismatch.
 - [ ] Per-game config filenames and reported Git commits are deterministic and replayable.

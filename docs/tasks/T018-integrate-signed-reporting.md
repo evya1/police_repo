@@ -63,7 +63,7 @@ The missing/conflicting-report sanction is unresolved (OPEN-004) and no punishme
 
 Plaintext and partially settled reports are invalid.
 
-Artifact development proceeds against the project artifact contract that T016 defines; final authoritative compliance stays gated on the official templates.
+Artifact development proceeds against the project artifact contract that T016 defines; final authoritative compliance stays gated on the official templates. This pipeline consumes that contract only through T016's builder and validator interfaces — it never imports the schema or hardcodes its field names — so an official schema replaces it without changing this task's code.
 
 Artifact instances are produced in lifecycle order: one declaration before the series, one locked configuration and one incrementally recorded/finalized log per sub-game, and one result only after verified settlement. T016 must first supply the official schema/canonical contract.
 

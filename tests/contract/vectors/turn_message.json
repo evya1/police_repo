@@ -1,0 +1,12 @@
+{
+  "message": {
+    "step": 0,
+    "move": "MOVE:N",
+    "state": "init",
+    "intent": "advance",
+    "nonce": "deadbeefcafe1234"
+  },
+  "canonical_bytes": "{\"intent\":\"advance\",\"move\":\"MOVE:N\",\"nonce\":\"deadbeefcafe1234\",\"state\":\"init\",\"step\":0}",
+  "canonical_sha256": "db92a4b1dfd91408eb1233d3a84ffef01c390931d9d9f332279a32858e1a6a69",
+  "commit": "2ef158231f818ca21ef3c25708d2ef2b0153921257f527e0b1aa5861182e674a"
+}

@@ -1,0 +1,9 @@
+{
+  "model": {
+    "state": "active",
+    "locked_at": "2026-08-17T00:00:00Z",
+    "game_id": "Police-Thief"
+  },
+  "canonical_bytes": "{\"game_id\":\"Police-Thief\",\"locked_at\":\"2026-08-17T00:00:00Z\",\"state\":\"active\"}",
+  "canonical_sha256": "d6d78dcf4ba732f322ba19d29aa2e28eb23a5efd12c805b56a29212a312682d2"
+}

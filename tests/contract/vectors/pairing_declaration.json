@@ -1,0 +1,10 @@
+{
+  "declaration": {
+    "role_a": "Police",
+    "role_b": "Thief",
+    "game_id": "Police-Thief",
+    "seed": 42
+  },
+  "sorted_game_id": "Police-Thief",
+  "note": "game_id must be sorted pair"
+}

@@ -1,0 +1,10 @@
+{
+  "contract": {
+    "game_id": "Police-Thief",
+    "uid": "b36566c8a9b3016aa169df1d5eb2c869",
+    "terms_sig": "e50c2b5527dbb2d78e3985b802ae93d4be6e1483b3b2163fdf72ec81e60a5ff6",
+    "nonce": "deadbeefcafe1234"
+  },
+  "canonical_bytes": "{\"game_id\":\"Police-Thief\",\"nonce\":\"deadbeefcafe1234\",\"terms_sig\":\"e50c2b5527dbb2d78e3985b802ae93d4be6e1483b3b2163fdf72ec81e60a5ff6\",\"uid\":\"b36566c8a9b3016aa169df1d5eb2c869\"}",
+  "canonical_sha256": "86c819d878cbf4cee2215e1c5aa9b2d2b14c21b7c9145e7210cfd585ed003d4b"
+}

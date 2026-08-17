@@ -1,0 +1,11 @@
+{
+  "empty": "{}",
+  "single_key": "{\"a\":1}",
+  "multiple_keys_sorted": "{\"a\":2,\"m\":3,\"z\":1}",
+  "nested_sorted": "{\"a\":3,\"b\":{\"x\":1,\"y\":2}}",
+  "unicode": "{\"emoji\":\"🎲\",\"name\":\"שלום\"}",
+  "float": "{\"value\":1.5}",
+  "bool": "{\"flag\":true,\"other\":false}",
+  "null": "{\"x\":null}",
+  "array": "{\"items\":[1,2,3]}"
+}

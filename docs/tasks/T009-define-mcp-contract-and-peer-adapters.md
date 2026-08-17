@@ -16,6 +16,7 @@ context_files:
   - docs/mechanisms/M-06-peer-protocol-surface.md
   - docs/contracts/CT-03-peer-wire.md
   - docs/decisions/ADR-004-kit-first-interoperability-profile.md
+  - docs/decisions/ADR-005-shared-protocol-layer-placement.md
 read_set: []
 depends_on:
   - T003
@@ -28,11 +29,21 @@ parallel_safe: true
 claimed_by:
 claim_expires_at:
 write_set:
-  - src/police_peer/transport/mcp_server.py
-  - src/police_peer/transport/mcp_client.py
-  - src/police_peer/transport/contracts.py
+  - common/transport/transport.py
+  - common/transport/loopback.py
+  - common/transport/terms.py
+  - common/transport/negotiate.py
+  - common/transport/refusals.py
+  - common/transport/locks.py
+  - common/transport/messages.py
+  - common/transport/series.py
+  - common/transport/mcp_server.py
+  - common/transport/mcp_client.py
+  - common/transport/probes.py
+  - common/transport/readiness.py
+  - tests/unit/transport/
   - tests/contract/mcp/
-  - tests/integration/test_two_process_smoke.py
+  - tests/integration/test_series_loopback.py
 risk: high
 ---
 

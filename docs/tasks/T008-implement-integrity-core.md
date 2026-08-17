@@ -19,6 +19,7 @@ context_files:
   - docs/mechanisms/M-05-commit-reveal-integrity.md
   - docs/contracts/CT-04-canonical-bytes.md
   - docs/decisions/ADR-004-kit-first-interoperability-profile.md
+  - docs/decisions/ADR-005-shared-protocol-layer-placement.md
 read_set: []
 depends_on:
   - T003
@@ -31,10 +32,14 @@ parallel_safe: true
 claimed_by:
 claim_expires_at:
 write_set:
-  - src/police_peer/integrity/commit_reveal.py
-  - src/police_peer/integrity/audit.py
-  - tests/unit/integrity/
-  - tests/contract/test_commit_reveal.py
+  - common/transport/canonical.py
+  - common/transport/integrity.py
+  - common/transport/ids.py
+  - common/transport/audit.py
+  - tests/unit/transport/test_canonical.py
+  - tests/unit/transport/test_integrity.py
+  - tests/unit/transport/test_ids.py
+  - tests/contract/test_golden_vectors.py
 risk: high
 ---
 

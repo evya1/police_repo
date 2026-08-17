@@ -9,6 +9,7 @@
     "min_center_intensity": 0.5,
     "num_games": 6
   },
-  "signature": "e50c2b5527dbb2d78e3985b802ae93d4be6e1483b3b2163fdf72ec81e60a5ff6",
+  "nonce": "deadbeefcafe1234",
+  "signature": "907bbe9a90944be95a1450ef107373ffc6be9f751e6748438a207285c8406fbc",
   "canonical": "{\"private\":{\"min_center_intensity\":0.5,\"num_games\":6,\"scent\":\"v1\"},\"shared\":{\"grid_size\":7,\"max_moves\":35,\"scent_model\":\"subtractive_chebyshev_v1\"}}"
 }

@@ -1,48 +1,49 @@
 """Game ID and UID derivation.
 
-Game IDs are sorted-pair strings (order-independent). UIDs are 16-byte UUID hex digests
-derived from game_id concatenated with the terms hash. The terms signature commits both
-the shared and private sides of the projection table.
+Game IDs are sorted-pair strings with ``-vs-`` between them (order-independent).
+UIDs are 16-byte UUID hex digests derived from ``SHA256(canonical(terms) + "|" +
+"|".join(sorted(group_ids)))[:16]``. The exact derivation matches the kit's
+``ref_game_uid`` / ``ref_game_id`` so golden vectors reproduce byte-for-byte.
 """
 
 from __future__ import annotations
 
 import hashlib
-import json
 import uuid
+
+from common.transport.canonical import canonical_bytes
 
 
 def game_id(role_a: str, role_b: str) -> str:
     """Return a sorted-pair game ID from the two role names.
 
-    The pair is sorted so ``game_id('A', 'B') == game_id('B', 'A')`` — the ID is
-    order-independent, which is what both peers need to agree on.
+    Uses ``-vs-`` between the sorted pair so it matches the kit's
+    ``ref_game_id`` exactly. The pair is sorted so
+    ``game_id('A', 'B') == game_id('B', 'A')`` — the ID is order-independent,
+    which is what both peers need to agree on.
     """
-    pair = sorted([role_a, role_b])
-    return "-".join(pair)
+    return "-vs-".join(sorted([role_a, role_b]))
 
 
-def game_uid(game_id: str, terms_hash: str) -> str:
-    """Return a 16-byte UUID hex derived from game_id + terms hash.
+def game_uid(terms: dict, group_a: str, group_b: str) -> str:
+    """Return a 16-byte UUID hex derived from terms + sorted group ids.
 
-    The first 16 bytes of SHA-256(game_id|terms_hash) become a UUID hex string.
-    This is the opaque handle used in artifacts and ledger rows.
+    Matches the kit's ``ref_game_uid``:
+    ``UUID(SHA256(canonical(terms) + "|" + "|".join(sorted([a, b])))[:16])``.
+    Both peers derive the same value with no round-trip because the terms
+    already value-equal at the point this is called.
     """
-    combined = f"{game_id}|{terms_hash}".encode()
-    digest = hashlib.sha256(combined).digest()
-    return uuid.UUID(bytes=digest[:16]).hex
+    pair = sorted([group_a, group_b])
+    seed = f"{canonical_bytes(terms).decode('utf-8')}|{'|'.join(pair)}"
+    return str(uuid.UUID(bytes=hashlib.sha256(seed.encode("utf-8")).digest()[:16]))
 
 
-def terms_signature(shared: dict, private: dict) -> str:
-    """Return a SHA-256 signature over projected shared + private terms.
+def terms_signature(terms: dict, nonce: str) -> str:
+    """Return a SHA-256 signature over canonical(terms) with the nonce pipe-appended.
 
-    The combined dict is canonicalized (sorted keys, compact separators, no ASCII escape)
-    so both peers arrive at the same hash even if their dict insertion order differs.
+    Matches the kit's ``ref_terms_signature`` / ``ref_commit``:
+    ``SHA256(canonical_json(terms) + "|" + nonce)``.
     """
-    combined = json.dumps(
-        {"shared": shared, "private": private},
-        sort_keys=True,
-        ensure_ascii=False,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(combined).hexdigest()
+    return hashlib.sha256(
+        f"{canonical_bytes(terms).decode('utf-8')}|{nonce}".encode()
+    ).hexdigest()

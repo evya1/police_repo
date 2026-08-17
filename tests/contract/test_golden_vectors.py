@@ -95,18 +95,18 @@ class TestTermsSignature:
     def test_reproduce(self) -> None:
         with open(VECTORS_DIR / "terms_signature.json", encoding="utf-8") as f:
             vec = json.load(f)
-        computed = terms_signature(vec["shared"], vec["private"])
+        # The fixture now carries the combined terms and nonce.
+        terms = {"shared": vec["shared"], "private": vec["private"]}
+        computed = terms_signature(terms, vec["nonce"])
         assert computed == vec["signature"]
         # Canonical form must also match
         expected_canonical = json.dumps(
-            {"shared": vec["shared"], "private": vec["private"]},
+            terms,
             sort_keys=True,
             ensure_ascii=False,
             separators=(",", ":"),
         ).encode("utf-8")
-        assert canonical_bytes({"shared": vec["shared"], "private": vec["private"]}) == (
-            vec["canonical"].encode("utf-8")
-        )
+        assert canonical_bytes(terms) == vec["canonical"].encode("utf-8")
         assert expected_canonical == vec["canonical"].encode("utf-8")
 
 
@@ -116,12 +116,15 @@ class TestGameUid:
     def test_reproduce(self) -> None:
         with open(VECTORS_DIR / "game_uid.json", encoding="utf-8") as f:
             vec = json.load(f)
-        computed = game_uid(vec["game_id"], vec["terms_hash"])
+        computed = game_uid(vec["terms"], vec["group_a"], vec["group_b"])
         assert computed == vec["uid"]
-        # Also verify via the raw derivation
-        combined = f"{vec['game_id']}|{vec['terms_hash']}".encode()
-        digest = hashlib.sha256(combined).digest()
-        expected = uuid.UUID(bytes=digest[:16]).hex
+        # Also verify via the raw derivation.
+        from common.transport.canonical import canonical_bytes
+        terms_bytes = canonical_bytes(vec["terms"])
+        pair = sorted([vec["group_a"], vec["group_b"]])
+        seed = f"{terms_bytes.decode('utf-8')}|{'|'.join(pair)}"
+        digest = hashlib.sha256(seed.encode("utf-8")).digest()
+        expected = str(uuid.UUID(bytes=digest[:16]))
         assert computed == expected
 
 
@@ -162,6 +165,8 @@ class TestPairingDeclaration:
         assert computed == vec["sorted_game_id"]
         # Symmetry: order must not matter
         assert game_id(declaration["role_b"], declaration["role_a"]) == vec["sorted_game_id"]
+        # The -vs- separator is the canonical form (matches ref_game_id).
+        assert "-vs-" in computed
 
 
 class TestTurnMessage:

@@ -29,6 +29,24 @@ class DummyBudgets:
     poll_interval = 0.01
 
 
+_full_terms = {
+    "board_size": 7,
+    "smell_grid_size": 5,
+    "decay_per_step": 0.1,
+    "emit_intensity": 0.9,
+    "min_center_intensity": 0.5,
+    "max_steps": 35,
+    "barriers_max": 14,
+    "setting": "New York",
+    "hint_max_words": 15,
+    "axis_origin_corner": "top-left",
+    "axis_start_index": 0,
+    "thief_start": [3, 3],
+    "cop_start": [0, 0],
+    "num_games": 6,
+}
+
+
 class DeterministicEngine:
     """A deterministic turn engine that produces legal moves on a board."""
 
@@ -69,13 +87,13 @@ def test_full_series_over_loopback() -> None:
     config_a = PeerConfig(
         natural_role=Role.POLICE,
         budgets=DummyBudgets(),
-        terms={"max_moves": 35, "grid_size": 7},
+        terms=_full_terms,
         seed=42,
     )
     config_b = PeerConfig(
         natural_role=Role.THIEF,
         budgets=DummyBudgets(),
-        terms={"max_moves": 35, "grid_size": 7},
+        terms=_full_terms,
         seed=42,
     )
 
@@ -146,13 +164,13 @@ def test_deterministic_seed() -> None:
         config_a = PeerConfig(
             natural_role=Role.POLICE,
             budgets=DummyBudgets(),
-            terms={"max_moves": 35, "grid_size": 7},
+            terms=_full_terms,
             seed=42,
         )
         config_b = PeerConfig(
             natural_role=Role.THIEF,
             budgets=DummyBudgets(),
-            terms={"max_moves": 35, "grid_size": 7},
+            terms=_full_terms,
             seed=42,
         )
         engine_a = DeterministicEngine(Role.POLICE, seed=42)

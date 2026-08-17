@@ -114,28 +114,19 @@ class PeerFacade:
             settled_outcome=final_outcome,
         )
 
-    def _greeting_to_dict(self, greeting) -> dict:
-        """Convert a Greeting dataclass to a dict for transport."""
-        if isinstance(greeting, dict):
-            return greeting
-        return {
-            "shared_terms": getattr(greeting, "shared_terms", {}),
-            "private_terms": getattr(greeting, "private_terms", {}),
-            "lock_family": getattr(greeting, "lock_family", None),
-            "game_id": getattr(greeting, "game_id", None),
-            "game_uid": getattr(greeting, "game_uid", None),
-            "signature": getattr(greeting, "signature", ""),
-        }
-
     def _exchange_greeting(self) -> None:
-        """Send our greeting and poll for the opponent's."""
-        from common.transport.negotiate import our_greeting
+        """Send our greeting and poll for the opponent's, then verify."""
+        from common.transport.integrity import new_nonce
+        from common.transport.negotiate import our_greeting, verify_greeting
 
         greeting = our_greeting(
-            natural_role=self.config.natural_role,
             terms=self.config.terms,
+            nonce=new_nonce(),
+            group_id=self.name,
+            role=self.config.natural_role.value,
+            sub_game_number=1,
         )
-        self.channel.send_agreement(self._greeting_to_dict(greeting))
+        self.channel.send_agreement(greeting)
         opponent_greeting = self.channel.poll_agreement()
         if opponent_greeting is None:
             import time
@@ -149,12 +140,9 @@ class PeerFacade:
         if opponent_greeting is None:
             raise TimeoutError("opponent greeting not received")
 
-        if isinstance(opponent_greeting, dict):
-            self._game_id = opponent_greeting.get("game_id", "")
-            self._game_uid = opponent_greeting.get("game_uid", "")
-        else:
-            self._game_id = getattr(opponent_greeting, "game_id", "")
-            self._game_uid = getattr(opponent_greeting, "game_uid", "")
+        agreed = verify_greeting(opponent_greeting, self.config.terms, self.name, 1)
+        self._game_id = agreed.game_id
+        self._game_uid = agreed.game_uid
 
     def _play_sub_game(self, sub_game: int) -> SeriesRow:
         """Play a single sub-game. Return the result row."""

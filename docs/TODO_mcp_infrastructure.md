@@ -2,11 +2,11 @@
 artifact: stage-todo
 id: TODO-MCP-INFRA
 status: active
-version: 0.4
+version: 0.8
 derived_from: PLAN-MCP-INFRA@0.1 · PRD_mcp_infrastructure (approved 2026-08-17)
 applies_to: police_repo + thief_repo
 owner: orchestrator
-updated 2026-08-17 (ST-03 + ST-04 + ST-05 done)
+updated 2026-08-18 (ST-03 + ST-04 + ST-05 + ST-06 + ST-07 + ST-08 + ST-09 done; pre-existing spine/golden-vector debt fixed)
 ---
 
 # TODO — MCP Infrastructure (Stage 2)
@@ -30,11 +30,11 @@ Task ledger for building the MCP infrastructure from `PRD_mcp_infrastructure.md`
 | ST-02 | Transport seam + loopback transport + module skeletons | A | P0 | done | IA | ST-01 | T009 · FR-6/7/8 | G-S1 |
 | ST-03 | End-to-end skeleton series over loopback (top of the tree) | A | P0 | done | IA | ST-02 | T009 · FR-3/18/19/41 | G-S1 |
 | ST-04 | Byte-level primitives + golden vectors (M1) | B | P0 | done | IA | ST-03 | T008 · FR-12/15 | G-S2 |
-| ST-05 | Terms layer + private config wiring | C | P0 | not started | IA | ST-03 (∥ ST-04) | T009 · FR-11/40 | G-S3 |
-| ST-06 | Handshake: negotiation, refusals, pairing, locks, uid | C | P0 | not started | IA | ST-04, ST-05 | T009 · FR-10…16, 18, 20 | G-S3 |
-| ST-07 | Turn frames: shapes + all-or-nothing validation | C | P0 | not started | IA | ST-03 (∥ ST-04…06) | T009 · FR-21…27 | G-S4 |
-| ST-08 | At-least-once inbox + deterministic fault injection (M3) | D | P1 | not started | IA | ST-07 | T012 · FR-32/33/34 | G-S4 |
-| ST-09 | Mutual audit + TAMPERED sanction (M4-loopback) | E | P0 | not started | IA | ST-08 | T008 · FR-28/29/42 | G-S5 |
+| ST-05 | Terms layer + private config wiring | C | P0 | done | IA | ST-03 (∥ ST-04) | T009 · FR-11/40 | G-S3 |
+| ST-06 | Handshake: negotiation, refusals, pairing, locks, uid | C | P0 | done | IA | ST-04, ST-05 | T009 · FR-10…16, 18, 20 | G-S3 |
+| ST-07 | Turn frames: shapes + all-or-nothing validation | C | P0 | done | IA | ST-03 (∥ ST-04…06) | T009 · FR-21…27 | G-S4 |
+| ST-08 | At-least-once inbox + deterministic fault injection (M3) | D | P1 | done | IA | ST-07 | T012 · FR-32/33/34 | G-S4 |
+| ST-09 | Mutual audit + TAMPERED sanction (M4-loopback) | E | P0 | done | IA | ST-08 | T008 · FR-28/29/42 | G-S5 |
 | ST-10 | FastMCP server (M2) | F | P0 | not started | IA | ST-03 (∥ phases B–E) | T009 · FR-4/6/8/9/19/37 | G-S6 |
 | ST-11 | FastMCP client + two-process localhost smoke (M2) | F | P0 | not started | IA | ST-06…10 | T009 · FR-3/7/30 | G-S6 |
 | ST-12 | Session faults + recovery suite (M4) | G | P1 | not started | IA | ST-11 | T012/T022 · FR-31 | G-S7 |
@@ -152,24 +152,48 @@ Build (PLAN §5.4, §11): `terms.py` — `TERMS_KEYS` (exactly 14), `project_ter
 - Tests: `tests/unit/transport/test_terms.py` (29 tests) + `tests/unit/wire/test_config.py` (18 tests) in both repos.
 - Ruff: clean. Common dirs byte-identical across repos.
 
-### ST-06 — Negotiation, refusals, pairing, locks, uid (owner: IA → repo task T009)
+### ST-06 — Negotiation, refusals, pairing, locks, uid (owner: IA → repo task T009) ✅ DONE
 
 Build (PLAN §5.5, §5.6): `locks.py` (families, pinned doc + hash, `lock_decision`), `negotiate.py` (`Greeting` with the FR-20 omission convention, `our_greeting`, `verify_greeting` with the **fixed FR-13 order** — terms present → 14 keys → value-equality → signature re-verify with our own serializer (both canonical strings on failure) → locks → pairing → declared uid), `refusals.py` (SPAR-N00…N10 codes + actionable diagnostics; the pairing/uid decision tables — omission never refuses, FR-14/FR-16), refusal sent via `receive_control` and no game state created on refusal (US-MCP-006).
 
 **Definition of done:**
-- [ ] TC-03 (valid 14-key terms + signature accepted; single value mismatch refused with the key named), TC-04 (serializer drift, e.g. `ensure_ascii=True` ⇒ signature refusal with both canonical strings printed), TC-05 (two `police` refused; complementary accepted; omitted `role` = silence), TC-06 (uid omitted sub-game 1 / declared sub-game ≥ 2 / mismatched uid refused at handshake), TC-07 (both declare + disagree ⇒ refuse; one omits ⇒ play) — all green.
-- [ ] TC-25 lock/pairing/uid vectors still green; spine green with real handshakes (both sides derive the same `game_id`/`game_uid`, no round-trip — US-MCP-001).
-- [ ] Refusal channel test: a refused stranger receives a `receive_control` message carrying the code; local state unchanged (US-MCP-006).
+- [x] TC-03 (valid 14-key terms + signature accepted; single value mismatch refused with the key named), TC-04 (serializer drift, e.g. `ensure_ascii=True` ⇒ signature refusal with both canonical strings printed), TC-05 (two `police` refused; complementary accepted; omitted `role` = silence), TC-06 (uid omitted sub-game 1 / declared sub-game ≥ 2 / mismatched uid refused at handshake), TC-07 (both declare + disagree ⇒ refuse; one omits ⇒ play) — all green.
+- [x] TC-25 lock/pairing/uid vectors still green; spine green with real handshakes (both sides derive the same `game_id`/`game_uid`, no round-trip — US-MCP-001).
+- [x] Refusal channel test: a refused stranger receives a `receive_control` message carrying the code; local state unchanged (US-MCP-006).
 
-### ST-07 — Turn frames + all-or-nothing validation (owner: IA → repo task T009)
+**Implementation notes:**
+- `common/transport/locks.py` — `LOCK_FAMILIES` (4 families), `LOCK_DOC_KEYS` (4 canonical keys), `lock_decision(our_hash, their_hash)` returns accept/refuse/silence per FR-16; `lock_hash(doc)` canonical SHA-256 over lock document; `build_lock_doc()` factory.
+- `common/transport/negotiate.py` — `our_greeting(terms, nonce, group_id, role, sub_game_number, opponent_group, locks)` builds greeting with FR-20 omission convention (None fields omitted); `verify_greeting(raw, our_terms, our_group_id, sub_game_number)` enforces fixed FR-13 order: terms present → 14 keys → value-equality → signature re-verify → locks → pairing → uid; returns `Agreed(game_id, game_uid, opponent_group, opponent_role, terms)`.
+- `common/transport/refusals.py` — `Refused` exception with stable codes SPAR-N00…N10; `refuse(code, detail)` builds control message; `is_refusal(code)`; `diagnostic(code)` human-readable text.
+- `common/transport/messages.py` — `TurnMessage`, `ControlMessage`, `AuditPayload`, `Negotiation` dataclasses with `to_wire()`/`from_wire()` matching reference-v3 wire shape.
+- `common/transport/ids.py` — `game_id()` uses `-vs-` separator matching kit's `ref_game_id`; `game_uid(terms, group_a, group_b)` matches kit's `ref_game_uid`; `terms_signature(terms, nonce)` matches kit's `ref_terms_signature`.
+- Tests: `tests/unit/transport/test_locks.py` (20 tests) + `tests/unit/transport/test_negotiate.py` (24 tests) + `tests/unit/transport/test_refusals.py` (24 tests) in both repos.
+- Ruff: clean. Common dirs byte-identical across repos.
+- Series engine updated to use new `our_greeting` signature with `new_nonce()` from `integrity`.
+
+### ST-07 — Turn frames + all-or-nothing validation (owner: IA → repo task T009) ✅ DONE
 
 Build (PLAN §5.7): `messages.py` — `TurnMessage`/`ControlMessage`/`AuditPayload` dataclasses with `to_wire`/`from_wire` (negotiation encoder omits `None`; turn optionals as explicit `null`s; unknown keys dropped on intake — the extension seam, FR-20), `validate_turn` (all decisions **before any state change**, FR-25), `validate_audit`, `assert_no_position_leak`. Unit tests per PRD §8.5.
 
 **Definition of done:**
-- [ ] TC-08 (missing `smell_grid` ⇒ refused, zero state change), TC-09 (stringified intensity refused; numeric accepted), TC-10 (uppercase commit refused), TC-11 (empty timestamp refused), TC-12 (unknown key tolerated and ignored) — green.
-- [ ] TC-13 green: structural scan of the turn wire shape — no field carries a numeric position except the explicitly public `barrier_placed`/`capture_claim`; `hint` is text-only (NET-004, FR-26/27).
-- [ ] TC-26 green: a Hebrew + astral-plane-emoji hint round-trips the wire byte-identical under `ensure_ascii=False`.
-- [ ] Spine green with validated frames (a malformed frame from a scripted engine is refused without partial application).
+- [x] TC-08 (missing `smell_grid` ⇒ refused, zero state change), TC-09 (stringified intensity refused; numeric accepted), TC-10 (uppercase commit refused), TC-11 (empty timestamp refused), TC-12 (unknown key tolerated and ignored) — green.
+- [x] TC-13 green: structural scan of the turn wire shape — no field carries a numeric position except the explicitly public `barrier_placed`/`capture_claim`; `hint` is text-only (NET-004, FR-26/27).
+- [x] TC-26 green: a Hebrew + astral-plane-emoji hint round-trips the wire byte-identical under `ensure_ascii=False`.
+- [x] Spine green with validated frames (a malformed frame from a scripted engine is refused without partial application).
+
+**Implementation notes:**
+- Split `messages.py` (111 lines) + `validators.py` (121 lines) to respect the 150-line cap.
+- `refusals.py`: added SPAR-N11 (turn validation failed), SPAR-N12 (audit validation failed), SPAR-N13 (position leak).
+- Tests split across 4 files to stay under 150 lines each: `test_messages.py` (141), `test_turn_validation.py` (119), `test_turn_validation_general.py` (73), `test_audit_validation.py` (74), `test_position_leak.py` (86).
+- Both repos: 182 transport unit tests pass, ruff clean, `common/` byte-identical.
+- Coverage for `common.transport.messages` + `common.transport.validators` + `common.transport.refusals`: 90%+ (exceeds 85% threshold).
+
+**Debt fixed during ST-07 handoff** (pre-existing breakages from ST-06 API changes):
+- `common/transport/series.py` `_exchange_greeting`: was using old `_greeting_to_dict` with stale field names (`shared_terms`, `private_terms`); replaced with direct `verify_greeting()` call. Spine test now green.
+- `tests/contract/test_golden_vectors.py` + fixtures: `terms_signature()` signature changed from `(shared, private)` to `(terms, nonce)`; `game_uid()` from `(game_id, terms_hash)` to `(terms, group_a, group_b)`; `game_id()` now uses `-vs-` separator. Updated tests and JSON fixtures.
+- `tests/integration/test_series_loopback.py`: spine test used minimal 2-key terms; updated to full 14-key TERMS_KEYS.
+- `tests/unit/transport/test_series.py`: MockChannel returned fake greeting without terms; updated to return valid `verify_greeting()`-passing greeting.
+- Result: **0 test failures in both repos** (was 4 pre-existing). Spine test green.
 
 ---
 
@@ -180,23 +204,25 @@ Build (PLAN §5.7): `messages.py` — `TurnMessage`/`ControlMessage`/`AuditPaylo
 Build (PLAN §5.8, §5.12): `inbox.py` — pure `delivery_decision` (the six-way pinned table; duplicates keyed on **commit**, not `(kind, step)`) + `deadline_decision` (pure; renews nothing; judged every lap) + `Inbox.offer` (absorb / equivocation-loud / buffer / apply-drain / discard / violation; `window` configurable, default 4, never 0 — a window-0 config is refused at load, FR-32) + `reset_for_subgame`. `faults.py` — `FaultyTransport` (deterministic: duplicate / reorder / drop-then-retry every nth turn message; `flush`).
 
 **Definition of done:**
-- [ ] TC-14 (exact duplicate absorbed; applied once; ledger unchanged), TC-15 (different commit for a played step ⇒ `Equivocation`, quarantined, loud), TC-16 (within-window out-of-order buffered and applied in sequence; beyond window rejected), TC-19 (duplicate/early push renews nothing; deadline judged on a flood lap) — green.
-- [ ] TC-17 (first run): same seeded six-sub-game series, clean vs duplicate+reorder+drop-then-retry over `FaultyTransport` ⇒ **byte-identical outcome ledger** (NFR-1) — audit still stubbed; the final run with real audit lands in ST-09.
-- [ ] Spine green; window-0 config refused test green.
+- [x] TC-14 (exact duplicate absorbed; applied once; ledger unchanged), TC-15 (different commit for a played step ⇒ `Equivocation`, quarantined, loud), TC-16 (within-window out-of-order buffered and applied in sequence; beyond window rejected), TC-19 (duplicate/early push renews nothing; deadline judged on a flood lap) — green.
+- [x] TC-17 (first run): same seeded six-sub-game series, clean vs duplicate+reorder+drop-then-retry over `FaultyTransport` ⇒ **byte-identical outcome ledger** (NFR-1) — audit still stubbed; the final run with real audit lands in ST-09.
+- [x] Spine green; window-0 config refused test green.
 
 ---
 
 ## Phase E — M4 (loopback proof): mutual audit
 
-### ST-09 — Mutual audit + TAMPERED sanction (owner: IA → repo task T008)
+### ST-09 — Mutual audit + TAMPERED sanction (owner: IA → repo task T008) ✅ DONE
 
 Build (PLAN §5.9): `audit.py` + `audit_physics.py` — `audit_records(records, played, terms)`: layer 1 re-hash every revealed record **with our own serializer** (any mismatch ⇒ step TAMPERED; verdict `{passed, verified_steps, failed_steps, skipped}`; one mismatch ⇒ technical loss, total sanction, **no repair path**, FR-29); layer 2 binding against the inbox `played` map (revealed == received, both directions, frontier-tolerant); layer 3 physics armed from the 14 terms (trail on-board, ≤ one orthogonal step, barrier quota, step ceiling — from the position trail, never the peer's move spelling). The stand-in engine's `audit_payload()` reveals all records + nonces + `result_claim`.
 
 **Definition of done:**
-- [ ] TC-20 green: full mutual audit clean ⇒ `{passed: true, …}`; then a one-byte mutation of one revealed record ⇒ TAMPERED, both sides score 0, no code path repairs it (US-MCP-004).
-- [ ] TC-17 (final): clean vs fault-injected seeded series ⇒ byte-identical ledger **including audit verdicts** (US-MCP-003).
-- [ ] Sealed step-0 record (identity declaration) rides inside `submit_audit.records` — there is no step-0 tool/turn on the surface (FR-19; SEC-008 record only — signing/metering stay out of scope, T013).
-- [ ] `intent` field declared in sealed records; audit corroborates structurally (FR-42). Spine green.
+- [x] `audit.py` + `audit_physics.py` built (PLAN §5.9): three-layer audit — re-hash integrity, binding to played map, physics from 14 terms.
+- [x] Sealed step-0 record (identity declaration) rides inside `submit_audit.records` (FR-19; SEC-008 record only — signing/metering stay out of scope, T013).
+- [x] `intent` field declared in sealed records; audit corroborates structurally (FR-42).
+- [x] TC-20 green: full mutual audit clean ⇒ `{passed: true, …}`; then a one-byte mutation of one revealed record ⇒ TAMPERED, both sides score 0, no code path repairs it (US-MCP-004). — `tests/unit/transport/test_audit_clean.py` + `test_audit_tampered.py`, both repos.
+- [x] TC-17 (final): clean vs fault-injected seeded series ⇒ byte-identical ledger **including audit verdicts** (US-MCP-003). — `tests/integration/test_series_fault_audit.py`, both repos.
+- [x] **Spine green** — `test_full_series_over_loopback` passes in both repos (verified 2026-08-18: full suite 563 passed police / 554 passed thief; ruff clean; `common/` + test files byte-identical across repos).
 
 ---
 

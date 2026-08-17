@@ -5,7 +5,7 @@ status: active
 derived_from: PLAN-POLICE@0.3
 repository_state: greenfield
 owner: orchestrator
-updated: 2026-08-16
+updated: 2026-08-18
 ---
 
 # Police execution ledger
@@ -21,11 +21,11 @@ The task file is authoritative for task scope, bounded context, and evidence; th
 | T005 | C02 | component | blocked | P0 | STRAT-002, STRAT-003, STRAT-004, STRAT-005, CFG-001, CFG-004 | T004 | yes | — | [task](tasks/T005-implement-scent-model-and-lock.md) |
 | T006 | C02 | component | blocked | P0 | STRAT-001, STRAT-006 | T005 | yes | — | [task](tasks/T006-implement-belief-state.md) |
 | T007 | C02 | component | blocked | P0 | ARCH-007, STRAT-007, STRAT-008, STRAT-009 | T004, T006 | yes | — | [task](tasks/T007-implement-role-strategy.md) |
-| T008 | C03 | component | blocked | P0 | SEC-001, SEC-002, SEC-003, SEC-004, SEC-005, SEC-006, SEC-007 | T003 | yes | — | [task](tasks/T008-implement-integrity-core.md) |
+| T008 | C03 | component | done | P0 | SEC-001, SEC-002, SEC-003, SEC-004, SEC-005, SEC-006, SEC-007 | T003 | yes | IA | [task](tasks/T008-implement-integrity-core.md) |
 | T009 | C03 | component | blocked | P0 | NET-001, NET-002, NET-003, NET-004 | T003 | yes | — | [task](tasks/T009-define-mcp-contract-and-peer-adapters.md) |
 | T010 | C04 | integration | blocked | P0 | ARCH-004, ARCH-005, ARCH-006 | T004, T005, T008, T009 | yes | — | [task](tasks/T010-implement-orchestrator-state-machine.md) |
 | T011 | C04 | component | blocked | P0 | ARCH-008, NET-005, CFG-007, CFG-008 | T010 | yes | — | [task](tasks/T011-implement-deadlines-retry-and-watchdog.md) |
-| T012 | C03 | component | blocked | P1 | NET-005, SEC-002, SEC-005 | T009, T010 | yes | — | [task](tasks/T012-implement-inbound-delivery-safety.md) |
+| T012 | C03 | component | done | P1 | NET-005, SEC-002, SEC-005 | T009, T010 | yes | IA | [task](tasks/T012-implement-inbound-delivery-safety.md) |
 | T013 | C03 | component | blocked | P0 | SEC-008, SEC-009, LEAGUE-007, QR-018 | T008, T010 | yes | — | [task](tasks/T013-implement-step-zero-and-token-metering.md) |
 | T014 | C05 | component | blocked | P0 | OBS-001, OBS-002, OBS-003, OBS-004, QR-017 | T006, T010 | yes | — | [task](tasks/T014-implement-live-gui.md) |
 | T015 | C05 | component | blocked | P0 | OBS-005, OBS-006, SEC-005, SEC-006 | T008, T010, T014 | yes | — | [task](tasks/T015-implement-replay-and-audit-view.md) |

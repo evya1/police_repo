@@ -4,7 +4,9 @@ version = "1.00"
 description = "Greenfield Police peer for the distributed Police/Thief final project"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+  "fastmcp>=3.4,<4",
+]
 
 [tool.uv]
 package = false
@@ -19,16 +21,24 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--tb=short -q --cov=scripts --cov-report=term-missing --cov-fail-under=85"
+addopts = "--tb=short -q --cov-report=term-missing --cov-fail-under=85"
 
 [tool.coverage.run]
 branch = false
-source = ["scripts"]
+source = ["scripts", "src/police_peer", "common"]
 
 [tool.coverage.report]
 fail_under = 85
 show_missing = true
 skip_covered = true
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.",
+  "raise NotImplementedError",
+  "\"\"\".*\"\"\"",
+]
+
+
 
 [dependency-groups]
 dev = [

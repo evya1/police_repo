@@ -1,0 +1,11 @@
+{
+  "terms": {
+    "grid_size": 7,
+    "max_moves": 35,
+    "scent_model": "subtractive_chebyshev_v1"
+  },
+  "group_a": "Police",
+  "group_b": "Thief",
+  "uid": "a4d5d813-e1b0-3b69-3f70-4118f07ee792",
+  "note": "uid derived from canonical(terms) + sorted group ids"
+}

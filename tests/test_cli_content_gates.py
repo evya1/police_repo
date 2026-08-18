@@ -85,18 +85,13 @@ class ContentGateCliTests(unittest.TestCase):
             workflow.write_text("permissions:\n  contents: read\njobs: {}\n", encoding="utf-8")
             config = root / "quality.toml"
             config.write_text(
-                'workflow_dirs = [".github/workflows"]\n'
-                "workflow_allowed_write_permissions = []\n",
+                'workflow_dirs = [".github/workflows"]\nworkflow_allowed_write_permissions = []\n',
                 encoding="utf-8",
             )
             arguments = ["--repo", str(root), "--config", str(config)]
-            self.assertEqual(
-                captured_main(check_workflow_permissions.main, arguments)[0], 0
-            )
+            self.assertEqual(captured_main(check_workflow_permissions.main, arguments)[0], 0)
             workflow.write_text("permissions:\n  contents: write\njobs: {}\n", encoding="utf-8")
-            self.assertEqual(
-                captured_main(check_workflow_permissions.main, arguments)[0], 1
-            )
+            self.assertEqual(captured_main(check_workflow_permissions.main, arguments)[0], 1)
 
 
 if __name__ == "__main__":

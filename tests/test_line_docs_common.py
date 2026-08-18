@@ -41,9 +41,7 @@ class LineAndDocumentTests(unittest.TestCase):
             cache.mkdir(parents=True)
             (source / "kept.py").write_text("x = 1\n", encoding="utf-8")
             (cache / "ignored.py").write_text("x = 1\n", encoding="utf-8")
-            files = check_line_cap.collect_files(
-                root, [Path("src")], {".py"}, {"__pycache__"}
-            )
+            files = check_line_cap.collect_files(root, [Path("src")], {".py"}, {"__pycache__"})
             self.assertEqual(files, [source / "kept.py"])
 
     def test_collect_files_rejects_missing_path(self) -> None:
@@ -51,17 +49,13 @@ class LineAndDocumentTests(unittest.TestCase):
             tempfile.TemporaryDirectory() as directory,
             self.assertRaisesRegex(quality_common.QualityError, "not found"),
         ):
-            check_line_cap.collect_files(
-                Path(directory), [Path("missing")], {".py"}, set()
-            )
+            check_line_cap.collect_files(Path(directory), [Path("missing")], {".py"}, set())
 
     def test_find_line_cap_violations(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "module.py"
             source.write_text("x = 1\ny = 2\n", encoding="utf-8")
-            self.assertEqual(
-                check_line_cap.find_violations([source], 1, "logical"), [(source, 2)]
-            )
+            self.assertEqual(check_line_cap.find_violations([source], 1, "logical"), [(source, 2)])
 
     def test_line_cap_main_reads_configuration(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -82,9 +76,7 @@ exclude_dirs = []
             )
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
-                result = check_line_cap.main(
-                    ["--repo", str(root), "--config", str(config)]
-                )
+                result = check_line_cap.main(["--repo", str(root), "--config", str(config)])
             self.assertEqual(result, 1)
             self.assertIn("exceed", output.getvalue())
 
@@ -92,9 +84,7 @@ exclude_dirs = []
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "README.md").write_text("ready\n", encoding="utf-8")
-            missing = check_docs_present.missing_documents(
-                root, ["README.md", "docs/PRD.md"]
-            )
+            missing = check_docs_present.missing_documents(root, ["README.md", "docs/PRD.md"])
             self.assertEqual(missing, ["docs/PRD.md"])
 
     def test_configuration_type_validation(self) -> None:

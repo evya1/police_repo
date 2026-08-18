@@ -29,7 +29,7 @@ def commit(payload: dict, nonce: str) -> str:
     receiver can verify by re-canonicalizing and re-hashing.
     """
     payload_bytes = canonical_bytes(payload)
-    combined = payload_bytes + nonce.encode("utf-8")
+    combined = payload_bytes + b"|" + nonce.encode("utf-8")
     return hashlib.sha256(combined).hexdigest()
 
 

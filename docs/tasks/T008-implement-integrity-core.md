@@ -18,7 +18,7 @@ context_files:
   - docs/components/C03-peer-protocol-integrity/PLAN.md
   - docs/mechanisms/M-05-commit-reveal-integrity.md
   - docs/contracts/CT-04-canonical-bytes.md
-  - docs/decisions/ADR-004-kit-first-interoperability-profile.md
+  - docs/decisions/ADR-004-operational-interoperability-profile.md
   - docs/decisions/ADR-005-shared-protocol-layer-placement.md
 read_set: []
 depends_on:
@@ -63,7 +63,7 @@ A single integrity boundary creates fresh nonces, performs SHA-256 Commit-Reveal
 
 The minimum committed semantics are State, Move, Intent, and Nonce. OPEN-007 blocks the final *official* byte envelope, including nonce placement, Unicode escaping, separators, and report-consensus scope, and it stays open. Auxiliary serializers and vectors are not official schema evidence and never become one.
 
-Two different claims must not be confused. "Our bytes are the officially required bytes" waits on OPEN-007. "Our bytes reproduce a published, independently implemented peer's bytes" does not — it is a checkable property of the primitives this task builds, and published golden vectors for exactly those primitives already exist (`EVID-003`). Under the kit-first decision in `ADR-004`, this task proves the second claim now rather than deferring every byte check to T022. Proving it changes nothing about OPEN-007's official status.
+Two different claims must not be confused. "Our bytes are the officially required bytes" waits on OPEN-007. "Our bytes reproduce our own registered, golden-vector-tested primitives" does not — it is a checkable property of the primitives this task builds. Under the operational convention recorded in `ADR-004`, this task proves the second claim now rather than deferring every byte check to T022. Proving it changes nothing about OPEN-007's official status.
 
 This task does **not** own scent arithmetic. Scent profiles and their vectors belong to T005.
 

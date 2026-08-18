@@ -15,7 +15,7 @@ context_files:
   - docs/components/C03-peer-protocol-integrity/PLAN.md
   - docs/mechanisms/M-06-peer-protocol-surface.md
   - docs/contracts/CT-03-peer-wire.md
-  - docs/decisions/ADR-004-kit-first-interoperability-profile.md
+  - docs/decisions/ADR-004-operational-interoperability-profile.md
   - docs/decisions/ADR-005-shared-protocol-layer-placement.md
 read_set: []
 depends_on:

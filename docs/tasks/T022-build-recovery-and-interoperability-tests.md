@@ -15,7 +15,7 @@ context_files:
   - docs/PRD.md
   - docs/PLAN.md
   - docs/interop/LEAGUE_COMPATIBILITY.md
-  - docs/decisions/ADR-004-kit-first-interoperability-profile.md
+  - docs/decisions/ADR-004-operational-interoperability-profile.md
 read_set: []
 depends_on:
   - T011

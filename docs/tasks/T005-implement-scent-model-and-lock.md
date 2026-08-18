@@ -16,7 +16,7 @@ context_files:
   - docs/components/C02-perception-strategy/PRD.md
   - docs/components/C02-perception-strategy/PLAN.md
   - docs/mechanisms/M-01-scent-model.md
-  - docs/decisions/ADR-004-kit-first-interoperability-profile.md
+  - docs/decisions/ADR-004-operational-interoperability-profile.md
 read_set: []
 depends_on:
   - T004
@@ -101,3 +101,6 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+
+Not claimed. Integration-baseline state (this branch, `lahav`): no `scent/` module exists under `src/`; T004's `common/domain/` logic is present but T005 has not started against this baseline. Feature-branch state: a scent-model implementation (both registered profiles, the model-lock mechanism, and unit/contract vector tests) exists on the dedicated `feature/issue-8-t005-scent-model-lock` branch. That branch is not merged into `lahav` and is not integrated here. Review state: not reviewed against this task's acceptance criteria. Verification state: not run against this baseline. Integration state: not integrated. Formal task state: not started (this task has not been claimed).

@@ -2,8 +2,6 @@
 
 > Repository execution copy of the approved planning methodology. This file contains the repository-facing rules needed for standalone work and preserves the methodology's artifact ownership, stable-ID, change-control, task, orchestration, and verification semantics.
 
-**Version 2.0** (bounded-context migration, Issue #1 / Issue #3; supersedes v1.0). The lifecycle, stable-ID discipline, claiming rules, parallel-execution rules, safety rules, and prohibited patterns from v1.0 are unchanged and repeated below. What is new is §1a (two-level planning), the `Primary component` relation in §1, the `context_files`/`read_set`/`write_set` and `gates:` semantics in §5–§6, and the master/local-copy/submodule rule in §12.
-
 ## 1. Artifact ownership
 
 | Artifact | Owns | Must not become |
@@ -22,7 +20,7 @@
 
 Changes flow from PRD to PLAN to TODO/tasks to implementation to evidence — at **both** levels described in §1a. A downstream artifact must not silently redefine an upstream artifact.
 
-## 1a. Two-level planning (added in v2.0)
+## 1a. Two-level planning
 
 The PRD → PLAN → TODO/Tasks → implementation → verification chain now operates at two levels:
 
@@ -152,7 +150,7 @@ Before implementation and after material changes, verify:
 
 Do not duplicate requirements across artifacts, maintain competing status ledgers, create vague mega-tasks, code before required approval, micro-plan stale future details, run false parallel work, share mutable state without isolation, expand scope silently, guess missing requirements, mark unverified work done, hide failure, retry without bounds, keep decisions only in conversation memory, or model a criterion-scoped ambiguity as a whole-task `depends_on` edge when a `gates:` entry with `blocks: criterion` or `blocks: integration` is the honest representation.
 
-## 12. Bundle/submodule-aware synchronization (added in v2.0)
+## 12. Bundle/submodule-aware synchronization
 
 Where the general planning repository packages multiple repositories via Git submodules:
 

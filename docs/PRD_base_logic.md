@@ -18,7 +18,7 @@ updated: 2026-08-15
 
 Build the deterministic core of the game: a discrete square board, the movement and barrier rules, capture and terminal conditions, the fixed scoring table, and the shared configuration contract that parameterizes them all — with **no communication, no strategy, no scent, no cryptography, and no I/O** (book ch. 10 build order, stage 1). This is the foundation every later stage rests on: stage 2 (FastMCP infrastructure) starts only after stage 1 behavior is observed working end-to-end. Target audience: the two peer agents (which consume the contract and enforce the physics), the project team, and the evaluator (who audits the stage evidence).
 
-This PRD decomposes the approved product contract `PRD-FINAL-P2P@0.1` into stage 1 scope. It adds no new product scope: every requirement maps to a canonical ID in `docs/spec/CANONICAL_REQUIREMENTS.md`. Where the book body uses parameter placeholders (`[גודל הלוח]`, `[מכסת המחסומים]`, `[סף ההישרדות]`), the binding values and their fixed/minimum/negotiated statuses come from Appendix F as registered in that canonical set; the shared contract's file structure and field names come from Appendix B, and the binding rule list from Appendix E. The reference implementation `references/copthief-league-protocol/sparring/rules/` (`board.py`, `engine.py`, `outcome.py`, and the parent `config.py` binding table) is the **correctness baseline and test oracle** for this stage.
+This PRD decomposes the approved product contract `PRD-FINAL-P2P@0.1` into stage 1 scope. It adds no new product scope: every requirement maps to a canonical ID in `docs/spec/CANONICAL_REQUIREMENTS.md`. Where the book body uses parameter placeholders (`[גודל הלוח]`, `[מכסת המחסומים]`, `[סף ההישרדות]`), the binding values and their fixed/minimum/negotiated statuses come from Appendix F as registered in that canonical set; the shared contract's file structure and field names come from Appendix B, and the binding rule list from Appendix E. This project's own contract tests (`tests/unit/domain/`) are the **correctness baseline** for this stage.
 
 ## Context and theoretical background (book ch. 3)
 
@@ -121,7 +121,7 @@ Normative key words (MUST, MUST NOT, SHOULD) are RFC-2119. Each BL row maps to t
 | BL-21 | GAME-013 | Scoring MUST be fixed: capture gives Police 20 and Thief 5; survival gives Police 5 and Thief 10; technical loss is 0 for both; a cumulative series tie gives 2 to each side. | `(outcome, role)` → int |
 | BL-22 | — | A zeroed outcome (technical loss / timeout / tamper) MUST NOT be reported as a tie: the 0–0 is a sanction, not a draw. | `(outcome, scores)` → `tie` flag |
 
-### F. Hidden-position design constraint (reference `engine.py`)
+### F. Hidden-position design constraint
 
 The domain core MUST operate on **local truth only**, so stage 2 can attach a transport without redesign:
 
@@ -191,7 +191,7 @@ Note on `num_games`: the book's example JSON ships `num_games: 1` (a single samp
 
 ### Binding values (App. F tables 13, 15, 17)
 
-| Official key (App. B/F) | Reference name | Status | Default | Stage 1 validation |
+| Official key (App. B/F) | Common name | Status | Default | Stage 1 validation |
 |---|---|---|---|---|
 | `grid_size` | `board_size` | minimum | 7 | ≥ 7 |
 | `num_agents` | — | fixed | 2 | == 2 |
@@ -227,8 +227,8 @@ The private `config/game.toml` (App. B §4) holds local-only settings — group 
 - Start positions, board size, and quota MUST never be hardcoded as constants in game logic — always read from the validated config, so the balance can change per pairing without touching agent code (book §3.3).
 - The canonical cell representation is `(row, col)` with the contract's origin and indexing; if one peer indexed from 0 and the other from 1, `[3,3]` would diverge and the game would collapse — validation MUST reject mismatched interpretations (book §3.3).
 - The domain MUST NOT hash or sign anything in stage 1 (that is the stage 6 integrity layer); internal representations are free but outcomes and scores are pinned by the tables above.
-- The reference implementation defines expected behavior; it is not a license to copy — this repository's package layout and module boundaries follow `PLAN.md` (TD-01, TD-08).
-- **Fixed field names (App. B §3).** Only values are negotiable; the section structure and field names are mandatory. The reference implementation uses equivalent but differently named keys (`board_size`, `barriers_max`, `max_steps`); this repository MUST use the official Appendix B/F names and treat the reference as a test oracle through that mapping.
+- This repository's package layout and module boundaries follow `PLAN.md` (TD-01, TD-08).
+- **Fixed field names (App. B §3).** Only values are negotiable; the section structure and field names are mandatory. This repository MUST use the official Appendix B/F names (`grid_size`, `max_barriers`, `max_moves`); the "Common name" column in the binding-values table above records the informal names used in project discussion, mapped through to the official keys.
 - **Stage 1 demo driver.** The two-agent scripted run (SC-3) is a test-only harness and MAY run in a single process; the App. E rule 1 binding — two fully separate processes with no shared memory — applies to the shipped peers from stage 2 onward.
 
 ## Alternatives considered and rationale
@@ -239,8 +239,8 @@ The private `config/game.toml` (App. B §4) holds local-only settings — group 
 | 5×5 default board | Rejected | State space too small: the pursuit is decided almost immediately and brute-force remains feasible; 7×7 is the binding minimum with strategic room (book §3.3). |
 | Hardcoded constants for game values | Rejected | The contract is negotiated per pairing; values must flow from `config/game.json` (book §3.2–3.3; CFG-004). |
 | 1-based coordinate indexing | Allowed by negotiation, not default | Book and reference default to 0-based, top-left origin; both peers may agree otherwise but MUST agree identically (GAME-003). |
-| Single shared board object (omniscient state) | Rejected | The hidden-position model requires local truth per peer; even the live GUI must not show the objective board (OBS-002). Reference `SubGameEngine` demonstrates the local-truth shape. |
-| Copying `sparring/rules/` verbatim | Not adopted as plan | Repositories are greenfield with their own package structure (PLAN TD-01/08); the reference is used as a test oracle and behavior baseline, not as vendored code. |
+| Single shared board object (omniscient state) | Rejected | The hidden-position model requires local truth per peer; even the live GUI must not show the objective board (OBS-002). |
+| Vendoring third-party rule-engine code | Not adopted as plan | Repositories have their own package structure (PLAN TD-01/08); no third-party game logic is vendored into this project. |
 
 ## Success criteria and stage gate (book ch. 10 discipline)
 
@@ -332,13 +332,13 @@ flowchart TD
 
 ## Open items
 
-No stage 1 value is open: all are registered in Appendix F. If the official specification (v3.0.0) and the reference implementation ever diverge on a value, the specification wins and an `OPEN-*` entry is raised per workflow §4.
+No stage 1 value is open: all are registered in Appendix F. If a later official clarification (v3.0.0 or newer) diverges from a value assumed here, the specification wins and an `OPEN-*` entry is raised per workflow §4.
 
 ## Approval and change history
 
 | Version | Date | Status | Change | Approval |
 |---|---|---|---|---|
-| 0.1 | 2026-08-15 | draft | Initial stage 1 PRD: decomposes PRD-FINAL-P2P@0.1 (GAME-001…014, CFG-001…010) per book ch. 3, guideline §2.3, with the sparring reference rules as correctness baseline | Pending project-team review |
+| 0.1 | 2026-08-15 | draft | Initial stage 1 PRD: decomposes PRD-FINAL-P2P@0.1 (GAME-001…014, CFG-001…010) per book ch. 3, guideline §2.3 | Pending project-team review |
 | 0.2 | 2026-08-15 | draft | Aligned with book appendices B/E/F (official config field names and section structure, binding rule citations) and with guideline §20.1 (user stories, KPIs, timeline/checkpoints) | Pending project-team review |
 
 After approval, per the repository workflow: only the orchestrator edits this PRD; material changes require a Change Request naming affected requirement IDs, source/authority, impact, approval, and resulting version, followed by PLAN/task reconciliation.

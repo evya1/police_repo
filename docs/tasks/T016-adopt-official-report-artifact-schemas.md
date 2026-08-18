@@ -84,7 +84,26 @@ The runtime instances are built during execution: declaration before the series,
 
 ## Implementation plan
 
-To be completed immediately before execution.
+Status: `blocks: start` on INPUT-001; never begin speculatively. When the gate
+resolves: adopt the four official templates unmodified into
+`config/official/reporting/`; record authority, version, safe hash, and
+verification status in INPUT_REGISTER; implement `schemas.py` validators
+returning the three distinct errors from §4; builders expose the four
+lifecycle points; golden tests from sanitized official templates; candidate
+layouts quarantined from production config. Error model: `SchemaError`,
+`SignatureError`, `IdentifierMismatch`. Dependency requests: none.
+
+(Reviewed 2026-08-18: analyzed by deepseek-v4-pro, approved by glm-5.2; full rationale in docs/evidence/c06-prep-01/analysis.md sections 2, 3, 5.)
+
+## Behavioral test plan
+
+(gate note: `INPUT-001 blocks: start` — defer integration tests until the gate resolves)
+- **unit** — validators distinguish three distinct failure kinds: `SchemaError`, `SignatureError`, `IdentifierMismatch`; assert each is raised by its own fixture.
+- **boundary-adapter** — builders expose the four lifecycle points (declaration, configuration, finalized log, result) and reject premature creation or mutation of a finalized log.
+- **integration** — none until INPUT-001 resolves; state this explicitly.
+- **failure** — unknown fields and private/secret fields are rejected at validation.
+- **security** — no secret content passes into an artifact; check_no_secrets passes against fixtures.
+- **determinism** — per-game filenames and reported Git commit strings are byte-identical on replay with injected clock/config.
 
 ## Handoff contract
 

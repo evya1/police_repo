@@ -91,7 +91,33 @@ Tests must never contact Gmail or any optional model provider. Live OAuth author
 
 ## Implementation plan
 
-To be completed immediately before execution.
+Modules `external_api_gatekeeper.py` (facade: token bucket, queue, DOS
+lockout, backoff, optional quota) and `reporting/gmail.py` (adapter).
+Configuration-driven limits (private TOML defaults, shared JSON overrides).
+Gmail adapter builds the RFC 2822 MIME message per §1 and calls
+`users().messages().send`; scope check rejects broader grants. Backoff policy
+(exact): on HTTP 429 only, exponential backoff with full jitter, base 2.0 s,
+max 3 attempts; queue overflow and DOS lockout do not retry. Resource
+lifecycle: bounded queue with timeout/cancellation; blocking send executed
+off the event loop via an injected executor seam. Error model: `RateLimited`,
+`QueueOverflow`, `DosLocked`, `BackoffExceeded`, `QuotaExhausted`,
+`InvalidRecipient`, `TokenExpired`, `DuplicateSend`, `NetworkError`.
+Dependency request: structured `dependency_request` for
+`google-api-python-client`, `google-auth-httplib2`, `google-auth-oauthlib` (a
+separate authorized dependency-integration step must land them before T017
+tests run).
+
+(Reviewed 2026-08-18: analyzed by deepseek-v4-pro, approved by glm-5.2; full rationale in docs/evidence/c06-prep-01/analysis.md sections 2, 3, 5.)
+
+## Behavioral test plan
+
+(gate note: `PLANQ-005` resolved by this analysis → `sender_choice` criterion unblocked)
+- **unit** — token bucket refills per injected clock and refuses over-capacity; concurrency bound is enforced; queue overflow is explicit; DOS lockout threshold flips the pipeline locked; quota decrement reaches zero.
+- **boundary-adapter (Gmail)** — a fake send seam captures the exact `raw` bytes; an OAuth scope check rejects any broader granted scope; a draft-substitute or message-body-text path fails the compliance check.
+- **integration** — Gatekeeper + Gmail adapter are wired so every send transits the single facade; a future provider adapter must route through the same facade without changing Gmail behavior.
+- **failure** — 429 (backoff, not blind retry), quota-exhausted, expired-token, invalid-recipient, duplicate-send, and network-error paths each return a distinct failure outcome.
+- **security** — credentials.json/token.json are absent from fixtures and logs; check_no_secrets passes.
+- **determinism** — backoff schedule and bucket state are deterministic under an injected clock/RNG.
 
 ## Handoff contract
 

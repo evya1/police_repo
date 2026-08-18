@@ -90,7 +90,25 @@ Artifact instances are produced in lifecycle order: one declaration before the s
 
 ## Implementation plan
 
-To be completed immediately before execution.
+`artifacts.py` builds/signs the four artifacts from CT-06 and enforces
+immutability of a finalized log; `pipeline.py` orchestrates settle → M-07
+reconcile → build → one Gatekeeper send. OPEN-004's sanction criterion waits;
+implement the conservative unsettled state only. Idempotency: persist the
+per-`game_id` result-hash sent guard before send. Exact attachment bytes
+asserted against a fake send. Dependency requests: none beyond T016/T017
+outputs.
+
+(Reviewed 2026-08-18: analyzed by deepseek-v4-pro, approved by glm-5.2; full rationale in docs/evidence/c06-prep-01/analysis.md sections 2, 3, 5.)
+
+## Behavioral test plan
+
+(gate note: `OPEN-004 blocks: criterion` on `sanction_settlement` — implement the conservative guard only)
+- **unit** — artifact totals derive strictly from CT-06 records + the fixed GAME-013 table; the idempotent sent-state guard refuses a second send for the same `game_id`.
+- **boundary-adapter** — the exact MIME attachment bytes passed to a mock are asserted byte-for-byte; exactly one send per settled series.
+- **integration** — declaration → per-sub-game configuration → finalized log → result is produced in lifecycle order, then exactly one send fires.
+- **failure** — missing, incomplete, or conflicting required reports reach the explicit unsettled state with preserved evidence (M-07); tampered/schema-invalid records are refused.
+- **security** — signature verification precedes any send; no plaintext report is ever accepted.
+- **determinism** — with seeded verified records and injected timestamp/commit values, artifact bytes are identical across runs.
 
 ## Handoff contract
 

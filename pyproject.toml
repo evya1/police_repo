@@ -5,7 +5,7 @@ description = "Greenfield Police peer for the distributed Police/Thief final pro
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "fastmcp>=2.0,<3.0",
+  "fastmcp>=3.4,<4",
 ]
 
 [tool.uv]

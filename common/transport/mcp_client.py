@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import threading
+import time
 import urllib.error
 import urllib.request
 
@@ -47,13 +48,31 @@ class McpChannel:
         )
         self._loop_thread.start()
         self._client: object | None = None
-        self._connect()
+        try:
+            self._connect()
+        except Exception:  # noqa: BLE001 — never leak the loop thread on a failed open
+            self._stop_loop()
+            raise
 
     # --- event-loop plumbing ----------------------------------------------------------------
     def _submit(self, coro, timeout: float | None = None):
-        """Run a coroutine on the private loop and block for its result."""
+        """Drive a coroutine on the private loop; cancel it if the wait times out.
+
+        Cancelling the future stops the orphaned coroutine instead of leaving it
+        running on the loop after the caller has moved on.
+        """
         future = asyncio.run_coroutine_threadsafe(coro, self._loop)
-        return future.result(timeout=timeout if timeout is not None else self.timeout)
+        try:
+            return future.result(timeout=timeout if timeout is not None else self.timeout)
+        except Exception:
+            future.cancel()
+            raise
+
+    def _stop_loop(self) -> None:
+        """Stop the private event loop and join its daemon thread. Idempotent."""
+        if self._loop.is_running():
+            self._loop.call_soon_threadsafe(self._loop.stop)
+        self._loop_thread.join(timeout=5.0)
 
     def _connect(self) -> None:
         """Open (or reopen) the held session to the opponent."""
@@ -69,19 +88,29 @@ class McpChannel:
                 self._submit(self._client.__aexit__(None, None, None), timeout=5.0)
             self._client = None
 
-    # --- the one call path, with a single re-establish (FR-30/FR-31) ------------------------
+    # --- the one call path, with a single re-establish inside one deadline (FR-30/FR-31) ----
     def _call(self, tool: str, args: dict) -> dict:
         async def _invoke() -> dict:
             result = await self._client.call_tool(tool, args)
             return dict(result.data) if getattr(result, "data", None) is not None else {"ok": True}
 
+        deadline = time.monotonic() + self.timeout
         try:
             return self._submit(_invoke(), timeout=self.timeout)
-        except Exception:  # noqa: BLE001 — one re-establish inside the deadline
+        except Exception:  # noqa: BLE001 — re-establish once, within the same deadline
+            # A turn/audit redelivered by the retry is absorbed by the at-least-once inbox
+            # (FR-32/33/34), so a duplicate is safe even though delivery is not exactly-once.
             self._teardown()
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise PeerUnreachableError(
+                    f"peer at {self.peer_url} timed out; no time to retry"
+                ) from None
             try:
                 self._connect()
-                return self._submit(_invoke(), timeout=self.timeout)
+                return self._submit(_invoke(), timeout=max(0.1, deadline - time.monotonic()))
+            except PeerUnreachableError:
+                raise
             except Exception as exc:  # noqa: BLE001
                 raise PeerUnreachableError(
                     f"peer at {self.peer_url} unreachable after re-establish: {exc}"
@@ -116,7 +145,7 @@ class McpChannel:
     def close(self) -> None:
         """Tear down the session and stop the private loop. Idempotent."""
         self._teardown()
-        self._loop.call_soon_threadsafe(self._loop.stop)
+        self._stop_loop()
 
 
 def edge_answers(url: str, timeout: float = 2.0) -> bool:

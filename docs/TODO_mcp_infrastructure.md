@@ -6,7 +6,7 @@ version: 0.8
 derived_from: PLAN-MCP-INFRA@0.1 · PRD_mcp_infrastructure (approved 2026-08-17)
 applies_to: police_repo + thief_repo
 owner: orchestrator
-updated 2026-08-18 (ST-03 + ST-04 + ST-05 + ST-06 + ST-07 + ST-08 + ST-09 done; pre-existing spine/golden-vector debt fixed)
+updated 2026-08-18 (ST-03 + ST-04 + ST-05 + ST-06 + ST-07 + ST-08 + ST-09 done; pre-existing spine/golden-vector debt fixed; ST-10 + ST-11 done — real FastMCP 3.4 server/client, four-tool surface, 406 ready state, and the two-OS-process localhost smoke (SC-1): both peers complete six sub-games with mutual audits over real HTTP and agree on game_id/game_uid. Follow-on hardening: TC-22 latency benchmark and the preflight exit-5 fixture)
 ---
 
 # TODO — MCP Infrastructure (Stage 2)
@@ -35,8 +35,8 @@ Task ledger for building the MCP infrastructure from `PRD_mcp_infrastructure.md`
 | ST-07 | Turn frames: shapes + all-or-nothing validation | C | P0 | done | IA | ST-03 (∥ ST-04…06) | T009 · FR-21…27 | G-S4 |
 | ST-08 | At-least-once inbox + deterministic fault injection (M3) | D | P1 | done | IA | ST-07 | T012 · FR-32/33/34 | G-S4 |
 | ST-09 | Mutual audit + TAMPERED sanction (M4-loopback) | E | P0 | done | IA | ST-08 | T008 · FR-28/29/42 | G-S5 |
-| ST-10 | FastMCP server (M2) | F | P0 | not started | IA | ST-03 (∥ phases B–E) | T009 · FR-4/6/8/9/19/37 | G-S6 |
-| ST-11 | FastMCP client + two-process localhost smoke (M2) | F | P0 | not started | IA | ST-06…10 | T009 · FR-3/7/30 | G-S6 |
+| ST-10 | FastMCP server (M2) | F | P0 | done | IA | ST-03 (∥ phases B–E) | T009 · FR-4/6/8/9/19/37 | G-S6 |
+| ST-11 | FastMCP client + two-process localhost smoke (M2) | F | P0 | done | IA | ST-06…10 | T009 · FR-3/7/30 | G-S6 |
 | ST-12 | Session faults + recovery suite (M4) | G | P1 | not started | IA | ST-11 | T012/T022 · FR-31 | G-S7 |
 | ST-13 | Tunnel readiness discipline (M5-local) | H | P1 | not started | IA | ST-11 (∥ ST-12) | T009/T022 · FR-35/36 | G-S8 |
 | ST-14 | Guards + cross-repo sync + Stage-2 system proof | H | P0 | not started | IA | ST-12, ST-13 | T022 · FR-1/2/38/39, SC-1…7 | G-S8 |

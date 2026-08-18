@@ -46,6 +46,26 @@ included here.
 - OpenRouter routed these models across several inference providers; the split
   above is by model, which is what the roles map to.
 
+## Supervisor cost (Claude Code)
+
+The Claude Code supervisor ran on Claude Opus 4.8 (with a small amount of Sonnet
+5 for auxiliary classification). This figure is an **estimate** computed from the
+session's own token usage times the published per-MTok rates (Opus 4.8:
+$5 input / $25 output / $6.25 cache-write / $0.50 cache-read); it is not a billing
+statement.
+
+| Category | Tokens | Rate ($/MTok) |
+|---|---|---|
+| Output | ~1.0M | 25.00 |
+| Cache write (5-minute) | ~14.5M | 6.25 |
+| Cache read | ~257M | 0.50 |
+| Uncached input | ~1.6K | 5.00 |
+
+- **Estimated supervisor cost: about USD 244.** It is dominated by prompt-cache
+  reads — a long agentic session re-reads a large cached context on every turn
+  (about 800 turns here), so cache-read volume, not output, drives the total.
+- **Estimated grand total (supervisor + workers): about USD 248.**
+
 ## Work delivered
 
 - Consolidated `docs/documentation-fix` and `docs/operational-conventions` onto

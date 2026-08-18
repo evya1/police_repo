@@ -8,7 +8,7 @@ This repository implements the autonomous Police side of a two-peer Police/Thief
 
 The target is a decentralized hidden-state pursuit game: the Police process maintains local state, opponent belief, scent evidence, a separate strategy, Commit-Reveal integrity, Live GUI, Replay, resilience, and signed reporting. Its strategy objective is to pursue through local belief, place truthful barriers, and make only justified capture claims.
 
-Confirmed team metadata:
+Confirmed public team metadata:
 
 - Team name: `ZeroOne`
 - Team number: `01`

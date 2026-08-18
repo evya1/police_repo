@@ -233,24 +233,28 @@ Build (PLAN §5.9): `audit.py` + `audit_physics.py` — `audit_records(records, 
 Build (PLAN §5.15, §3): `mcp_server.py` — `build_server(inboxes)` with the four `@mcp.tool` handlers (validate, enqueue, return `{"ok": True}` — **no** await of game progress, no crypto, no state mutation, FR-8), **lazy `fastmcp` import** inside construction (NFR-5); `port_is_held(host, port)` — a **connect probe, never a trial bind** (FR-37); `preflight(cfg)` — runs the shared-layer guard scan and refuses to start on violation (FR-39) before any bind; `serve(cfg, inboxes, game_loop, peer_url)` — preflight → port check → server on a **daemon thread**, game loop on the caller's thread (FR-4); tools-only mode prints the kit's "TOOLS ONLY — no game loop" banner (a listener that never dials never plays, FR-3); mounted at `/mcp`; browser-shaped GET ⇒ `406` (the ready state, FR-9).
 
 **Definition of done:**
-- [ ] TC-01 green over the real server: all four tools listed under their exact names (`receive_control` present).
+- [x] TC-01 green over the real server: all four tools listed under their exact names (`receive_control` present).
 - [ ] TC-22 green: handler enqueue-and-return p99 < 5 ms on localhost (benchmark in `tests/contract/mcp/`); static scan of handler bodies ⇒ zero blocking/crypto calls (scan lives in `scripts/check_shared_layer.py`, ST-14 — the handler-subset runs here via a focused test).
 - [ ] Preflight test: a deliberately injected guard violation (test fixture) ⇒ server refuses to bind (exit code 5 path).
 - [ ] 406 probe test: browser-shaped GET ⇒ 406; MCP `initialize` POST ⇒ real `protocolVersion` answer (TC-23 partial).
-- [ ] `uv run pytest tests/contract/mcp` green with `fastmcp` installed; the zero-dep spine still green without importing `fastmcp`.
+- [x] `uv run pytest tests/contract/mcp` green with `fastmcp` installed; the zero-dep spine still green without importing `fastmcp`.
 
 ### ST-11 — FastMCP client + two-process localhost smoke (owner: IA → repo task T009)
 
 Build (PLAN §5.16): `mcp_client.py` — `McpChannel` implementing `PeerChannel`: **one session held across the series** (FR-30) on a **private event loop in a daemon thread**, synchronous facade (the game loop stays async-free), per-call timeout from config; on session-terminated ⇒ tear down, re-establish **once**, retry within the original deadline, else `PeerUnreachable` (FR-31); the `payload`/`message` asymmetry applied at the call site. `probes.py` — `edge_answers`, `classify_probe` (pure), `diagnose`. Role `entry.py` real mode: builds `McpChannel(peer_url)` + serves + runs the facade (two processes).
 
 **Definition of done (SC-1, `local_mcp_smoke`):**
-- [ ] TC-21 green: **two independent local processes** (one from `police_repo`, one from `thief_repo`, separate config areas, FR-38) on `localhost` complete the full surface — handshake, six sub-games, mutual audits — **without a public endpoint and without an opponent URL**.
-- [ ] TC-02 green over real HTTP: calling `submit_audit` with an argument named `message` ⇒ schema error (the asymmetry asserted, not assumed, FR-7).
+- [x] TC-21 green: **two independent local processes** (one from `police_repo`, one from `thief_repo`, separate config areas, FR-38) on `localhost` complete the full surface — handshake, six sub-games, mutual audits — **without a public endpoint and without an opponent URL**.
+- [x] TC-02 green over real HTTP: calling `submit_audit` with an argument named `message` ⇒ schema error (the asymmetry asserted, not assumed, FR-7).
 - [ ] US-MCP-001/002 over HTTP: handshake with same-derived ids; a legal turn returns `{"ok": True}` in µs while the nonce stays secret (FR-8, US-MCP-002).
 - [ ] `reference_v3_contract` gate: the four-tool surface, argument asymmetry, turn keys/shapes, locked-model declaration/refusal, thief-first order, no step-0 — all asserted against the live local server (`tests/contract/mcp/`), no real opponent required.
-- [ ] Spine (loopback) still green; full repo gates green.
+- [x] Spine (loopback) still green; full repo gates green.
 
 ---
+
+**Evidence (2026-08-18) — verified.** Real FastMCP 3.4.7 server + client implemented in `common/transport/mcp_server.py` / `mcp_client.py` (byte-identical across both repos). Contract suite `tests/contract/mcp/test_local_mcp_smoke.py` (guarded by `importorskip fastmcp`, so the zero-dependency loopback spine is untouched): the `/mcp` edge answers a browser-shaped GET with `406`; all four tools list under their exact names; `submit_audit(message=…)` is rejected over HTTP; and the full six-sub-game series settles over real localhost HTTP with both sides deriving the same `game_id`/`game_uid`. Two-OS-process smoke: a `police_repo` peer and a `thief_repo` peer, each serving its own FastMCP server and dialing the other, both exit 0 and complete six sub-games with mutual audits and agreeing identity (complementary outcomes) — reproduced from fresh clones with `uv sync --locked`. Full suite 567 passed, ruff clean, 7/7 quality gates, planning-graph 0 issues in both repos. Independently reviewed (DeepSeek V4 Pro) and cross-repository-verified (GLM 5.2): no blocking issues.
+
+**Still open on ST-10/ST-11 (follow-on, unchecked above):** TC-22 handler-latency p99 benchmark; the preflight guard-violation fixture proving the exit-5 refusal path; and explicit live-server assertions for locked-model declaration/refusal and nonce-secrecy-over-HTTP (both are covered by the loopback contract suite today).
 
 ## Phase G — M4 (system): session faults & recovery
 

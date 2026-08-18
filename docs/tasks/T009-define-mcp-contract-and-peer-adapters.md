@@ -83,16 +83,16 @@ The entire contract is provable with two local processes. A real opponent URL, a
 ## Acceptance criteria
 
 - [ ] Server and client run in the same peer process while state remains role-local, and this side actively dials the peer as well as serving it — a peer that only listens never plays.
-- [ ] The four `reference-v3` tools are exposed and called under their exact names: `negotiate`, `receive_turn`, `submit_audit`, `receive_control`. The first three are required; `receive_control` touches no game state and is never sealed or scored.
-- [ ] The argument-name asymmetry is preserved exactly: `submit_audit` takes `payload`; `negotiate`, `receive_turn`, and `receive_control` take `message`. A test asserts the asymmetry rather than assuming it.
+- [x] The four `reference-v3` tools are exposed and called under their exact names: `negotiate`, `receive_turn`, `submit_audit`, `receive_control`. The first three are required; `receive_control` touches no game state and is never sealed or scored.
+- [x] The argument-name asymmetry is preserved exactly: `submit_audit` takes `payload`; `negotiate`, `receive_turn`, and `receive_control` take `message`. A test asserts the asymmetry rather than assuming it.
 - [ ] Turn messages carry the required keys `step`, `sender`, `hint`, `smell_grid`, `commit`, `timestamp`; `smell_grid` is present with `{'r,c': number}` values and a stringified intensity is refused. A missing required key is refused, never defaulted; an unknown key is tolerated and ignored; every decision is made before any state change.
 - [ ] Selected-profile declarations for `scent_model`, `wire_shape`, `info_mode`, and `smell_binding` are sent as document hashes at negotiate time, outside the closed signed-terms set, and refusal fires only when both peers declare a family and disagree — silence on either side is never refusal.
 - [ ] `info_mode: belief` is declared and structurally honored: the rival's position never crosses the wire.
-- [ ] The `reference-v3` turn-order convention is implemented and asserted — the thief takes the first game turn — with a diagnostic that names a turn-order disagreement rather than reporting a bare timeout. `{#reference_v3_contract}`
+- [x] The `reference-v3` turn-order convention is implemented and asserted — the thief takes the first game turn — with a diagnostic that names a turn-order disagreement rather than reporting a bare timeout. `{#reference_v3_contract}`
 - [ ] Tool discovery and contract mismatch diagnostics fail before game start.
 - [ ] Natural-language hints remain free-form and no direct numeric-position side channel exists.
 - [ ] Endpoint, tunnel, request timeout, and retry limits come from configuration; no value is required to be a real opponent's for the local suite to pass.
-- [ ] Contract tests exercise two independent local processes with no public endpoint and no opponent URL, and reject incompatible role/sub-game/config identifiers. `{#local_mcp_smoke}`
+- [x] Contract tests exercise two independent local processes with no public endpoint and no opponent URL, and reject incompatible role/sub-game/config identifiers. `{#local_mcp_smoke}`
 - [ ] Public-endpoint reachability over a real or simulated tunnel is exercised only once `G-LIVE` is satisfied; the local smoke test above does not require it. `{#public_endpoint}`
 
 ## Verification
@@ -109,3 +109,7 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+## Implementation evidence (2026-08-18)
+
+The FastMCP transport is implemented in `common/transport/mcp_server.py` (server, four tools, lazy import, enqueue-and-return, 406 ready state) and `common/transport/mcp_client.py` (`McpChannel`, a drop-in `PeerChannel` over HTTP with a synchronous facade over the async client). Verified by `tests/contract/mcp/test_local_mcp_smoke.py` and a two-OS-process localhost run (police_repo peer vs thief_repo peer): both peers complete the handshake, six sub-games, and mutual audits over real HTTP with no public endpoint, agreeing on `game_id`/`game_uid`. `implementation_state` is `implementation_present`; the task is **not** closed — the belief-mode position-leak guard, full turn-key/profile-declaration assertions against the live HTTP server, and the public-endpoint path (`{#public_endpoint}`, gated on `G-LIVE`) remain.

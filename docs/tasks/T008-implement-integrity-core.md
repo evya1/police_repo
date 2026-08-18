@@ -90,8 +90,8 @@ This task does **not** own scent arithmetic. Scent profiles and their vectors be
 
 ## Verification
 
-- `uv run pytest tests/unit/integrity tests/contract/test_commit_reveal.py`
-- `uv run ruff check src/police_peer/integrity tests/unit/integrity tests/contract/test_commit_reveal.py`
+- `uv run pytest tests/unit/transport/test_canonical.py tests/unit/transport/test_integrity.py tests/unit/transport/test_ids.py tests/unit/transport/test_audit_clean.py tests/unit/transport/test_audit_tampered.py tests/contract/test_golden_vectors.py tests/contract/test_canonical_differential.py`
+- `uv run ruff check common/transport/canonical.py common/transport/integrity.py common/transport/ids.py common/transport/audit.py tests/unit/transport tests/contract/test_canonical_differential.py`
 
 ## Implementation plan
 
@@ -192,3 +192,21 @@ write set or record approval.
 
 **Gated criterion:** `{#cross_peer_vectors}` remains unchecked — OPEN-007 (`blocks: criterion`)
 stays open; the auxiliary vectors are not official schema evidence.
+
+### Evidence reconciliation (2026-08-18)
+
+- Verification commands above were stale (pointed at `tests/unit/integrity`,
+  `src/police_peer/integrity`, `tests/contract/test_commit_reveal.py`, none of which exist).
+  Corrected to the real T008-owned suites under `common/transport/` and `tests/`.
+- ACs 1-5 re-verified: `tests/unit/transport/test_{canonical,integrity,ids}.py`,
+  `test_audit_clean.py`, `test_audit_tampered.py`, and `tests/contract/test_golden_vectors.py`
+  all green (57 cases); byte-for-byte golden-vector reproduction confirmed.
+- AC #6 `{#cross_peer_vectors}` non-gated part added: `tests/contract/test_canonical_differential.py`
+  (12 cases) pins the recorded OPEN-007 convention and proves the enumerated alternatives
+  (compact/spaced, key order, nonce placement, Unicode escaping, signature insertion, float
+  round-trip) are byte-distinguishable. The criterion itself stays unchecked — OPEN-007 and the
+  final report envelope remain gated. Replay/step-order divergence stays on the audit path.
+- Dependency-status lag: this task is `status: done` while its dependency **T003 is
+  `status: blocked`**. T003's package/configuration boundary is implemented in-tree
+  (`common/config/`, `src/*/wire/config.py`) but not formally claimed; the edge is to be
+  reconciled by the T003 evidence pass, not by weakening this task's proven state.

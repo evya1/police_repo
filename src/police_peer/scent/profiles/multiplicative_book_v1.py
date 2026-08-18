@@ -1,7 +1,8 @@
 """Multiplicative book scent profile (book-oriented alternative).
 
-Ported verbatim from ``verify_vectors.py`` (upstream commit ad6557626587e09146af4283a5e808e7001343c5,
-EVID-003 revision) — the arithmetic must not be re-derived.
+Implements M-01 §B.2, the book-oriented profile, from the official game book
+(Book v3.0.0, ch. 4). Kernel values, evaluation order, and clamp policy are pinned by
+``vectors/scent_book_v3.json`` — do not refit them to a closed form.
 
 M-01 §B.2: verbatim 5x5 figure-4 kernel lookup, multiplicative decay,
 decay-then-deposit, no rounding, [0, 0.9] clamp, recomputed rather than transmitted.

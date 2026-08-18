@@ -1,8 +1,8 @@
 """Model lock — pinned parameter documents, canonical hashing, and refusal decision.
 
-Ported from the kit's locked_model.json (upstream commit ad6557626587e09146af4283a5e808e7001343c5,
-EVID-003 revision). The two scent_model documents and the refusal truth table are the only
-registered families needed for T005.
+The two scent_model documents and the refusal truth table are the registered families needed
+for T005; their parameters are those specified in M-01 §B and pinned in
+``vectors/locked_model.json``.
 
 STRAT-005: before a series, both parties exchange the complete emission-and-decay model with a
 numeric example, confirm identical interpretation, and cryptographically lock the agreement.

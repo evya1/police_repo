@@ -13,7 +13,7 @@ Two models, both selectable, because real pairings lock either one:
 * ``multiplicative_book_v1`` — the book's own: a verbatim 5x5 figure-4 kernel, multiplicative
   decay, no rounding, once per full turn.
 
-Note the asymmetry the kit records: the book model's registration says ``transmitted: false`` —
+Note the asymmetry between the profiles: the book model's registration says ``transmitted: false`` —
 each side is meant to *recompute* the rival's field rather than receive it. Running it under
 ``reference-v3`` therefore means "book physics, still transmitted". That is a real combination a
 pair may lock, so it is allowed here and declared in the handshake rather than refused locally.
@@ -55,7 +55,7 @@ class Trail:
     def full_turn(self, center: Cell) -> dict[str, float]:
         """Advance one FULL turn — after both agents have moved, which is the book's cadence.
 
-        The two models differ in every detail of how, which is exactly why the kit registers them
+        The two models differ in every detail of how, which is exactly why they are registered
         separately and why a pair locks one before playing.
         """
         if self.model == BOOK_MODEL:

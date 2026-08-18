@@ -30,8 +30,8 @@ ARCH-007 (strategy is a separate module from communication/orchestration/logging
 - On every move or stay, the role emits a 5×5 scent field around its position with fixed center intensity 0.9 and the agreed radial profile (STRAT-002).
 - After a full turn by both sides, each scent cell decays and absorbs new emission. The **selected scent profile supplies the complete emission-and-decay arithmetic** used at runtime — not merely the saturation/merge/update-order details the source leaves open (OPEN-009). See M-01 §B.
   - `multiplicative_book_v1` follows the book-style multiplicative recurrence `tau_ij(t+1) = max(0, (1-0.10)*tau_ij(t) + delta_tau_ij)` (STRAT-003).
-  - `subtractive_chebyshev_v1` uses the kit-reference subtractive arithmetic `round(max(0, tau - 0.1), 3)` and therefore **intentionally diverges from the book's multiplicative decay form**.
-  - The project supports both behind one interface, defaulting to `subtractive_chebyshev_v1` for immediate interoperability with the current sparring peer. That default is an engineering/interoperability decision (ADR-004): it does not modify the official/canonical requirement and does not close OPEN-009.
+  - `subtractive_chebyshev_v1` uses the subtractive arithmetic `round(max(0, tau - 0.1), 3)` and therefore **intentionally diverges from the source's multiplicative decay form**.
+  - The project supports both behind one interface, defaulting to `subtractive_chebyshev_v1` because that is the arithmetic `wire_shape: reference-v3` transmits. That default is an operational convention (ADR-004): it does not modify the official or canonical requirement and does not close OPEN-009.
 - The active profile is chosen once, by configuration, at the component boundary; no conditional on model identity is spread through belief or strategy code.
 - The role reads only the opponent's scent field and its own hints, never plants scent it does not occupy (STRAT-004).
 - The belief map updates from scent and hints and materially influences legal move selection for both roles (STRAT-006) — see M-02 for the invariants this update must hold.
@@ -81,7 +81,7 @@ An emitted scent field (own turn); an updated belief distribution; a selected le
 
 ## Relevant OPEN/input gates
 
-- OPEN-009 — officially OPEN, and reclassified `implementation_status: DRAFT_CONTRACT_NONOFFICIAL` by the kit-first interoperability decision. It no longer blocks `{#model_lock}`: the approved profile decision is sufficient to implement, select, declare, and test both models. What still waits on an official answer is the claim that either profile is the correct reading of section 4.3, confirmed before counted play.
+- OPEN-009 — officially OPEN, with `implementation_status: OPERATIONAL_CONVENTION`. It does not block `{#model_lock}`: the recorded convention is sufficient to implement, select, declare, and test both models. What still waits on an official answer is the claim that either profile is the correct reading of section 4.3, confirmed before counted play.
 - PLANQ-003, PLANQ-004 — team decisions gating whether an optional provider is used at all and what it may generate; `blocks: start` on the optional adapter task only (T027), never on template-mode strategy.
 
 ## Definition of Done

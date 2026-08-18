@@ -1,115 +1,186 @@
-# Open Questions and Missing Official Inputs
+# Open Questions, Late Inputs, and Implementation Decisions
 
 These are active blockers and confirmations, not permission to guess. T001 records an arriving authoritative input in `INPUT_REGISTER.md`, verifies it, updates the affected `OPEN-*` entries, and reconciles derived artifacts. Input receipt does not create a Change Request unless accepting the information changes an already-approved canonical product requirement or PRD contract.
 
-## Two independent axes (added in the bounded-context migration, Issue #1 / Issue #3)
+## Categories used in this register
+
+- **Official requirement** — a behavior explicitly required by the authoritative project specification, an official course artifact, the official software-quality guide, or a later written lecturer clarification. Nothing else may be labeled one.
+- **Operational convention** — a concrete project decision taken because the official requirements leave a detail undefined or admit several valid choices, while implementation needs one deterministic choice for interoperability, testing, execution, serialization, or reporting. A convention is binding for this implementation, is never presented as a course requirement, carries a precise contract and verification, and is replaced if a later authoritative clarification requires other behavior.
+- **Implementation decision** — an ordinary internal engineering choice that interprets no unresolved course rule, such as package layout or an internal interface shape. These are not tracked here.
+- **Unresolved official input** — something that genuinely requires an external artifact, a live opponent/team/submission value, or an authoritative clarification, and cannot safely be decided locally.
+
+## Two independent axes
 
 `official_status` records whether the course/lecturer has actually closed the question. Only a verified official answer moves it to `RESOLVED`. `implementation_status` records how much local work can proceed without that answer. The two are independent: an item can remain `official_status: OPEN` while its `implementation_status` narrows to a specific, named criterion instead of blocking an entire task.
 
-`implementation_status` values:
+Allowed `implementation_status` values:
 
 - `RESOLVED_LOCALLY` — the authoritative material already fully determines every implementable behavior; no task waits on this item.
 - `DIFFERENTIAL_TESTS_ONLY` — implementation proceeds using the compatibility-matrix pattern (candidate behaviors compared, none selected as production default); only the final lock/selection criterion waits.
-- `DRAFT_CONTRACT_NONOFFICIAL` — an internal, explicitly-labeled-non-official contract may be built and used locally; only cross-peer byte agreement waits.
+- `OPERATIONAL_CONVENTION` — a recorded operational convention determines every implementable behavior; only the claim of official correctness, and any named confirmation gate, still wait.
 - `LATE_RUNTIME_INPUT` — the input is expected only late in the project lifecycle (team confirmation, opponent, submission form); it does not block early work.
 - `HARD_BLOCK` — no local work may substitute for the missing answer at the named scope.
 
-`latest_safe_resolution_gate` names the acceptance criterion or integration gate (see `docs/tasks/T###` `gates:` entries and `planning/INTEGRATION_PLAN.md`) beyond which the item must be resolved. `blocks` / `does_not_block` state the scope precisely, replacing a flat "this open item blocks this task" reading.
+`latest_safe_resolution_gate` names the acceptance criterion or integration gate (see `docs/tasks/T###` `gates:` entries and the project-level integration plan) beyond which the item must be resolved. `blocks` / `does_not_block` state the scope precisely, replacing a flat "this open item blocks this task" reading.
 
 ## Active OPEN items
 
 | ID | Type | Question / missing input | Impact | Required next action | Owner |
 |---|---|---|---|---|---|
-| OPEN-001 | MISSING OFFICIAL INPUT | The four official attached JSON templates/schemas and their exact canonical rules were not supplied. Runtime instances are expected to be produced during the lifecycle: declaration before the series, configuration before each sub-game, log during/finalized after each sub-game, and result after verified series settlement. | Blocks T016, reporting integration, and final cross-team artifact verification; it does not imply that completed match instances should already exist. | Obtain the original declaration, configuration, log, and result templates/schemas from Moodle; do not synthesize their field contract or canonical bytes. Flat and nested candidate layouts with differing field sets may be retained only as test cases showing why a substitute is unsafe. | orchestrator + project team/lecturer |
-| OPEN-002 | MISSING OFFICIAL INPUT | The official Moodle Word-to-PDF submission template was not supplied. | Blocks the final Moodle submission packet in T026. | Download the exact template and fill it without moving or changing fields. | orchestrator + project team/lecturer |
-| OPEN-003 | TEAM INPUT | Confirmed non-secret metadata: team name `ZeroOne`, team number `01`, and GitHub handles `evya1` and `Us5rName`. Still unknown: the valid eight-character final-project group code, role repository URLs, public MCP endpoints, opponent values, and any private identity fields required only by an official submission form. | Blocks live endpoints, counted play, final reporting identifiers/links, and submission, but not repository planning. | Retain the confirmed public metadata; replace the remaining placeholders only after team/lecturer confirmation. Do not infer the eight-character code from a previous submission label, and never add government IDs to repository artifacts. | orchestrator + project team/lecturer |
-| OPEN-004 | SOURCE CONTRADICTION | §9.3.3 says the non-reporting side receives no credit, while Appendix E rule 35 says a missing or conflicting report invalidates the game and gives both sides 0. | Blocks final report-refusal/sanction behavior and T018 settlement. | Ask the lecturer which sanction governs; until then require two consistent reports and block automatic scoring of the conflict. | orchestrator + project team/lecturer |
-| OPEN-005 | SOURCE AMBIGUITY | The Minimum status for operational maxima such as requests_per_minute or concurrent_requests does not unambiguously define the 'harder' direction. **Reclassified during the bounded-context migration — see "OPEN-005 reclassification" below; official_status remains OPEN.** | Narrowed: blocks only labeling/approving a proposed negotiated change to an operational Minimum parameter. Does not block CFG-005/CFG-007 validation, default-value operation, the Game Core configuration boundary (T003), or C04 retry/timeout behavior (T011, T017). | Use printed defaults unless both teams document an agreement; obtain lecturer guidance before labeling a change as "harder" or "easier". | orchestrator + project team/lecturer |
-| OPEN-006 | MISSING OFFICIAL INPUT | The pre-supplied key for signing Step 0 and its distribution mechanism are absent. | Blocks final Step 0 signing-key provisioning and counted play. | Obtain the authorized key-distribution procedure; do not invent or commit keys. Locally generated Nonces, hashes, or example signature fields do not supply the missing authorized key. | orchestrator + project team/lecturer |
-| OPEN-007 | SCHEMA AMBIGUITY | The book binds at least State/Move/Intent/Nonce but mentions a richer record; nonce placement, Unicode escaping, canonical separators, report-consensus signature scope/form, and the game_uid/game_id relationship depend on missing official files. | Blocks cross-peer canonical hash fixtures and final integrity/report envelopes; does not block local Commit-Reveal primitives built against the internal draft contract (`docs/mechanisms/M-05-commit-reveal-integrity.md`, `docs/contracts/CT-04-canonical-bytes.md`). | Implement only after OPEN-001 is resolved; meanwhile define an internal draft contract explicitly labeled non-official. Test compact versus spaced JSON, nonce-inside versus nonce-appended constructions, Unicode/float behavior, and sign-then-insert scope without selecting any as official. | orchestrator + project team/lecturer |
-| OPEN-008 | TERMINOLOGY / SERIES SEMANTICS | The terms game, match, series, and sub-game overlap; Appendix F fixes six sub-games but does not state role assignment/alternation, and the cumulative-tie wording does not unambiguously say whether the score of 2 replaces or is added to accumulated points. | Blocks exact role schedule, aggregation labels, tie settlement, and report fields but not the binding count of six or tie value 2; series mechanics (T019) may be built and tested against the fixed GAME-013 score table. | Confirm these semantics from the official reporting files or lecturer before counted play; retain the binding numeric values. Series-add, series-replace, and per-sub-game tie handling are test candidates, not approved defaults. | orchestrator + project team/lecturer |
-| OPEN-009 | SOURCE AMBIGUITY | Section 4.3 states that scent intensity is in `[0, 0.9]` and gives `tau_ij(t+1)=max(0,(1-rho)tau_ij(t)+delta_tau_ij)`. Repeated emission can exceed 0.9, but no upper clamp, replacement, or merge rule is stated. **Reclassified by the kit-first interoperability decision — see "OPEN-009 reclassification" below; official_status remains OPEN.** | Narrowed: blocks only the claim that any implemented profile is the *officially correct* reading of section 4.3, and the confirmation step required before counted play. Does not block implementing scent (T005), selecting the default interoperability scent model, generating or declaring the selected model lock, local testing, or sparring against a non-counted peer. | Obtain lecturer confirmation of saturation/merge and update order; record a numeric repeated-emission example and confirm the approved model before counted play. Until then implement the profiles named in the kit-first interoperability ADR, keep both registered models supported and vector-tested, and never label either as the official reading. | orchestrator + project team/lecturer |
-| OPEN-010 | HUMAN CONFIRMATION | Confirm the public team metadata and GitHub handles before the first public repository push. | Blocks the first public push only; it does not block local planning or implementation. | Verify the recorded team name `ZeroOne`, team number `01`, and GitHub handles `evya1` and `Us5rName` against a human-approved team record. Preserve the values until confirmation; do not guess replacements or add private identity data. | project team |
-| OPEN-011 | SOURCE AMBIGUITY | GAME-014 fixes a move cap and a survival threshold that both default to 35, but no source states whether they are one termination event or two, which outcome and score a move-cap exhaustion produces, or whether one counted move is a full round in which both sides act or a single half-turn. | Blocks the terminal-outcome map, sub-game settlement, and any counted play whose two values diverge; the binding minimum of 35 for each value and the GAME-013 score table are unaffected. | Ask the lecturer whether reaching the move cap yields the GAME-013 survival score or a technical loss, and whether the count is per round or per half-turn. Until then treat cap-versus-threshold ordering and round-versus-half-turn counting as differential tests only, and refuse to start a sub-game whose two values diverge rather than guessing a precedence. | orchestrator + project team/lecturer |
+| OPEN-001 | MISSING OFFICIAL INPUT | The four official attached JSON templates/schemas for the declaration, per-sub-game configuration, log, and result artifacts, and their exact canonical rules, have not been supplied. Runtime instances are produced during the lifecycle: declaration before the series, configuration before each sub-game, log during and finalized after each sub-game, and result after verified series settlement. **See "OPEN-001 local artifact contract" below; `official_status` remains OPEN.** | Narrowed: blocks final authoritative artifact compliance and cross-team artifact verification. Does not block the reporting architecture, the lifecycle builders, the validators, or their tests, which are developed against the project artifact contract. It does not imply that completed match instances should already exist. | Obtain the original declaration, configuration, log, and result templates/schemas; do not present a locally defined field contract or canonical byte rule as the official one. | orchestrator + project team/lecturer |
+| OPEN-002 | MISSING OFFICIAL INPUT | The official Word-to-PDF submission template has not been supplied. | Blocks the final submission packet in T026 only. It does not block product implementation. | Obtain the exact template and fill it without moving or changing fields. | orchestrator + project team/lecturer |
+| OPEN-003 | TEAM INPUT | Confirmed non-secret metadata: team name `ZeroOne`, team number `01`, GitHub handles `evya1` and `Us5rName`, and the two role repository URLs (`https://github.com/evya1/police_repo`, `https://github.com/evya1/thief_repo`). An eight-character candidate group code `ZeroOne1` appears in the role READMEs and is **not yet confirmed** against a human-approved team record. Still unknown: the final opponent identity, the public MCP endpoints, the tunnel procedure, counted-game runtime values, and any private identity fields required only by an official submission form. | Blocks live endpoints, counted play, final reporting identifiers, and submission. Does not block repository planning or local implementation. | Confirm the group code against a human-approved team record before it is used in any submitted artifact; it stays a candidate until then. Collect the remaining live values as they become real. Never infer an opponent, endpoint, tunnel URL, or counted-game value, and never add government identifiers to repository artifacts. | orchestrator + project team/lecturer |
+| OPEN-004 | SOURCE CONTRADICTION | §9.3.3 says the non-reporting side receives no credit, while Appendix E rule 35 says a missing or conflicting report invalidates the game and gives both sides 0. | Blocks the final report-refusal/sanction behavior and T018 settlement. | Ask the lecturer which sanction governs. Until then apply the conservative guard below; do not implement a punishment beyond what the authoritative requirements establish. | orchestrator + project team/lecturer |
+| OPEN-005 | SOURCE AMBIGUITY | The Minimum status for operational maxima such as `requests_per_minute` or `concurrent_requests` does not unambiguously define the 'harder' direction. **See "OPEN-005 local resolution" below; `official_status` remains OPEN.** | Narrowed: blocks only labeling or approving a proposed negotiated change to an operational Minimum parameter. Does not block CFG-005/CFG-007 validation, default-value operation, the Game Core configuration boundary (T003), or C04 retry/timeout behavior (T011, T017). | Use printed defaults unless both teams document an agreement; obtain lecturer guidance before labeling a change as "harder" or "easier". | orchestrator + project team/lecturer |
+| OPEN-006 | MISSING OFFICIAL INPUT | Whether Step 0 requires any course-supplied credential beyond the declaration, sealing, and signing mechanism the project already documents. No authoritative artifact defines such a credential, and none may be assumed to exist. | Blocks only the criterion that Step 0 uses a course-supplied credential, if one turns out to be required. Does not block Step 0 implementation, which proceeds against the documented project mechanism with a clean extension point. | Ask whether any course-supplied signing material or distribution procedure exists. Do not invent, fabricate, or commit key material of any kind. | orchestrator + project team/lecturer |
+| OPEN-007 | SCHEMA AMBIGUITY | The source binds at least State/Move/Intent/Nonce but describes a richer record; nonce placement, Unicode escaping, canonical separators, report-consensus signature scope and form, and the `game_uid`/`game_id` relationship are not fixed by any available official file. **See "OPEN-007 canonical serialization convention" below; `official_status` remains OPEN.** | Narrowed: blocks the claim that the implemented bytes are the officially required bytes, and the final report envelope. Does not block the Commit-Reveal primitives, the canonical serializer, the audit path, or their golden vectors, which are built against the recorded convention. | Obtain the official schemas or a written clarification; until then implement the convention below and keep it behind the adapter boundary. | orchestrator + project team/lecturer |
+| OPEN-008 | TERMINOLOGY / SERIES SEMANTICS | The terms game, match, series, and sub-game overlap; Appendix F fixes six sub-games but does not state role assignment or alternation, and the cumulative-tie wording does not unambiguously say whether the score of 2 replaces or is added to accumulated points. **See "OPEN-008 series execution convention" below; `official_status` remains OPEN.** | Narrowed: blocks the counted-play role schedule, the aggregation labels used in official artifacts, and tie settlement in a counted series. Does not block the binding count of six, the tie value 2, the fixed GAME-013 score table, or local series execution and testing. | Confirm role assignment, alternation, and tie aggregation before counted play; retain the binding numeric values. | orchestrator + project team/lecturer |
+| OPEN-009 | SOURCE AMBIGUITY | Section 4.3 states that scent intensity is in `[0, 0.9]` and gives `tau_ij(t+1)=max(0,(1-rho)tau_ij(t)+delta_tau_ij)`. Repeated emission can exceed 0.9, but no upper clamp, replacement, or merge rule is stated, and no source fixes whether decay applies before or after a same-turn deposit, or how rounding is handled. **See "OPEN-009 scent recurrence convention" below; `official_status` remains OPEN.** | Narrowed: blocks only the claim that an implemented profile is the officially correct reading of section 4.3, and the confirmation step required before counted play. Does not block implementing scent (T005), selecting the default profile, generating or declaring the model lock, local testing, or uncounted external play. | Obtain lecturer confirmation of saturation, merge rule, and update order; record a numeric repeated-emission example and confirm the selected profile before counted play. Never label either profile as the official reading. | orchestrator + project team/lecturer |
+| OPEN-010 | HUMAN CONFIRMATION | The final team, runtime, and submission metadata has not been confirmed against a human-approved team record. | Blocks counted play and final submission. It does not block local planning, implementation, or repository publication. | Before counted play and before final submission, confirm the team name `ZeroOne`, team number `01`, GitHub handles `evya1` and `Us5rName`, the group code, the reported repository URLs and commit identifiers, and the hardware/model declaration fields against a human-approved record. Preserve the recorded values until then; do not guess replacements or add private identity data. | project team |
+| OPEN-011 | SOURCE AMBIGUITY | GAME-014 fixes a move cap and a survival threshold that both default to 35, but no source states whether they are one termination event or two, which outcome and score a move-cap exhaustion produces, or whether one counted move is a full round in which both sides act or a single half-turn. | Blocks the terminal-outcome map for a move-cap exhaustion, sub-game settlement, and any counted play whose two values diverge. The binding minimum of 35 for each value and the GAME-013 score table are unaffected. | Ask the lecturer whether reaching the move cap yields the GAME-013 survival score or a technical loss, and whether the count is per round or per half-turn. Until then keep both readings as explicit differential tests, refuse to score a move-cap exhaustion rather than guessing, and refuse to start a sub-game whose two values diverge. | orchestrator + project team/lecturer |
 
-## OPEN-005 reclassification (bounded-context migration, dated 2026-08-15)
+## OPEN-001 local artifact contract (operational convention)
 
-**Evidence re-examined.** `CFG-005` (Appendix E rule 12; Appendix F status definitions; PDF p. 144, 151, 155) states, verbatim: *"A Fixed value is immutable; a Negotiated value may be freely agreed and defaults when no agreement exists; a Minimum value cannot fall below its threshold and may be made harder only by agreement."* This is corroborated verbatim in `final_project_requirements_en.md:192` and `:402` ("`Minimum` is a floor that may not be weakened"), and in the Hebrew audit register row `AUD-052`.
+The official templates are still required, and no locally defined artifact may be presented as one of them. To keep the reporting architecture buildable and verifiable in the meantime, the project defines its own artifact contract.
+
+**Convention.** The four lifecycle artifacts — declaration, per-sub-game configuration, log, and result — are produced by dedicated builders against a project-defined schema held in `config/official/reporting/`, serialized with the canonical form recorded under OPEN-007 below, and validated by schema, signature, and cross-artifact identifier checks. Each artifact is created only at its lifecycle point, and a finalized log is immutable.
+
+**Scope.** This convention is sufficient for development, unit and contract testing, and local end-to-end runs. It is not sufficient for counted reporting.
+
+**Verification.** Builders, validators, and cross-artifact reconciliation are proven against committed fixtures for the project contract. When the official templates arrive, they replace the project schema at the same boundary and the same test suite is re-run against them.
+
+`implementation_status: OPERATIONAL_CONVENTION`; `latest_safe_resolution_gate: before-counted-reporting`; `blocks` is narrowed to final authoritative artifact compliance.
+
+## OPEN-004 conservative settlement guard (operational convention)
+
+The official contradiction stays open, and no punishment beyond the authoritative requirements is implemented.
+
+**Convention.** A series result is finalized automatically only when both required reports exist and are mutually consistent. Missing, incomplete, or conflicting required reports produce an explicit unsettled state with preserved evidence; they never produce an automatically settled valid result, and they never select a sanction on their own.
+
+**Verification.** T018 tests assert that each of the missing, incomplete, and conflicting cases reaches the unsettled state rather than a scored outcome.
+
+`implementation_status: OPERATIONAL_CONVENTION`; `latest_safe_resolution_gate: report_reconciliation`.
+
+## OPEN-005 local resolution
+
+**Evidence.** `CFG-005` (Appendix E rule 12; Appendix F status definitions; PDF p. 144, 151, 155) states, verbatim: *"A Fixed value is immutable; a Negotiated value may be freely agreed and defaults when no agreement exists; a Minimum value cannot fall below its threshold and may be made harder only by agreement."* This is corroborated verbatim in `final_project_requirements_en.md:192` and `:402` ("`Minimum` is a floor that may not be weakened"), and in the Hebrew audit register row `AUD-052`.
 
 **Finding.** This authoritative text establishes two independently enforceable rules that together fully determine every implementable behavior for the nine `CFG-007` Minimum parameters: (1) an absolute floor — a configured value below the printed threshold is rejected unconditionally, with no agreement able to weaken it; (2) an agreement precondition — any deviation from the printed default requires recorded mutual agreement. Under these two rules, configuration validation and every runtime default are fully specified without knowing which direction "harder" points. Since rule 2 already requires agreement for a change in either direction, the missing directional label changes no enforceable behavior.
 
-**What remains genuinely open:** only the semantic label itself — whether "harder" is stated for descriptive clarity in a future negotiation record, not whether a change is legal. `official_status` therefore **stays OPEN**; the authoritative material does not define the directional semantics, and this reference-material analysis does not close an official question. Supporting/reference material alone must not close it, and none is treated as doing so here.
+**What remains open:** only the semantic label itself — whether "harder" is stated for descriptive clarity in a future negotiation record, not whether a change is legal. `official_status` therefore **stays OPEN**; the authoritative material does not define the directional semantics, and this analysis does not close an official question.
 
-**Resolution applied:** `implementation_status` moves from an effective task-level blocker to `RESOLVED_LOCALLY`; `latest_safe_resolution_gate` is set to `before-negotiated-change-to-a-Minimum-parameter`; `blocks` is narrowed to labeling/approving such a proposed change. The original question text, ID, owner, and required next action above are unchanged from the pre-migration register — this note is additive.
+**Resolution applied.** `implementation_status: RESOLVED_LOCALLY`; `latest_safe_resolution_gate: before-negotiated-change-to-a-Minimum-parameter`; `blocks` is narrowed to labeling or approving such a proposed change. This item is not an implementation blocker.
 
-## OPEN-009 reclassification (kit-first interoperability decision, dated 2026-08-16)
+## OPEN-006 Step 0 mechanism (operational convention)
 
-**What did not change.** The official question is untouched. Section 4.3 still states an
-intensity range of `[0, 0.9]` and the recurrence `tau_ij(t+1)=max(0,(1-rho)tau_ij(t)+delta_tau_ij)`
-without stating an upper clamp, a replacement or merge rule for repeated emission, or the
-order of decay against a same-turn deposit. No official Moodle artifact and no written
-lecturer clarification has answered it. `official_status` therefore **stays OPEN**.
+No authoritative artifact defines a course-supplied Step 0 signing credential, and none is assumed to exist. The earlier assumption that one had already been issued was unsupported and has been withdrawn.
 
-**Evidence examined.** `EVID-003` in `requirements/EVIDENCE_REGISTER.md` — the current
-`Imreec/copthief-league-protocol` upstream at commit `ad6557626587e09146af4283a5e808e7001343c5`,
-inspected read-only. It registers two *distinct, separately named* scent models rather than one
-resolved reading: `subtractive_chebyshev_v1` (what `wire_shape: reference-v3` actually carries,
-`vectors/pheromone.json`, status `CORE`) and `multiplicative_book_v1` (a verbatim reading of the
-book's printed figure-4 kernel, `vectors/scent_book_v3.json`, status `PROMOTED`). Each has a
-pinned parameter document whose hash is comparable across implementations.
+**Convention.** Step 0 is implemented against the project's documented declaration, sealing, and signing mechanism: the required hardware, model, version, team, sub-game, and commit fields are collected before the first move, canonicalized under the OPEN-007 convention, and sealed through the single integrity boundary. The signing material is supplied through one narrow, injected credential seam with no default value, so a later authoritative credential requirement is satisfied by configuring that seam rather than by changing the Step 0 record or the integrity path.
 
-**Finding.** This evidence is NON-AUTHORITATIVE and settles nothing about the book. What it does
-supply is two fully specified, independently reproducible profiles — enough to build, test, and
-declare a model without guessing, and enough for a peer to detect a profile mismatch before play
-rather than diverging silently mid-game. The fact that the kit registers *both* is itself the
-clearest confirmation that the ambiguity is real and remains unresolved.
+**Scope.** No credential is fabricated, generated as a stand-in for an authorized one, or committed. Locally generated nonces, hashes, and example signature fields are not a substitute for an authorized credential and are never described as one.
 
-**Human-approved engineering decision.** The project team has selected
-`subtractive_chebyshev_v1` as the default interoperability scent profile and
-`multiplicative_book_v1` as the additionally supported book-oriented profile, recorded in the
-kit-first interoperability ADR in each role repository (`docs/decisions/`). That is an
-engineering choice about what we build, not a reading of the book.
+**Verification.** T013 tests prove the full field set is collected and sealed before the first move, that a missing or unverifiable commit or configuration version blocks counted play, and that the credential seam is injected rather than defaulted.
 
-**Explicitly not claimed.** This reclassification does not state that OPEN-009 was "resolved by
-the kit", that a lecturer clarified it, or that the official model is subtractive. None of those
-statements is permitted anywhere in project artifacts.
+`implementation_status: OPERATIONAL_CONVENTION`; `latest_safe_resolution_gate: before-counted-play`.
 
-**Resolution applied.** `implementation_status` moves from an effective blocker on the model lock
-to `DRAFT_CONTRACT_NONOFFICIAL` — the ADR profile is the internal, explicitly-labeled-non-official
-contract that implementation, default selection, model-lock generation and declaration, local
-testing, and uncounted sparring may all proceed against.
-`latest_safe_resolution_gate` is set to `before-counted-play`. `blocks` narrows to the claim of
-official correctness and to that pre-counted-play confirmation; `does_not_block` now covers T005
-implementation in full, including the `{#model_lock}` criterion. The original question text, ID,
-owner, and impact class are otherwise unchanged; this note is additive, and follows the same
-pattern as the OPEN-005 reclassification above.
+## OPEN-007 canonical serialization convention (operational convention)
 
-## Input gates (bounded-context migration)
+The official byte contract is still missing and the ambiguity stays visible. The implementation nevertheless needs one deterministic byte form, because two peers must independently produce identical verification results.
 
-Four named classes group the eleven `OPEN-*`/`INPUT-*` items by *when* they become ready, so tasks can cite a scope rather than depending on all of T001. Defined once here; referenced by `id` in task frontmatter `gates:` entries.
+**Canonical serialization.**
+
+- UTF-8 encoding, no byte-order mark.
+- Object keys sorted by Unicode code point, ascending.
+- Compact separators: `,` between items and `:` between key and value, with no other whitespace.
+- Non-ASCII characters are emitted literally, never as `\u` escapes.
+- Floats use the shortest representation that round-trips exactly; a value that fails shortest round-trip is rejected rather than silently re-formatted.
+- Integers and floats are distinct; an integral float is not narrowed to an integer.
+- No trailing newline.
+
+**Commitment construction.** The commitment for one step is `SHA-256` over `canonical(payload) || "|" || nonce`, where `payload` is the `{State, Move, Intent}` triple in canonical form, `||` is byte concatenation, `"|"` is the single-byte U+007C separator, and `nonce` is the step's fresh nonce in its transmitted textual form. The digest is compared as a 64-character lowercase hexadecimal string; uppercase is a mismatch, because the value is compared as a string.
+
+**Ordering.** Commit precedes acknowledgement, acknowledgement precedes reveal, and the full audit runs only after the last reveal of a sub-game. The nonce is never transmitted or logged before the audit phase. Replay follows recorded step order; a missing, extra, reordered, or mutated step is an integrity failure, not a repairable condition.
+
+**Identifiers.** `game_uid` is the series-scoped identifier carried in the declaration and in every artifact; `game_id` is the sub-game-scoped identifier. Both are compared as exact strings. Their relationship to the eventual official fields is unresolved, so both are produced through the adapter boundary rather than assumed by the domain.
+
+**Verification.** Deterministic golden vectors committed under T008 cover the canonical form (key ordering, compact separators, literal non-ASCII, float round-trip), the commitment construction, and the sealed terms and identifier signatures built on it. The vectors are byte-exact: a divergence fails the local suite rather than an opponent's audit. Both role repositories run the same vectors, which is what makes two independent peers produce identical verification results.
+
+**Not claimed.** This convention is not the official byte contract. When the official schemas arrive they replace it at the adapter boundary, and the differential fixtures for compact-versus-spaced JSON, nonce-inside versus nonce-appended, Unicode, float, key-order, and signature-insertion variants remain as rejection tests.
+
+`implementation_status: OPERATIONAL_CONVENTION`; `latest_safe_resolution_gate: cross_peer_vectors`.
+
+## OPEN-008 series execution convention (operational convention)
+
+Every explicitly required series behavior is preserved: exactly six sub-games per series, the fixed tie value of 2, and the GAME-013 score table. Only the details the source leaves undefined are decided here.
+
+**Convention.**
+
+- Roles alternate across the six sub-games, starting from this repository's natural role, so each side plays each role three times in a series.
+- Each sub-game runs from a clean state with its own configuration and log identity; no state carries across sub-games.
+- Series totals accumulate per sub-game, and the tie value is **added** to the accumulated total rather than replacing it.
+- A technical-loss or tampered outcome scores zero for both sides and can never be converted into a clean or tie outcome.
+
+**Verification.** T019 tests assert the six-sub-game count, the alternation schedule, clean state reset, unique configuration/log identities, and the additive tie application, and keep series-replace as an explicit rejected alternative.
+
+**Counted-play gate.** Role assignment, alternation, and tie aggregation materially affect counted scoring. Before counted play, the schedule and the tie rule are confirmed against the official reporting files or a lecturer answer; the convention above governs local execution only until then.
+
+`implementation_status: OPERATIONAL_CONVENTION`; `latest_safe_resolution_gate: before-counted-play`.
+
+## OPEN-009 scent recurrence convention (operational convention)
+
+**What did not change.** Section 4.3 still states an intensity range of `[0, 0.9]` and the recurrence `tau_ij(t+1)=max(0,(1-rho)tau_ij(t)+delta_tau_ij)` without stating an upper clamp, a replacement or merge rule for repeated emission, or the order of decay against a same-turn deposit. No official artifact and no written lecturer clarification has answered it. `official_status` therefore **stays OPEN**.
+
+**Convention.** Two scent profiles are implemented behind one common interface, recorded in full in `docs/mechanisms/M-01-scent-model.md` §B and selected through `ADR-004`:
+
+- **Default — `subtractive_chebyshev_v1`.** Linear Chebyshev falloff from the emitting cell; emitted values merge into the existing field by maximum per cell, never by addition; deposit first, then decay the whole field; subtractive decay `round(max(0, tau - 0.1), 3)`; rounding to 3 decimal places at both emission and decay; lower clamp at `0.0` with no upper clamp; once per full turn; only cells strictly greater than `0` retained; the field is transmitted and the receiver decays it.
+- **Additionally supported — `multiplicative_book_v1`.** The printed 5×5 kernel looked up verbatim by offset; multiplicative decay `(1 - rho) * tau` with `rho = 0.1`; decay first, then deposit; evaluated exactly as `(1 - rho) * tau + delta` then clamped to `[0.0, 0.9]`; no rounding; once per full turn from an empty start; recomputed by each side rather than transmitted.
+
+Edges and corners clip to the board in both profiles: a cell outside the board receives no value, and clipping never wraps, reflects, or redistributes intensity. Exactly one profile is active per pairing, and the active model is declared and compared as a document hash, so a mismatch is refused before play rather than diverging silently mid-game.
+
+**Verification.** Deterministic vectors committed under T005 cover both profiles independently: single emission, repeated emission at the same cell, saturation behavior (no upper clamp under the default profile, clamping at `0.9` under the book-form profile), decay sequences, board edges, board corners, and the model-lock hash. Both role repositories run the same vectors.
+
+**Explicitly not claimed.** Neither profile is the official reading of section 4.3. This convention states what the project builds, never what the source means, and the official question stays open until an official answer is registered and verified. Confirmation of the selected profile happens before counted play.
+
+`implementation_status: OPERATIONAL_CONVENTION`; `latest_safe_resolution_gate: before-counted-play`.
+
+## OPEN-011 termination readings (operational convention for testing only)
+
+The official ambiguity stays open and is not converted into a rule.
+
+**Convention.** Both readings are exercised as explicit differential tests: move cap and survival threshold as one termination event versus two, and one counted move as a full round versus a single half-turn. Neither reading is selected as a production default. A move-cap exhaustion below the survival threshold refuses to score rather than producing a guessed outcome, and a sub-game whose configured `max_moves` and `survival_threshold` diverge refuses to start.
+
+**Counted-play gate.** No counted play may proceed while the two values diverge or while the outcome of a move-cap exhaustion is unresolved.
+
+`implementation_status: DIFFERENTIAL_TESTS_ONLY`; `latest_safe_resolution_gate: before-counted-play`.
+
+## Input gates
+
+Four named classes group the eleven `OPEN-*`/`INPUT-*` items by *when* they become blockers:
 
 | Gate | Class | Covers | Ready when |
 |---|---|---|---|
-| `G-OFFICIAL` | official artifact intake | INPUT-001…008, INPUT-011; OPEN-001, 002, 004, 005 (label only), 006, 007, 008, 009, 011 | Moodle/lecturer supplies the file or the answer |
+| `G-OFFICIAL` | official artifact intake | INPUT-001…008, INPUT-011; OPEN-001, 002, 004, 005 (label only), 006, 007, 008, 009, 011 | the course supplies the file or the answer |
 | `G-PROFILE` | implementation-profile decisions | PLANQ-002…008 | project team decides |
-| `G-TEAM` | public team metadata | INPUT-009; OPEN-003 (public part), OPEN-010 | human confirmation |
+| `G-TEAM` | public team metadata | INPUT-009; OPEN-003 (team part), OPEN-010 | human confirmation |
 | `G-LIVE` | live pairing / opponent / endpoints | INPUT-010; OPEN-003 (remainder) | opponent agreed, tunnels up |
 
 ## Implementation Decision Register
 
-The following items are implementation-planning decisions, not official requirements and not substitutes for OPEN-001 through OPEN-010. Resolve them during the relevant task-planning step; the project team approves the value. Record only sufficiently important and durable technical decisions in an ADR. Use a Change Request only for a material change to an approved requirement or PRD contract. Additional implementation work receives a new stable task ID instead of silently expanding an active task.
+The following items are project decisions, not official requirements and not substitutes for OPEN-001 through OPEN-011. Resolve them during the relevant task-planning step; the project team approves the value. Record only sufficiently important and durable technical decisions in an ADR. Use a Change Request only for a material change to an approved requirement or PRD contract. Additional implementation work receives a new stable task ID instead of silently expanding an active task.
 
 | ID | Planning question | Constraints / options to examine | Decision | Owner | Affected tasks |
 |---|---|---|---|---|---|
-| PLANQ-001 | What are the final Police and Thief repository URLs, and which confirmed GitHub handle maintains each repository? | Use `evya1` and `Us5rName`; do not infer role ownership or create URLs until the team confirms them. | `TBD_TEAM_DECISION` | project team | T001, T023, T026 |
-| PLANQ-002 | Which Python baseline, FastMCP direct-dependency policy, and existing test/quality dependency baseline will form the initial T002 lock under the accepted `uv` bootstrap/version policy? | Start from official capabilities and select the smallest supported set. T002 owns the Python baseline, the FastMCP direct dependency selection, the existing test/quality dependency baseline, the already-approved `uv` bootstrap/version policy, and creation plus verification of the *initial* `uv.lock`. GUI toolkit and dependency choice belongs to PLANQ-007; Gmail sender and dependency choice belongs to PLANQ-005; T002 must not install speculative GUI or Gmail dependencies. `pyproject.toml` and `uv.lock` are repository-global, whole-environment integration artifacts and therefore carry serialized mutation ownership: if a later human-approved implementation decision requires changing project dependencies, the orchestrator must explicitly assign that dependency-file mutation as serialized dependency-integration work before `pyproject.toml` or `uv.lock` is edited, and a component worker must not silently widen its own `write_set` to reach them. If that later integration constitutes new implementation work, it receives a new stable task ID at that time. The T002 lock is accordingly complete for the dependency decisions approved at T002 time rather than the final dependency set of the finished project. | `TBD_TEAM_DECISION` | project team + orchestrator | T002 |
-| PLANQ-003 | Is an external language-model provider needed for this implementation mode, and if so which provider/model, call cadence, token/cost budget, and rate limits will be selected? | Optional P2 work only; template mode remains valid, and no live external call occurs before the team approves the provider/model and budget. | `TBD_TEAM_DECISION` | project team | T013, T017, T027 |
-| PLANQ-004 | If a language-model provider is selected, what may it generate? | Limit the default integration to free-form verbal hints or behavior analysis; it must not select, veto, delay, or mutate a legal movement action. Deterministic template fallback remains available. | `TBD_TEAM_DECISION` | project team + orchestrator | T007, T027 |
+| PLANQ-001 | What are the Police and Thief repository URLs, and which confirmed GitHub handle maintains each repository? | The two repository URLs are objectively verifiable from the configured remotes and are recorded. Maintainer assignment is a human fact and is not inferred from commit authorship. | **PARTIALLY RESOLVED (2026-08-16).** Police: `https://github.com/evya1/police_repo`. Thief: `https://github.com/evya1/thief_repo`. Per-repository maintainer ownership among `evya1` and `Us5rName` remains `TBD_TEAM_DECISION`. | project team | T001, T023, T026 |
+| PLANQ-002 | Which Python baseline, FastMCP direct-dependency policy, and test/quality dependency baseline form the initial T002 lock under the accepted `uv` policy? | T002 owns only the Python runtime baseline, the FastMCP direct runtime dependency, the existing test/quality dependency baseline, the accepted `uv` policy, and creation plus verification of the *initial* lock. The GUI toolkit belongs to PLANQ-007, the Gmail sender to PLANQ-005, and an optional model provider to PLANQ-003; T002 must not install any of them. `pyproject.toml` and `uv.lock` are repository-global integration artifacts with serialized mutation ownership: a later dependency change is assigned as explicit dependency-integration work, and a component worker never widens its own `write_set` to reach them. | **RESOLVED (2026-08-16).** Python 3.12 is the CI/runtime baseline. The declared runtime range stays `>=3.12` unless actual dependency compatibility forces a narrower range. FastMCP is a direct runtime dependency at `fastmcp>=3.4,<4` — the current stable major line, verified to resolve on Python 3.12 with the declared range; the unreleased 4.x line is excluded until it ships and is evaluated. The current quality/test tooling (`pytest`, `pytest-cov`, `ruff`, `pre-commit`, `pyyaml`) is preserved. `uv` remains the package/dependency manager and is **not** added as an application dependency. No GUI, Gmail, or model-provider dependency is selected here. | project team + orchestrator | T002 |
+| PLANQ-003 | Is an external language-model provider needed, and if so which provider/model, call cadence, token/cost budget, and rate limits? | Optional P2 work only. | **PARTIALLY RESOLVED (2026-08-16).** For the core MVP, deterministic template mode with no external provider is sufficient and must remain a fully legal way to play a complete game; no external provider is on the critical path and none may block legal game execution. Whether to enable a provider at all, and the specific provider/model, cadence, budget, and rate limits, remain `TBD_TEAM_DECISION`. No live external call occurs before the team approves them. | project team | T013, T017, T027 |
+| PLANQ-004 | If a language-model provider is selected, what may it generate? | Must not weaken deterministic legality. | **RESOLVED (2026-08-16).** A model provider may generate only free-form text: verbal hints, natural-language explanations, and post-hoc behavior analysis. It must never determine whether a movement action is legal, select or veto a movement action, reorder candidate actions, or delay a turn in a way that bypasses the deterministic strategy and domain rules. Legality and action selection are computed by the domain and strategy modules alone, and the deterministic template fallback is always available. | project team + orchestrator | T007, T027 |
 | PLANQ-005 | Which Gmail sender implementation will satisfy the reporting and security requirements? | Verify send-only `gmail.send`, central Gatekeeper use, exact JSON attachment bytes, idempotency, secret handling, and tests. A draft creator or pretty-printed message-body substitute is noncompliant for counted reporting. | `TBD_TEAM_DECISION` | project team + orchestrator | T017, T018 |
-| PLANQ-006 | Which public endpoint/tunnel procedure and test opponent will be used? | Must preserve two independent processes, approved shared terms, and a human gate before counted play. | `TBD_TEAM_DECISION` | project team | T009, T020, T022 |
+| PLANQ-006 | Which public endpoint/tunnel procedure and test opponent will be used? | Must preserve two independent processes, approved shared terms, and a human gate before counted play. These are live values: an opponent identity, an endpoint, a tunnel URL, and connectivity evidence are recorded only once they are real. | `TBD_TEAM_DECISION` — collection in progress. Required inputs: opponent team identity; each side's public MCP endpoint; the tunnel procedure and its restart behavior; captured connectivity evidence for a successful two-peer handshake. None is a blocker for local implementation, which runs two local processes with no endpoint. | project team | T009, T020, T022 |
 | PLANQ-007 | Which GUI toolkit and evidence-capture workflow will be used? | Must show local truth plus belief only, keep Replay immutable, and capture real—not fabricated—submission evidence. | `TBD_TEAM_DECISION` | project team | T014, T015, T023 |
 | PLANQ-008 | Which role-specific heuristic priorities and seeded scenarios will be approved? | Police and Thief strategies remain separate; choices must satisfy legal-action, hint, belief, and audit constraints. | `TBD_TEAM_DECISION` | project team + orchestrator | T007, T021 |
 
 ## Resolution rule
 
-An official-input question closes only after the file or answer is registered and verified, private values remain outside public artifacts, affected IDs are named, and the orchestrator reconciles the necessary derived artifacts. If the input fills an existing contract without changing approved normative meaning, no Change Request is opened. If it materially changes an approved requirement or PRD contract, use an approved Change Request and resulting PRD version. A durable technical choice may use an ADR; newly discovered implementation work receives a new task. Silence, sample code, or a convenience draft is not resolution. A reclassification of `implementation_status` performed with cited authoritative evidence (as with OPEN-005 above) is not an official closure and does not change `official_status`. Neither is a reclassification performed on the strength of an approved implementation-profile decision plus non-authoritative interoperability evidence (as with OPEN-009 above): it states what we may build, never what the source means, and the official question stays open until an official answer is registered and verified.
+An official-input question closes only after the file or answer is registered and verified, private values remain outside published artifacts, affected IDs are named, and the orchestrator reconciles the necessary derived artifacts. If the input fills an existing contract without changing approved normative meaning, no Change Request is opened. If it materially changes an approved requirement or PRD contract, use an approved Change Request and resulting PRD version. A durable technical choice may use an ADR; newly discovered implementation work receives a new task. Silence, sample code, or a convenience draft is not resolution.
+
+Recording an operational convention is never an official closure and never changes `official_status`. A convention states what the project builds and how that is verified; it never states what the source means. When an authoritative answer arrives that contradicts a convention, the convention is replaced and its adapter boundary absorbs the change.

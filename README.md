@@ -1,21 +1,25 @@
 # P2P Police Peer
 
-> **Status:** greenfield planning scaffold. No game implementation, screenshots, benchmarks, league results, or passing application-test claim exists yet.
+> **Status:** the C01 foundation is implemented on the integration branch — shared domain rules, board geometry, movement/barrier/capture legality, the fixed scoring table, and the configuration boundary, with unit tests. Everything above C01 is not started. No screenshots, benchmarks, league results, or completed-series evidence exist yet. Per-task state is in `docs/TODO.md`.
 
-This repository will implement the autonomous Police side of a two-peer Police/Thief system. It owns only its local truth and communicates with the sibling peer through FastMCP/MCP. The shared intent is in `docs/PRD.md`; the role-specific strategy is in `docs/PLAN.md`; execution state lives in `docs/TODO.md` and individual task files.
+This repository implements the autonomous Police side of a two-peer Police/Thief system. It owns only its local truth and communicates with the sibling peer through FastMCP/MCP. The shared intent is in `docs/PRD.md`; the role-specific strategy is in `docs/PLAN.md`; execution state lives in `docs/TODO.md` and individual task files.
 
 ## Project overview
 
 The target is a decentralized hidden-state pursuit game: the Police process maintains local state, opponent belief, scent evidence, a separate strategy, Commit-Reveal integrity, Live GUI, Replay, resilience, and signed reporting. Its strategy objective is to pursue through local belief, place truthful barriers, and make only justified capture claims.
 
-Confirmed public team metadata:
+Confirmed team metadata:
 
 - Team name: `ZeroOne`
 - Team number: `01`
 - GitHub handles: `evya1`, `Us5rName`
-- Final-project group code: `ZeroOne1`
+- Repository URLs: `https://github.com/evya1/police_repo`, `https://github.com/evya1/thief_repo`
 
-Full legal names, government identifiers, and other private identity fields do not belong in this public repository scaffold.
+Candidate awaiting confirmation:
+
+- Final-project group code: `ZeroOne1` — eight characters, recorded here as a candidate. It must be confirmed against a human-approved team record (OPEN-003, OPEN-010) before it is used in any submitted artifact.
+
+Legal names, government identifiers, and other private identity fields are never stored in repository artifacts.
 
 Sibling repository: <https://github.com/evya1/thief_repo>.
 
@@ -31,7 +35,9 @@ Conflicts stop work and go to the orchestrator. Workers do not silently update t
 
 ## Architecture
 
-The proposed architecture separates domain rules, scent/belief, police strategy, orchestration/state, FastMCP transport, integrity/audit, reliability, reporting, and GUI/Replay. It exposes business behavior through one thin programmatic facade. See `docs/PLAN.md` for boundaries and the proposed tree; those paths are not implementation-status claims.
+The architecture separates domain rules, scent/belief, police strategy, orchestration/state, FastMCP transport, integrity/audit, reliability, reporting, and GUI/Replay, exposing business behavior through one thin programmatic facade. See `docs/PLAN.md` for the boundaries and the target tree; a path in that tree is not an implementation-status claim.
+
+Implemented on the integration branch: shared domain and configuration modules under `common/`, the role re-export surface under `src/police_peer/domain/`, and the shared game contract at `config/game.json`. The programmatic facade, transport, integrity, orchestration, observability, and reporting layers are not started.
 
 ## Installation
 
@@ -41,7 +47,7 @@ Prerequisite: a compatible `uv` installation.
 uv sync --all-groups
 ```
 
-`TODO_BEFORE_SUBMISSION`: T002 must approve runtime dependency versions and commit a validated `uv.lock`; after that, use:
+The runtime baseline is recorded as PLANQ-002 in `docs/spec/OPEN_QUESTIONS.md`: Python 3.12 as the CI baseline over a declared `>=3.12` range, FastMCP as a direct runtime dependency at `fastmcp>=3.4,<4`, and the existing test/quality tooling. T002 executes that baseline and commits the validated `uv.lock`; once it lands, use:
 
 ```sh
 uv sync --locked --all-groups
@@ -103,7 +109,9 @@ uv run pytest
 uv run python scripts/run_quality_gates.py
 ```
 
-The quality configuration enforces Ruff zero, 85% global coverage, a 150 logical-code-line limit, required docs, task-ID/TODO consistency, local Markdown links, secret/archive protection, and least-privilege workflow permissions. Application coverage becomes meaningful when T003 and component tasks add `src/` and tests.
+The quality configuration enforces Ruff zero, 85% global coverage, a 150 logical-code-line limit, required docs, task-ID/TODO consistency, local Markdown links, secret/archive protection, and least-privilege workflow permissions. The coverage gate currently measures `scripts/`; it extends to `src/` and `common/` as component tasks land tests there.
+
+Verification proceeds as a ladder — deterministic unit and golden-vector tests, a local two-process protocol smoke test, a full practice series, artifact validation, network readiness, an uncounted external game, and only then a counted game. The stages, their owning tasks, and their gates are recorded in `docs/PLAN.md`.
 
 ## Troubleshooting
 
@@ -121,4 +129,4 @@ Read `CONTRIBUTING.md` and `AGENTS.md`. Claim exactly one ready task, use its wr
 
 ## License and credits
 
-`TODO_BEFORE_SUBMISSION`: the team must choose and document the repository license/credits policy before public release. Do not add a license notice or third-party attribution without verifying what is actually distributed and legally required.
+`TODO_BEFORE_SUBMISSION`: the team must choose and document the repository license and credits policy before release. Do not add a license notice or an attribution without verifying what is actually distributed and legally required — and never remove one that is.

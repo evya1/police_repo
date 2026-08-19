@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Protocol
 
@@ -73,10 +74,14 @@ class TurnEngine(Protocol):
         """Return a move dict for the given sub-game and role."""
 
 
+SubgameDriver = Callable[[object, TurnEngine, PeerConfig, int], SeriesRow]
+
+
 class PeerFacade:
     """Wraps a channel and a turn engine into a peer that can both send and receive."""
 
-    def __init__(self, channel, engine: TurnEngine, config: PeerConfig, name: str = "peer") -> None:
+    def __init__(self, channel, engine: TurnEngine, config: PeerConfig, name: str = "peer",
+                 subgame_driver: SubgameDriver | None = None) -> None:
         self.channel = channel
         self.engine = engine
         self.config = config
@@ -84,6 +89,7 @@ class PeerFacade:
         self._game_id = ""
         self._game_uid = ""
         self._ledgers: list[SeriesRow] = []
+        self._subgame_driver = subgame_driver
 
     def run(self) -> SeriesResult:
         """Run a full six-sub-game series. Return the result."""
@@ -128,10 +134,11 @@ class PeerFacade:
         self._game_uid = agreed.game_uid
 
     def _play_sub_game(self, sub_game: int) -> SeriesRow:
-        """Play one sub-game (strict alternation + mutual audit) via the subgame module."""
+        """Play one sub-game via the selected driver (default: the legacy batch driver)."""
         from common.transport.subgame import play_subgame
 
-        return play_subgame(self.channel, self.engine, self.config, sub_game)
+        driver = self._subgame_driver or play_subgame
+        return driver(self.channel, self.engine, self.config, sub_game)
 
 
 def run_series(
@@ -141,10 +148,11 @@ def run_series(
     config_b: PeerConfig,
     engine_a: TurnEngine,
     engine_b: TurnEngine,
+    subgame_driver: SubgameDriver | None = None,
 ) -> tuple[SeriesResult, SeriesResult]:
     """Run a series with two peers on opposite ends of a channel. Returns (a, b)."""
-    facade_a = PeerFacade(channel_a, engine_a, config_a, "A")
-    facade_b = PeerFacade(channel_b, engine_b, config_b, "B")
+    facade_a = PeerFacade(channel_a, engine_a, config_a, "A", subgame_driver=subgame_driver)
+    facade_b = PeerFacade(channel_b, engine_b, config_b, "B", subgame_driver=subgame_driver)
     result_a: SeriesResult | None = None
     result_b: SeriesResult | None = None
     errors: list[Exception] = []

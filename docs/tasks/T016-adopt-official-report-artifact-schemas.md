@@ -91,3 +91,32 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+**T016 internal reporting artifact contract — implemented (INTERNAL CONTRACT — NOT OFFICIAL TEMPLATE CONFORMANCE).**
+
+Official `INPUT-001`/`OPEN-001` remain OPEN: the four official JSON templates are still required and are **not** synthesized. Per the OPEN-001 operational convention, this task builds the project-owned internal contract at the same boundary that official templates will replace. Task `status` stays `blocked` because the `schema_adoption` gate (`blocks: start`) is not resolved.
+
+**Files created (police repo; mirrored in thief repo):**
+- `src/police_peer/reporting/__init__.py`, `src/police_peer/reporting/schemas.py` (≈430 lines) — four lifecycle artifacts (Declaration, SubGameConfig, SubGameLog, SeriesResult), builders, `validate_schema`/`validate_identifiers`, injected signing seam (`sign_artifact`/`verify_artifact`), `finalize_log` (immutable), `serialize` (reuses `common.transport.canonical.canonical_bytes` — the OPEN-007 boundary), `artifact_filename` (deterministic internal filename).
+- `config/official/reporting/README.md` — internal contract doc, labelled INTERNAL; documents artifacts, serialization, signing seam, schema version `internal-1`, immutability, filename convention, recursive secret handling.
+- `tests/contract/report_schemas/` — 8 test modules (lifecycle, validators, serialization, cross-artifact IDs, signing seam, internal-contract label, + repair tests for recursive secrets/git_commit/filename).
+
+**AC status (police + thief parity):**
+- AC2 (validators distinguish SchemaError/SignatureError/IdentifierMismatchError): PASS_WITH_EVIDENCE — `tests/.../test_validators.py`, `test_cross_artifact_ids.py`.
+- AC3 (deterministic/replayable config filenames + git commits): PASS_WITH_EVIDENCE — `artifact_filename()` + `_validate_git_commit` (non-empty) — `test_internal_contract_extras.py`.
+- AC4 (only schema-supported fields, no secrets): PASS_WITH_EVIDENCE — recursive `_scan_secrets` rejects secret-bearing keys nested in `agreed_terms`/`sub_game_results`.
+- AC5 (four lifecycle points; no premature declaration/result; no finalized-log mutation): PASS_WITH_EVIDENCE — `assert_lifecycle_ok` + `SubGameLog.__setattr__` immutability — `test_artifact_lifecycle.py`.
+- AC7 (test-only layouts quarantined): PASS_WITH_EVIDENCE — production config has no test layouts; `tests/contract/report_schemas/` is test-only.
+- AC1 (official template receipt in input register): GATED — INPUT-001/OPEN-001 OPEN.
+- AC6 (golden tests from sanitized official templates): GATED — no official templates; fixtures are project-owned INTERNAL.
+
+**Verification (police):**
+- `uv run pytest tests/contract/report_schemas -q` → 12 passed.
+- `uv run pytest -q` (full suite) → all passed.
+- `uv run ruff check src/police_peer/reporting tests/contract/report_schemas` → clean.
+- `uv run python scripts/run_quality_gates.py` → 7/7.
+- `uv lock --check` → green.
+
+**Reviews:** local qwen pre-review (no material bugs); DeepSeek V4 Pro final review → 2 material repairs applied (recursive secret scan AC4; git_commit non-empty + internal filename AC3) and re-verified.
+
+**Known limitations / blockers:** official schema adoption (AC1, AC6) waits on authentic INPUT-001 templates; when they arrive they replace the project schema at the same `schemas.py` + README boundary without changing builders/validators/signing seam.

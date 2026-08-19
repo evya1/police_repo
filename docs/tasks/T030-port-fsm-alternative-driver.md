@@ -30,7 +30,7 @@ write_set:
   - docs/tasks/T030-port-fsm-alternative-driver.md
 risk: low
 ---
-# T030 — Port the kit state machine as an alternative subgame driver
+# T030 — State-machine-guarded alternative subgame driver
 
 ## Expected outcome
 
@@ -39,8 +39,9 @@ byte-identical ledgers to the legacy driver, with default OFF (legacy behaviour 
 
 ## Acceptance criteria
 
-1. `state.py` is a verbatim port of the kit source, with two deviations: docstring and `Enum` →
-   `StrEnum` (repo convention).
+1. `state.py` is a clean-room implementation of the mandatory FSM (spec §8.3, Appendix E
+   rules 4-5): the six-state commit-reveal cycle plus the absorbing `TECHNICAL_LOSS`
+   terminal, guarding illegal transitions, with no third-party source.
 2. Parity tests green — clean and fault-injected.
 3. Default `run_series` behavior unchanged — the existing test suite passes without modification.
 4. `common/` is byte-identical across both repos.

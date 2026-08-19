@@ -1,4 +1,4 @@
-"""Unit tests for the ported state machine (kit sparring/tests/test_wire_contract.py)."""
+"""Unit tests for the mandatory peer state machine (spec §8.3, Appendix E rules 4-5)."""
 
 from __future__ import annotations
 

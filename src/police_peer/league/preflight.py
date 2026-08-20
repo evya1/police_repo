@@ -78,7 +78,7 @@ class LeaguePairingGuard:
         counted_opponents = self.get_distinct_opponents()
         if opponent_team in counted_opponents:
             raise DuplicateOpponentError(
-                f"Already played counted match against opponent '{opponent_team}' (LEAGUE-003)"
+                f"Already played counted match against opponent '{opponent_team}' (LEAGUE-003 limit: {MAX_MATCHES_PER_OPPONENT})"
             )
 
         if declared_prior_count != len(counted_matches):

@@ -508,12 +508,18 @@ def finalize_log(log: SubGameLog, signer: Callable[[bytes], str]) -> SubGameLog:
         raise FinalizedLogMutationError("Log already finalized")
     if signer is None:
         raise SignatureError("Signer cannot be None")
-    # Mark as finalized first
-    object.__setattr__(log, "finalized", True)
-    # Sign over the finalized canonical payload (which now has finalized=True, signature=None)
-    sig = sign_artifact(log, signer)
-    object.__setattr__(log, "signature", sig)
-    return log
+    try:
+        # Mark as finalized first
+        object.__setattr__(log, "finalized", True)
+        # Sign over the finalized canonical payload (which now has finalized=True, signature=None)
+        sig = sign_artifact(log, signer)
+        object.__setattr__(log, "signature", sig)
+        return log
+    except Exception:
+        # Atomic rollback on signing failure
+        object.__setattr__(log, "finalized", False)
+        object.__setattr__(log, "signature", None)
+        raise
 
 
 def serialize(artifact: Any) -> bytes:

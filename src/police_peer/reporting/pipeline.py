@@ -4,7 +4,7 @@ from typing import Any
 
 from police_peer.reporting.artifacts import ReportingArtifactBundle
 from police_peer.reporting.gmail import GmailSender
-from police_peer.reporting.schemas import SchemaError
+from police_peer.reporting.schemas import ArtifactError
 
 
 class ReportingPipelineError(Exception):
@@ -29,22 +29,23 @@ class ReportingPipeline:
         if game_uid in self._sent_reports:
             raise ReportingPipelineError(f"Series report for '{game_uid}' has already been processed.")
 
-        # Reconcile & validate entire bundle
+        # Reconcile, validate entire bundle, and assemble attachments
         try:
             bundle.validate_bundle()
-        except SchemaError as exc:
+            attachments = bundle.to_attachments()
+        except ArtifactError as exc:
             raise ReportingPipelineError(f"Bundle reconciliation failed: {exc}") from exc
 
-        # Assemble exact canonical attachment bytes
-        attachments = bundle.to_attachments()
-
         # Transmit strictly through send-only Gmail adapter behind Gatekeeper
-        result = self.gmail_sender.send_report(
-            game_uid=game_uid,
-            artifacts=attachments,
-            recipient=recipient,
-            subject=subject,
-        )
+        try:
+            result = self.gmail_sender.send_report(
+                game_uid=game_uid,
+                artifacts=attachments,
+                recipient=recipient,
+                subject=subject,
+            )
+        except Exception as exc:
+            raise ReportingPipelineError(f"Report transmission failed: {exc}") from exc
 
         self._sent_reports.add(game_uid)
         return result

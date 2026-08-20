@@ -12,6 +12,8 @@ from police_peer.reporting.schemas import (
     finalize_log,
 )
 
+OFFICIAL_RECIPIENT = "rmisegal+uoh26finalgame@gmail.com"
+
 
 def _signer(b: bytes) -> str:
     return "sig-" + b.hex()[:8]
@@ -65,7 +67,7 @@ def test_reporting_pipeline_success_and_idempotence():
     assert len(attachments) == 14
 
     gk = ExternalApiGatekeeper()
-    sender = GmailSender(gatekeeper=gk)
+    sender = GmailSender(gatekeeper=gk, default_recipient=OFFICIAL_RECIPIENT)
     pipeline = ReportingPipeline(gmail_sender=sender)
 
     receipt = pipeline.process_and_send(bundle)
@@ -81,7 +83,8 @@ def test_reporting_pipeline_unfinalized_log_refusal():
     object.__setattr__(bundle.sub_game_logs[0], "finalized", False)
 
     gk = ExternalApiGatekeeper()
-    pipeline = ReportingPipeline(gmail_sender=GmailSender(gatekeeper=gk))
+    sender = GmailSender(gatekeeper=gk, default_recipient=OFFICIAL_RECIPIENT)
+    pipeline = ReportingPipeline(gmail_sender=sender)
 
-    with pytest.raises(ReportingPipelineError, match="must be finalized"):
+    with pytest.raises(ReportingPipelineError, match="Bundle reconciliation failed"):
         pipeline.process_and_send(bundle)

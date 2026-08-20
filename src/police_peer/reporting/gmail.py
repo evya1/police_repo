@@ -7,7 +7,6 @@ from typing import Any
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 
 GMAIL_SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send"
-OFFICIAL_RECIPIENT_FALLBACK = "reports@police-thief-league.org"
 
 
 class GmailError(Exception):
@@ -72,12 +71,16 @@ class GmailSender:
         self,
         gatekeeper: ExternalApiGatekeeper,
         sender_email: str = "peer@local",
-        default_recipient: str = OFFICIAL_RECIPIENT_FALLBACK,
+        default_recipient: str | None = None,
+        scopes: list[str] | str | None = None,
         service_client: Any = None,
     ) -> None:
+        if scopes is not None:
+            validate_oauth_scope(scopes)
         self.gatekeeper = gatekeeper
         self.sender_email = sender_email
         self.default_recipient = default_recipient
+        self.scopes = [scopes] if isinstance(scopes, str) else list(scopes or [])
         self._client = service_client
         self._sent_game_uids: set[str] = set()
 
@@ -94,6 +97,9 @@ class GmailSender:
             raise DuplicateSendError(f"Report for game_uid '{game_uid}' has already been transmitted.")
 
         target_recipient = recipient or self.default_recipient
+        if not target_recipient:
+            raise ValueError("Recipient email address must be explicitly provided or configured.")
+
         target_subject = subject or f"[PoliceThief-Report] Series {game_uid}"
 
         _, raw_b64 = build_email_message(

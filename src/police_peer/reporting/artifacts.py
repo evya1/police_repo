@@ -37,7 +37,7 @@ class ReportingArtifactBundle:
         validate_identifiers(self.declaration, self.series_result)
 
         # Validate each subgame pair
-        for cfg, log in zip(self.sub_game_configs, self.sub_game_logs, strict=False):
+        for cfg, log in zip(self.sub_game_configs, self.sub_game_logs):
             validate_schema(cfg)
             validate_schema(log)
             validate_identifiers(self.declaration, cfg, log, self.series_result)

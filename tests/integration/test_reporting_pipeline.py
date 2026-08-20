@@ -1,0 +1,88 @@
+import pytest
+
+from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
+from police_peer.reporting.artifacts import ReportingArtifactBundle
+from police_peer.reporting.gmail import GmailSender
+from police_peer.reporting.pipeline import ReportingPipeline, ReportingPipelineError
+from police_peer.reporting.schemas import (
+    build_declaration,
+    build_series_result,
+    build_sub_game_config,
+    build_sub_game_log,
+    finalize_log,
+)
+
+
+def _sample_bundle(game_uid: str = "series-test-99"):
+    decl = build_declaration(
+        game_uid=game_uid, team="team_alpha", role="police", members=["alice", "bob"],
+        police_repo_url="http://p", thief_repo_url="http://t", mcp_addresses=["mcp://1"],
+        hardware="h", model="m", token_budget=1000, start_time="s", end_time="e", num_games=6,
+    )
+
+    configs = []
+    logs = []
+    subgame_results = []
+    commits = {}
+    tokens = {}
+
+    signer = lambda b: "sig-" + b.hex()[:8]
+
+    for i in range(6):
+        gid = f"{game_uid}:{i}"
+        cfg = build_sub_game_config(
+            game_uid=game_uid, game_id=gid, sub_game_index=i,
+            role_for_this_sub_game="police" if i % 2 == 0 else "thief",
+            agreed_terms={"seed": i}, git_commit=f"commit-{i}",
+        )
+        configs.append(cfg)
+
+        log = build_sub_game_log(game_uid=game_uid, game_id=gid, steps=[{"step": i}])
+        finalize_log(log, signer)
+        logs.append(log)
+
+        subgame_results.append({"game_id": gid, "score": 10})
+        commits[gid] = f"commit-{i}"
+        tokens[gid] = 100
+
+    res = build_series_result(
+        game_uid=game_uid, sub_game_results=subgame_results, total_police_score=60,
+        total_thief_score=30, tie_applied=False, repo_links={"police": "http://p"},
+        total_llm_tokens_per_series=600, sub_game_git_commits=commits,
+        total_llm_tokens_per_sub_game=tokens,
+    )
+
+    return ReportingArtifactBundle(
+        declaration=decl, sub_game_configs=configs, sub_game_logs=logs, series_result=res,
+    )
+
+
+def test_reporting_pipeline_success_and_idempotence():
+    bundle = _sample_bundle("series-good")
+    attachments = bundle.to_attachments()
+    # 1 declaration + 6 configs + 6 logs + 1 result = 14 attachments
+    assert len(attachments) == 14
+
+    gk = ExternalApiGatekeeper()
+    sender = GmailSender(gatekeeper=gk)
+    pipeline = ReportingPipeline(gmail_sender=sender)
+
+    receipt = pipeline.process_and_send(bundle)
+    assert receipt["status"] == "SENT"
+    assert receipt["id"] == "msg-series-good"
+
+    # Idempotent: duplicate send rejected
+    with pytest.raises(ReportingPipelineError, match="already been processed"):
+        pipeline.process_and_send(bundle)
+
+
+def test_reporting_pipeline_unfinalized_log_refusal():
+    bundle = _sample_bundle("series-unfinalized")
+    # Tamper: set one log unfinalized
+    object.__setattr__(bundle.sub_game_logs[0], "finalized", False)
+
+    gk = ExternalApiGatekeeper()
+    pipeline = ReportingPipeline(gmail_sender=GmailSender(gatekeeper=gk))
+
+    with pytest.raises(ReportingPipelineError, match="must be finalized"):
+        pipeline.process_and_send(bundle)

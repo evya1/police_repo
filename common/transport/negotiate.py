@@ -85,7 +85,8 @@ def our_greeting(
 
 
 def verify_greeting(raw: dict, our_terms: dict, our_group_id: str,
-                    sub_game_number: int) -> Agreed:
+                    sub_game_number: int,
+                    our_locks: dict[str, str] | None = None) -> Agreed:
     """Check an inbound greeting, or refuse with a diagnosis.
 
     Verification runs in the fixed FR-13 order:
@@ -97,6 +98,14 @@ def verify_greeting(raw: dict, our_terms: dict, our_group_id: str,
     5. **locked-model comparison** — refuse only when both declare and disagree
     6. **pairing** — same ``sub_game_number``, complementary ``role``
     7. **declared ``game_uid``** — refuse only when both declare and disagree
+
+    ``our_locks`` carries the hashes *we* have pinned, keyed by family name
+    (``scent_model``, ``wire_shape``, ``info_mode``, ``smell_binding``). It is the
+    only channel through which the handshake learns our declarations — the locked
+    families themselves are role-specific and live outside the common layer, so
+    without it step 5 has nothing of ours to compare and stays silent. Passing
+    ``None`` (or omitting a family) means *we declare nothing* for it, which per
+    SPEC section 7 can never refuse.
     """
     # 1. Terms present.
     if not isinstance(raw, dict):
@@ -152,17 +161,29 @@ def verify_greeting(raw: dict, our_terms: dict, our_group_id: str,
         )
 
     # 5. Locked-model comparison (FR-16). Refuse only when both declare and disagree.
+    #    Our hash comes from ``our_locks``; theirs rides beside the greeting under
+    #    ``<family>_sha256``. Omission on either side is silence, never a refusal
+    #    (SPEC section 7 truth table). This is the *only* place a locked-model
+    #    disagreement is refused — the scent module supplies the pinned document and
+    #    its hash, but never decides start/refuse; that decision belongs at the
+    #    handshake boundary, here.
+    declared = our_locks or {}
     for family, key in (
         ("scent_model", "scent_model_sha256"),
         ("wire_shape", "wire_shape_sha256"),
         ("info_mode", "info_mode_sha256"),
         ("smell_binding", "smell_binding_sha256"),
     ):
-        ours_hash = raw.get(key)
-        # We don't declare locks in the common layer — that's role-specific.
-        # If we had one, we'd compare it here. The common layer skips this check
-        # unless the caller passes declared hashes.
-        del family, key, ours_hash  # noqa: B018 (silence the unused-variable lint)
+        ours_hash = declared.get(family)
+        theirs_hash = raw.get(key)
+        if ours_hash is not None and theirs_hash is not None and ours_hash != theirs_hash:
+            raise Refused(
+                "SPAR-N05",
+                f"locked-model mismatch on {family}: we declared {ours_hash}, they "
+                f"declared {theirs_hash}. Both sides pinned this family and the hashes "
+                "differ, so a counted game cannot start. Refused at the handshake "
+                "boundary before any game state exists.",
+            )
 
     # 6. Pairing: same sub-game, complementary roles (FR-14).
     ours_sg = sub_game_number

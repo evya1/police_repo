@@ -79,7 +79,29 @@ Series aggregation must not become a central judge; each peer derives its own re
 
 ## Implementation plan
 
-To be completed immediately before execution.
+`scoring.py` exposes one pure function `score_subgame(outcome:
+SubGameOutcome) -> Scores` implementing exactly: CAPTURE → Police 20, Thief
+5; SURVIVAL → Police 5, Thief 10; TECHNICAL_LOSS → 0/0; TAMPERED → 0/0; no
+local formula exported. `series.py` exposes `build_series(sub_games) ->
+SeriesTotals` enforcing exactly six sub-games, role alternation per the
+OPEN-008 operational convention (three each), clean reset per sub-game,
+unique config/log identities, additive tie (LEAGUE-006 adds the fixed 2),
+diversity reward 10 only for a qualifying new-opponent win (LEAGUE-005).
+Series-replace is implemented only as a rejected differential alternative,
+never selectable for counted play. Error model: `InvalidSubGameCount`,
+`RoleScheduleViolation`.
+
+(Reviewed 2026-08-18: analyzed by deepseek-v4-pro, approved by glm-5.2; full rationale in docs/evidence/c06-prep-01/analysis.md sections 2, 3, 5.)
+
+## Behavioral test plan
+
+(gate note: `OPEN-008 blocks: criterion` on `series_aggregation` — add/replace are differential only)
+- **unit (scoring)** — every GAME-013 row asserted directly: CAPTURE Police 20 / Thief 5; SURVIVAL Police 5 / Thief 10; TECHNICAL_LOSS 0/0; tie value 2.
+- **unit (series)** — exactly six isolated sub-games, clean state reset, unique config/log identities; additive tie per the OPEN-008 convention; series-replace asserted as a rejected differential alternative.
+- **boundary-adapter** — totals derive from CT-06 records only, never from recomputation.
+- **integration** — the same verified sub-game list is the single source feeding both totals and the T018 report input.
+- **failure** — TECHNICAL_LOSS/TAMPERED outcomes cannot be converted to clean or tie scores.
+- **determinism** — the same verified list always yields the same totals.
 
 ## Handoff contract
 

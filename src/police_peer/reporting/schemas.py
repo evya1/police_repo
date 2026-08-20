@@ -29,19 +29,52 @@ class FinalizedLogMutationError(ArtifactError):
     pass
 
 
-def _validate_field_types(artifact_dict: dict[str, Any], expected_types: dict[str, type]) -> None:
+def _validate_field_types(artifact_dict: dict[str, Any], expected_types: dict[str, Any]) -> None:
+    # Check for missing required fields and type correctness
     for field_name, expected_type in expected_types.items():
-        if field_name in artifact_dict:
-            value = artifact_dict[field_name]
+        if field_name not in artifact_dict:
+            raise SchemaError(f"Required field '{field_name}' is missing")
+        value = artifact_dict[field_name]
+        if isinstance(expected_type, tuple):
             if not isinstance(value, expected_type):
-                raise SchemaError(f"Field '{field_name}' must be of type {expected_type.__name__}, got {type(value).__name__}")
+                type_names = ", ".join(t.__name__ for t in expected_type)
+                raise SchemaError(
+                    f"Field '{field_name}' must be one of ({type_names}), got {type(value).__name__}"
+                )
+        else:
+            if not isinstance(value, expected_type):
+                raise SchemaError(
+                    f"Field '{field_name}' must be of type {expected_type.__name__}, got {type(value).__name__}"
+                )
+
+    # Check for unexpected extra fields
+    extra_fields = set(artifact_dict.keys()) - set(expected_types.keys())
+    if extra_fields:
+        raise SchemaError(f"Disallowed extra field(s): {', '.join(sorted(extra_fields))}")
 
 
-_SECRET_KEY_TOKENS = ("password", "passwd", "secret", "credential", "api_key",
-                      "apikey", "private_key", "privatekey", "access_key", "accesskey",
-                      "refresh_token", "refreshtoken", "access_token", "accesstoken",
-                      "auth_token", "authtoken", "bearer", "client_secret",
-                      "clientsecret", "oauth")
+_SECRET_KEY_TOKENS = (
+    "password",
+    "passwd",
+    "secret",
+    "credential",
+    "api_key",
+    "apikey",
+    "private_key",
+    "privatekey",
+    "access_key",
+    "accesskey",
+    "refresh_token",
+    "refreshtoken",
+    "access_token",
+    "accesstoken",
+    "auth_token",
+    "authtoken",
+    "bearer",
+    "client_secret",
+    "clientsecret",
+    "oauth",
+)
 
 
 def _scan_secrets(name: str, value: Any) -> None:
@@ -176,9 +209,11 @@ class SubGameLog:
     finalized: bool = False
     signature: str | None = None
 
-    def __setattr__(self, name, value):
-        if self.finalized and name in ("steps", "game_id", "game_uid", "schema_version"):
-            raise FinalizedLogMutationError(f"Cannot modify content field '{name}' of finalized log")
+    def __setattr__(self, name: str, value: Any) -> None:
+        if getattr(self, "finalized", False):
+            raise FinalizedLogMutationError(
+                f"Cannot modify content field '{name}' of finalized log"
+            )
         super().__setattr__(name, value)
 
     def __post_init__(self):
@@ -213,6 +248,8 @@ class SeriesResult:
     tie_applied: bool = False
     repo_links: dict[str, str] = field(default_factory=dict)
     total_llm_tokens_per_series: int = 0
+    sub_game_git_commits: dict[str, str] = field(default_factory=dict)
+    total_llm_tokens_per_sub_game: dict[str, int] = field(default_factory=dict)
 
     def __post_init__(self):
         _validate_game_uid(self.game_uid)
@@ -233,6 +270,8 @@ class SeriesResult:
             "tie_applied": self.tie_applied,
             "repo_links": self.repo_links,
             "total_llm_tokens_per_series": self.total_llm_tokens_per_series,
+            "sub_game_git_commits": self.sub_game_git_commits,
+            "total_llm_tokens_per_sub_game": self.total_llm_tokens_per_sub_game,
         }
 
 
@@ -250,7 +289,7 @@ def build_declaration(
     token_budget: int,
     start_time: str,
     end_time: str,
-    num_games: int = 6
+    num_games: int = 6,
 ) -> Declaration:
     return Declaration(
         game_uid=game_uid,
@@ -276,7 +315,7 @@ def build_sub_game_config(
     sub_game_index: int,
     role_for_this_sub_game: str,
     agreed_terms: dict[str, Any],
-    git_commit: str
+    git_commit: str,
 ) -> SubGameConfig:
     return SubGameConfig(
         game_uid=game_uid,
@@ -288,7 +327,9 @@ def build_sub_game_config(
     )
 
 
-def build_sub_game_log(*, game_uid: str, game_id: str, steps: list[dict[str, Any]] | None = None) -> SubGameLog:
+def build_sub_game_log(
+    *, game_uid: str, game_id: str, steps: list[dict[str, Any]] | None = None
+) -> SubGameLog:
     return SubGameLog(
         game_uid=game_uid,
         game_id=game_id,
@@ -304,7 +345,9 @@ def build_series_result(
     total_thief_score: int,
     tie_applied: bool,
     repo_links: dict[str, str],
-    total_llm_tokens_per_series: int
+    total_llm_tokens_per_series: int,
+    sub_game_git_commits: dict[str, str] | None = None,
+    total_llm_tokens_per_sub_game: dict[str, int] | None = None,
 ) -> SeriesResult:
     return SeriesResult(
         game_uid=game_uid,
@@ -314,10 +357,12 @@ def build_series_result(
         tie_applied=tie_applied,
         repo_links=repo_links,
         total_llm_tokens_per_series=total_llm_tokens_per_series,
+        sub_game_git_commits=sub_game_git_commits or {},
+        total_llm_tokens_per_sub_game=total_llm_tokens_per_sub_game or {},
     )
 
 
-def assert_lifecycle_ok(artifact, stage: str) -> None:
+def assert_lifecycle_ok(artifact: Any, stage: str) -> None:
     stages = {"pre_series", "pre_sub_game", "during_sub_game", "post_settlement"}
     if stage not in stages:
         raise SchemaError(f"Invalid lifecycle stage: {stage}")
@@ -331,16 +376,23 @@ def assert_lifecycle_ok(artifact, stage: str) -> None:
     elif isinstance(artifact, SubGameLog):
         if stage not in ("pre_sub_game", "during_sub_game"):
             raise SchemaError("SubGameLog must be built at pre_sub_game or during_sub_game stage")
-    elif isinstance(artifact, SeriesResult) and stage != "post_settlement":
-        raise SchemaError("SeriesResult must be built at post_settlement stage")
+    elif isinstance(artifact, SeriesResult):
+        if stage != "post_settlement":
+            raise SchemaError("SeriesResult must be built at post_settlement stage")
+    else:
+        raise SchemaError(f"Unsupported artifact type for lifecycle check: {type(artifact).__name__}")
 
 
-def validate_schema(artifact) -> None:
+def validate_schema(artifact: Any) -> None:
+    if not hasattr(artifact, "as_dict"):
+        raise SchemaError(f"Artifact {type(artifact).__name__} does not have as_dict method")
+
     artifact_dict = artifact.as_dict()
     _validate_no_secrets(artifact_dict)
 
     if isinstance(artifact, Declaration):
-        expected_types = {
+        expected_types: dict[str, Any] = {
+            "kind": str,
             "game_uid": str,
             "schema_version": str,
             "team": str,
@@ -362,6 +414,7 @@ def validate_schema(artifact) -> None:
 
     elif isinstance(artifact, SubGameConfig):
         expected_types = {
+            "kind": str,
             "game_uid": str,
             "game_id": str,
             "schema_version": str,
@@ -374,6 +427,7 @@ def validate_schema(artifact) -> None:
 
     elif isinstance(artifact, SubGameLog):
         expected_types = {
+            "kind": str,
             "game_uid": str,
             "game_id": str,
             "schema_version": str,
@@ -385,6 +439,7 @@ def validate_schema(artifact) -> None:
 
     elif isinstance(artifact, SeriesResult):
         expected_types = {
+            "kind": str,
             "game_uid": str,
             "schema_version": str,
             "sub_game_results": list,
@@ -393,20 +448,26 @@ def validate_schema(artifact) -> None:
             "tie_applied": bool,
             "repo_links": dict,
             "total_llm_tokens_per_series": int,
+            "sub_game_git_commits": dict,
+            "total_llm_tokens_per_sub_game": dict,
         }
         _validate_field_types(artifact_dict, expected_types)
+    else:
+        raise SchemaError(f"Unsupported artifact type: {type(artifact).__name__}")
 
 
-def validate_identifiers(*artifacts) -> None:
+def validate_identifiers(*artifacts: Any) -> None:
     # All artifacts in one call must share the same series game_uid, and every
     # sub-game artifact (SubGameConfig/SubGameLog) must share the same game_id.
     # validate_identifiers validates ONE sub-game's artifact set at a time;
     # a multi-sub-game series is validated by calling it per sub-game.
-    game_uids = {a.game_uid for a in artifacts}
+    if not artifacts:
+        return
+    game_uids = {getattr(a, "game_uid", None) for a in artifacts}
     if len(game_uids) > 1:
         raise IdentifierMismatchError("Mismatched game_uid across artifacts")
     sub_game_ids = {
-        a.game_id
+        getattr(a, "game_id", None)
         for a in artifacts
         if isinstance(a, (SubGameConfig, SubGameLog))
     }
@@ -414,16 +475,30 @@ def validate_identifiers(*artifacts) -> None:
         raise IdentifierMismatchError("Mismatched game_id in sub-game artifacts")
 
 
-def sign_artifact(artifact, signer: Callable[[bytes], str]) -> str:
+def _get_signable_payload(artifact: Any) -> dict[str, Any]:
+    payload = artifact.as_dict()
+    if "signature" in payload:
+        payload = dict(payload)
+        payload["signature"] = None
+    return payload
+
+
+def sign_artifact(artifact: Any, signer: Callable[[bytes], str]) -> str:
     if signer is None:
         raise SignatureError("Signer cannot be None")
-    payload = artifact.as_dict()
+    payload = _get_signable_payload(artifact)
     data = canonical_bytes(payload)
     return signer(data)
 
 
-def verify_artifact(artifact, signature: str, verifier: Callable[[bytes, str], bool]) -> bool:
-    payload = artifact.as_dict()
+def verify_artifact(
+    artifact: Any, signature: str, verifier: Callable[[bytes, str], bool]
+) -> bool:
+    if verifier is None:
+        raise SignatureError("Verifier cannot be None")
+    if not isinstance(signature, str) or not signature:
+        return False
+    payload = _get_signable_payload(artifact)
     data = canonical_bytes(payload)
     return verifier(data, signature)
 
@@ -431,16 +506,21 @@ def verify_artifact(artifact, signature: str, verifier: Callable[[bytes, str], b
 def finalize_log(log: SubGameLog, signer: Callable[[bytes], str]) -> SubGameLog:
     if log.finalized:
         raise FinalizedLogMutationError("Log already finalized")
-    log.signature = sign_artifact(log, signer)
-    log.finalized = True
+    if signer is None:
+        raise SignatureError("Signer cannot be None")
+    # Mark as finalized first
+    object.__setattr__(log, "finalized", True)
+    # Sign over the finalized canonical payload (which now has finalized=True, signature=None)
+    sig = sign_artifact(log, signer)
+    object.__setattr__(log, "signature", sig)
     return log
 
 
-def serialize(artifact) -> bytes:
+def serialize(artifact: Any) -> bytes:
     return canonical_bytes(artifact.as_dict())
 
 
-def artifact_filename(artifact) -> str:
+def artifact_filename(artifact: Any) -> str:
     """Return a deterministic INTERNAL filename for an artifact.
 
     INTERNAL CONTRACT — NOT OFFICIAL TEMPLATE CONFORMANCE. The four official

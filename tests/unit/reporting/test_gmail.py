@@ -28,8 +28,8 @@ class FakeGmailClient:
     def drafts(self):
         return self
 
-    def send(self, userId: str, body: dict):
-        self.sent_messages.append((userId, body))
+    def send(self, **kwargs):
+        self.sent_messages.append(kwargs)
         return self
 
     def execute(self):
@@ -72,7 +72,6 @@ def test_gmail_sender_workflow_and_idempotence():
     assert res["status"] == "OK"
     assert len(client.sent_messages) == 1
 
-    # Duplicate send for same game_uid is blocked
     with pytest.raises(DuplicateSendError):
         sender.send_report(game_uid="game-100", artifacts=artifacts)
 
@@ -82,5 +81,5 @@ def test_draft_substitution_prevented():
     draft_client = FakeGmailClient(is_draft=True)
     sender = GmailSender(gatekeeper=gk, service_client=draft_client)
 
-    with pytest.raises(Exception):
+    with pytest.raises(DraftSubstitutionError):
         sender.send_report(game_uid="game-200", artifacts=[("f.json", b"{}")])

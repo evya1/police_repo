@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from collections import deque
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -110,7 +110,16 @@ class ExternalApiGatekeeper:
             while True:
                 try:
                     return call(*args, **kwargs)
+                except GatekeeperError:
+                    raise
                 except Exception as exc:
+                    if exc.__class__.__name__ in (
+                        "DraftSubstitutionError",
+                        "AttachmentMissingError",
+                        "DuplicateSendError",
+                        "InvalidScopeError",
+                    ):
+                        raise
                     status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
                     is_429 = status_code == 429 or "429" in str(exc) or "rate" in str(exc).lower()
                     if is_429 and retries < self.cfg.max_retries:

@@ -13,6 +13,10 @@ from police_peer.reporting.schemas import (
 )
 
 
+def _signer(b: bytes) -> str:
+    return "sig-" + b.hex()[:8]
+
+
 def _sample_bundle(game_uid: str = "series-test-99"):
     decl = build_declaration(
         game_uid=game_uid, team="team_alpha", role="police", members=["alice", "bob"],
@@ -26,8 +30,6 @@ def _sample_bundle(game_uid: str = "series-test-99"):
     commits = {}
     tokens = {}
 
-    signer = lambda b: "sig-" + b.hex()[:8]
-
     for i in range(6):
         gid = f"{game_uid}:{i}"
         cfg = build_sub_game_config(
@@ -38,7 +40,7 @@ def _sample_bundle(game_uid: str = "series-test-99"):
         configs.append(cfg)
 
         log = build_sub_game_log(game_uid=game_uid, game_id=gid, steps=[{"step": i}])
-        finalize_log(log, signer)
+        finalize_log(log, _signer)
         logs.append(log)
 
         subgame_results.append({"game_id": gid, "score": 10})
@@ -60,7 +62,6 @@ def _sample_bundle(game_uid: str = "series-test-99"):
 def test_reporting_pipeline_success_and_idempotence():
     bundle = _sample_bundle("series-good")
     attachments = bundle.to_attachments()
-    # 1 declaration + 6 configs + 6 logs + 1 result = 14 attachments
     assert len(attachments) == 14
 
     gk = ExternalApiGatekeeper()
@@ -71,14 +72,12 @@ def test_reporting_pipeline_success_and_idempotence():
     assert receipt["status"] == "SENT"
     assert receipt["id"] == "msg-series-good"
 
-    # Idempotent: duplicate send rejected
     with pytest.raises(ReportingPipelineError, match="already been processed"):
         pipeline.process_and_send(bundle)
 
 
 def test_reporting_pipeline_unfinalized_log_refusal():
     bundle = _sample_bundle("series-unfinalized")
-    # Tamper: set one log unfinalized
     object.__setattr__(bundle.sub_game_logs[0], "finalized", False)
 
     gk = ExternalApiGatekeeper()

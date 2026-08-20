@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import base64
 from email.message import EmailMessage
-from pathlib import Path
 from typing import Any
 
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
@@ -108,9 +107,14 @@ class GmailSender:
         def _raw_send() -> dict[str, Any]:
             if self._client is not None:
                 # Disallow draft substitutions
-                if hasattr(self._client, "drafts") and not hasattr(self._client, "messages"):
+                users_res = self._client.users() if hasattr(self._client, "users") else self._client
+                if not hasattr(users_res, "messages"):
                     raise DraftSubstitutionError("Cannot use drafts API for report transmission.")
-                return self._client.users().messages().send(userId="me", body={"raw": raw_b64}).execute()
+                try:
+                    messages_res = users_res.messages()
+                except Exception as exc:
+                    raise DraftSubstitutionError("Cannot use drafts API for report transmission.") from exc
+                return messages_res.send(userId="me", body={"raw": raw_b64}).execute()
             # Fake transmission receipt for testing when client is not injected
             return {"id": f"msg-{game_uid}", "status": "SENT", "raw_length": len(raw_b64)}
 

@@ -21,20 +21,23 @@ class FakeClock:
         self.now += seconds
 
 
+class Http429Error(Exception):
+    def __init__(self, msg: str = "429 Too Many Requests"):
+        super().__init__(msg)
+        self.status_code = 429
+
+
 def test_token_bucket_rate_limiter():
     clock = FakeClock()
     cfg = GatekeeperConfig(requests_per_minute=60, bucket_capacity=2, dos_threshold=100)
     gk = ExternalApiGatekeeper(config=cfg, time_provider=clock)
 
-    # Consume available tokens
     assert gk.execute(lambda: "call1") == "call1"
     assert gk.execute(lambda: "call2") == "call2"
 
-    # Bucket exhausted
     with pytest.raises(RateLimitExceededError):
         gk.execute(lambda: "call3")
 
-    # Advance clock 1 second -> 1 token refilled (60/min = 1/s)
     clock.advance(1.0)
     assert gk.execute(lambda: "call3") == "call3"
 
@@ -51,16 +54,13 @@ def test_dos_lockout_trigger():
     gk.execute(lambda: 2)
     gk.execute(lambda: 3)
 
-    # 4th request within dos window triggers lockout
     with pytest.raises(DosLockoutError):
         gk.execute(lambda: 4)
 
-    # Still locked out after 5s
     clock.advance(5.0)
     with pytest.raises(DosLockoutError):
         gk.execute(lambda: 5)
 
-    # Lockout expires after 10.1s total
     clock.advance(5.1)
     assert gk.execute(lambda: "recovered") == "recovered"
 
@@ -88,9 +88,7 @@ def test_retry_on_429():
         nonlocal attempts
         attempts += 1
         if attempts < 2:
-            err = Exception("429 Too Many Requests")
-            setattr(err, "status_code", 429)
-            raise err
+            raise Http429Error()
         return "success"
 
     assert gk.execute(flaky_service) == "success"

@@ -39,6 +39,7 @@ def audit_records(
     records: list[dict],
     played: dict[int, str],
     terms: dict,
+    our_records: list[dict] | None = None,
 ) -> AuditResult:
     """Three-layer audit: re-hash, binding, physics.
 
@@ -99,6 +100,66 @@ def audit_records(
         if step not in failed:
             failed.append(step)
             notes.append(f"step {step}: {problem}")
+
+    # --- Layer 4: Outcome Semantics ---------------------------------------------
+    if our_records is not None:
+        audited_role = None
+        for r in records:
+            if "sender" in r:
+                audited_role = r["sender"]
+                break
+
+        our_by_step = {int(r.get("step", -1)): r for r in our_records if "step" in r}
+
+        import re
+
+        from common.domain.board import Board
+        from common.domain.scoring import Role
+        from common.transport.audit_physics import _parse_position
+
+        for r in records:
+            step = int(r.get("step", -1))
+            if step < 1:
+                continue
+
+            if audited_role == Role.POLICE.value:
+                claim = r.get("capture_claim")
+                if claim is not None:
+                    our_rec = our_by_step.get(step)
+                    if our_rec:
+                        our_pos = _parse_position(our_rec.get("state", ""))
+                        claim_pos = tuple(claim) if isinstance(claim, list) else claim
+                        if our_pos and tuple(our_pos) != claim_pos:
+                            if step not in failed:
+                                failed.append(step)
+                                notes.append(f"step {step}: false capture_claim at {claim_pos}")
+
+            if audited_role == Role.THIEF.value:
+                win_claim = r.get("win_claim")
+                if win_claim:
+                    claim_type = win_claim.get("type")
+                    if claim_type == "survival":
+                        if step < terms.get("max_steps", 35):
+                            if step not in failed:
+                                failed.append(step)
+                                notes.append(f"step {step}: invalid survival claim before max_steps")
+                    elif claim_type == "capture":
+                        state_str = r.get("state", "")
+                        thief_pos = _parse_position(state_str)
+                        barriers = set()
+                        match = re.search(r"barriers=\[(.*?)\]", state_str)
+                        if match and match.group(1).strip():
+                            b_strs = re.findall(r"\((\d+),\s*(\d+)\)", match.group(1))
+                            barriers = {(int(rr), int(cc)) for rr, cc in b_strs}
+
+                        board = Board(size=terms.get("board_size", 7))
+                        if thief_pos:
+                            r46 = thief_pos in barriers
+                            r47 = board.boxed_in(thief_pos, barriers)
+                            if not (r46 or r47):
+                                if step not in failed:
+                                    failed.append(step)
+                                    notes.append(f"step {step}: invalid self-capture claim")
 
     passed = len(failed) == 0
     verified = len([r for r in records if int(r.get("step", 0)) >= 1])

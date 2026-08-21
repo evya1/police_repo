@@ -22,7 +22,7 @@ from common.domain.scoring import Outcome, Role, settled_outcome
 # Stub termination: fixed half-turns per side per sub-game (6 total). A real driver ends a
 # sub-game on capture/survival/timeout; the stand-in engine plays a fixed shape so the
 # spine stays deterministic and fast.
-LAPS_PER_SUBGAME = 3
+MAX_STEPS = 35
 
 
 class Budgets(Protocol):
@@ -78,8 +78,10 @@ class SeriesResult:
 class TurnEngine(Protocol):
     """The interface the series engine calls to get a move."""
 
-    def step(self, sub_game: int, role: Role) -> dict:
-        """Return a move dict for the given sub-game and role."""
+    def start_subgame(self, sub_game: int, role: Role) -> None: ...
+    def decide(self) -> dict: ...
+    def observe_opponent(self, message: dict) -> None: ...
+    def terminal(self) -> Outcome | None: ...
 
 
 SubgameDriver = Callable[[object, TurnEngine, PeerConfig, int], SeriesRow]

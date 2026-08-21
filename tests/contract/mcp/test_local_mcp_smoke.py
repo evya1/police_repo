@@ -49,31 +49,7 @@ _full_terms = {
 }
 
 
-class DeterministicEngine:
-    """A deterministic turn engine that produces legal moves (mirrors the spine test)."""
-
-    def __init__(self, natural_role: Role, board_size: int = 7, seed: int = 42) -> None:
-        self.natural_role = natural_role
-        self.board_size = board_size
-        self.seed = seed
-
-    def _fresh_engine(self, sub_game: int):
-        from common.domain.board import Board
-        from common.domain.rules import GameEngine
-
-        role = role_for(self.natural_role, sub_game)
-        board = Board(size=self.board_size)
-        position = (0, 0) if role is Role.POLICE else (3, 3)
-        return GameEngine(board=board, role=role, position=position)
-
-    def step(self, sub_game: int, role: Role) -> dict:
-        engine = self._fresh_engine(sub_game)
-        legal = engine.legal_moves()
-        move = legal[0] if legal else "STAY"
-        engine.apply_own_move(move)
-        return {"move": move, "hint": "I am here", "step": 0, "state": engine.state_string()}
-
-
+from src.police_peer.wire import StandInEngine
 def _free_port() -> int:
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
@@ -111,7 +87,7 @@ def test_full_series_over_real_http(two_peers) -> None:
     config_t = PeerConfig(natural_role=Role.THIEF, budgets=DummyBudgets(), terms=_full_terms, seed=42)
     result_p, result_t = run_series(
         police_ch, thief_ch, config_p, config_t,
-        DeterministicEngine(Role.POLICE), DeterministicEngine(Role.THIEF),
+        StandInEngine(Role.POLICE), StandInEngine(Role.THIEF),
     )
     assert isinstance(result_p, SeriesResult) and isinstance(result_t, SeriesResult)
     assert len(result_p.ledger) == 6 and len(result_t.ledger) == 6

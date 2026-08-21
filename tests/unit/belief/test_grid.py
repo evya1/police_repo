@@ -152,3 +152,34 @@ class TestAsMatrix:
         for r in range(7):
             for c in range(7):
                 assert mat[r][c] == pytest.approx(bg.prob((r, c)))
+
+
+def test_diffuse_never_resurrects_an_excluded_cell() -> None:
+    """A barrier is impassable for the rest of the game, so diffusion may not refill it.
+
+    Rebuilding the allowed mask from whatever this diffusion reached re-admits every
+    previously excluded cell, and the belief then puts mass on cells the thief provably
+    cannot occupy -- compounding every turn.
+    """
+    grid = BeliefGrid(Board(size=7))
+    grid.exclude((2, 2))
+    assert grid.prob((2, 2)) == 0.0
+    assert (2, 2) not in grid.allowed_cells
+
+    for _ in range(5):
+        grid.diffuse()
+        assert (2, 2) not in grid.allowed_cells
+        assert grid.prob((2, 2)) == 0.0
+
+
+def test_diffuse_keeps_every_earlier_barrier_excluded() -> None:
+    """Barriers accumulate across a sub-game; none of them may come back."""
+    grid = BeliefGrid(Board(size=7))
+    barriers = [(1, 1), (3, 4), (5, 0)]
+    for cell in barriers:
+        grid.exclude(cell)
+        grid.diffuse()
+    for cell in barriers:
+        assert grid.prob(cell) == 0.0, cell
+        assert cell not in grid.allowed_cells, cell
+    assert abs(sum(grid.prob((r, c)) for r in range(7) for c in range(7)) - 1.0) < 1e-9

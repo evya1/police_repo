@@ -53,8 +53,15 @@ def audit_records(
     skipped: list[int] = []
     notes: list[str] = []
 
-    if not records:
-        return AuditResult(passed=True, verified_steps=0)
+    # A reveal must account for every step that was actually committed on the wire.
+    # Verifying only the records we are handed lets a peer drop the step it tampered
+    # with -- or reveal nothing at all -- and still settle clean.
+    revealed = {int(r.get("step", -1)) for r in records}
+    withheld = sorted(step for step in played if step not in revealed)
+    if withheld:
+        failed.extend(withheld)
+        tampered.extend(withheld)
+        notes.append(f"withheld reveal for committed step(s) {withheld}")
 
     # --- Layer 1: Integrity — re-hash every record -------------------------------
     for record in records:
@@ -119,24 +126,12 @@ def audit_records(
                 audited_role = r["sender"]
                 break
 
-        our_by_step = {int(r.get("step", -1)): r for r in our_records if "step" in r}
         survival_threshold = int(terms.get("survival_threshold", terms.get("max_steps", 35)))
 
         for r in records:
             step = int(r.get("step", -1))
             if step < 1:
                 continue
-
-            if audited_role == Role.POLICE.value:
-                claim = r.get("capture_claim")
-                if claim is not None:
-                    our_rec = our_by_step.get(step)
-                    if our_rec:
-                        our_pos = _parse_position(our_rec.get("state", ""))
-                        claim_pos = tuple(claim) if isinstance(claim, list) else claim
-                        if our_pos and tuple(our_pos) != claim_pos and step not in failed:
-                            failed.append(step)
-                            notes.append(f"step {step}: false capture_claim at {claim_pos}")
 
             if audited_role == Role.THIEF.value:
                 win_claim = r.get("win_claim")

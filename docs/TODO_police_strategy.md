@@ -64,8 +64,8 @@ leaves a new strategy module unwired and untested.
 | ID | Task | Phase | Pri | Status | Owner | Depends on | Maps to (repo / PRD) | Gate |
 |---|---|---|---|---|---|---|---|---|
 | PS-01 | Prerequisites & entry criteria | A | P0 | done | ORC | — | T004/T005/T008/T009/T010 assumed · T006 (belief) · write-set extensions | G-P0 |
-| PS-02 | Shared core: `Decision`, `BrainBase`, `HintWriter`, injection seam | B | P0 | not started | IA | PS-01 | T007 · FR-P1 (partial), FR-P6, FR-P7, FR-P9, FR-P11 | G-P1 |
-| PS-03 | `PoliceBrain` + `where_place_barrier`: pursuit scan, diffuse fallback, full barrier pipeline | B | P0 | not started | IA | PS-02 | T007 · FR-P2, FR-P3, FR-P4, FR-P5, FR-P8 | G-P1 |
+| PS-02 | Shared core: `Decision`, `BrainBase`, `HintWriter`, injection seam | B | P0 | done | IA | PS-01 | T007 · FR-P1 (partial), FR-P6, FR-P7, FR-P9, FR-P11 | G-P1 |
+| PS-03 | `PoliceBrain` + `where_place_barrier`: pursuit scan, diffuse fallback, full barrier pipeline | B | P0 | done | IA | PS-02 | T007 · FR-P2, FR-P3, FR-P4, FR-P5, FR-P8 | G-P1 |
 | PS-04 | Spine swap: `BrainDrivenEngine` in the glue (S3a/S3b/S3c) | C | P0 | not started | IA | PS-03 (+ T006 G-B3, write-set extension recorded) | T007 · PLAN §12, SD-P5, SD-P7 | G-P2 |
 | PS-05 | Verbal hardening: isolation, verdict rule, cap, lie rate | C | P0 | not started | IA | PS-03 | T007 · FR-P6, FR-P7, TC-P14…P16 | G-P2 |
 | PS-06 | KPI self-play + property + determinism + perf + coverage close-out | D | P1 | not started | IA | PS-04, PS-05 | T007 + T021 · PRD §2.3 KPIs, NFR-1/2 | G-P3 |
@@ -166,10 +166,34 @@ uv run pytest -q                                              # 100% passed (all
 - Shared-core files written per the PLAN §5 sync notes (role-neutral docstrings) so the
   PS-07/TS-07 cross-repo sync only normalizes the three pre-recorded divergences.
 
-**Verification:** `uv run pytest tests/unit/strategy -q`; `uv run ruff check
-src/police_peer/strategy tests/unit/strategy`; line cap check. **DoD:** G-P1 — shared core
-constructible with zero model/network dependencies; the seam fail-fast behavior proven;
-template hints generate offline.
+**Verification:** `uv run pytest tests/unit/strategy -q` (68 passed); `uv run ruff check
+src/police_peer/strategy tests/unit/strategy` (all checks passed); line cap: barriers.py 127
+lines, hints.py 144 lines, all others under cap. **DoD:** G-P1 — shared core constructible
+with zero model/network dependencies; the seam fail-fast behavior proven; template hints
+generate offline.
+
+#### Evidence (2026-08-21)
+
+**Branch:** `police-strategy` · HEAD: `7ce031d`
+
+| Artifact | Path | Lines (non-blank/non-comment) |
+|---|---|---|
+| `Decision` | `src/police_peer/strategy/decision.py` | 24 |
+| `BrainBase` | `src/police_peer/strategy/base.py` | 84 |
+| `HintWriter` + `TextProvider` | `src/police_peer/strategy/hints.py` | 144 |
+| `resolve_brain_cls` / `resolve_brain` | `src/police_peer/strategy/inject.py` | 92 |
+| `__init__` | `src/police_peer/strategy/__init__.py` | 25 |
+| TC-P01 | `tests/unit/strategy/test_decision.py` | — |
+| TC-P15 (partial) | `tests/unit/strategy/test_base.py` | — |
+| TC-P17 (partial) | `tests/unit/strategy/test_hints.py` | — |
+| TC-P18 (partial) | `tests/unit/strategy/test_base.py` | — |
+| TC-P19 (partial) | `tests/unit/strategy/test_purity.py` | — |
+
+Shared-core sync notes: docstrings are role-neutral (per PLAN §5 sync notes); the three
+pre-recorded divergences are: (1) `note_evidence` docstring references "the role's
+diffuse-fallback input" (role-neutral); (2) forced-STAY comment says "forced STAY; no
+barrier (pinned order)" (role-neutral); (3) `resolve_brain_cls` default-brain line says
+"police_repo: PoliceBrain" (role constant).
 
 ### PS-03 — `PoliceBrain` + `where_place_barrier`: pursuit scan, diffuse fallback, full barrier pipeline (owner: IA → repo task T007)
 
@@ -187,10 +211,35 @@ template hints generate offline.
   TC-P18 full; A/B fixtures for MS-3 (swapped belief peak vs. uniform belief ⇒ different
   actions in the pursuit fixtures).
 
-**Verification:** `uv run pytest tests/unit/strategy -q`; ruff; line cap. **DoD:** G-P1
-complete — the policy is deterministic and legal by construction; `where_place_barrier`
-is unit-green step by step (guards, value, self-route, reserve, threshold, tie); belief
-demonstrably changes selection (MS-2/MS-3 fixtures).
+**Verification:** `uv run pytest tests/unit/strategy -q` (68 passed); `uv run ruff check
+src/police_peer/strategy tests/unit/strategy` (all checks passed); line cap: barriers.py 127
+lines, police.py 112 lines, all others under cap. **DoD:** G-P1 complete — the policy is
+deterministic and legal by construction; `where_place_barrier` is unit-green step by step
+(guards, value, self-route, reserve, threshold, tie); belief demonstrably changes selection
+(MS-2/MS-3 fixtures).
+
+#### Evidence (2026-08-21)
+
+**Branch:** `police-strategy` · HEAD: `7ce031d`
+
+| Artifact | Path | Lines (non-blank/non-comment) |
+|---|---|---|
+| `where_place_barrier` + `cut_value` + `_reachable` | `src/police_peer/strategy/barriers.py` | 127 |
+| `PoliceBrain` | `src/police_peer/strategy/police.py` | 112 |
+| TC-P02 (unit) | `tests/unit/strategy/test_police.py` | — |
+| TC-P03 (4 branches) | `tests/unit/strategy/test_police.py` | — |
+| TC-P04 (commit to peak) | `tests/unit/strategy/test_police.py` | — |
+| TC-P05 (tie-break) | `tests/unit/strategy/test_police.py` | — |
+| TC-P06 (forced STAY) | `tests/unit/strategy/test_police.py` | — |
+| TC-P07 (guards) | `tests/unit/strategy/test_barriers.py` | — |
+| TC-P08 (value) | `tests/unit/strategy/test_barriers.py` | — |
+| TC-P09 (self-route) | `tests/unit/strategy/test_barriers.py` | — |
+| TC-P10 (reserve) | `tests/unit/strategy/test_barriers.py` | — |
+| TC-P11 (threshold/tie) | `tests/unit/strategy/test_barriers.py` | — |
+| TC-P18 full | `tests/unit/strategy/test_base.py` | — |
+
+A/B fixtures: `_UniformBelief` vs `_PeakBelief` in `test_police.py` — swapped belief peak
+vs. uniform belief produces different actions in the pursuit fixtures (TC-P03).
 
 ## Phase C — The loop and the verbal layer
 

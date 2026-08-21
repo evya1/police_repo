@@ -40,12 +40,14 @@ class PeerConfig:
         terms: dict,
         seed: int = 0,
         locks: dict[str, str] | None = None,
+        mode: str = "warmup",
     ) -> None:
         self.natural_role = natural_role
         self.budgets = budgets
         self.terms = terms
         self.seed = seed
         self.locks = locks
+        self.mode = mode
 
 
 @dataclass
@@ -94,11 +96,13 @@ class PeerFacade:
         config: PeerConfig,
         name: str = "peer",
         subgame_driver: SubgameDriver | None = None,
+        mode: str | None = None,
     ) -> None:
         self.channel = channel
         self.engine = engine
         self.config = config
         self.name = name
+        self.mode = mode or getattr(config, "mode", "warmup")
         self._game_id = ""
         self._game_uid = ""
         self._ledgers: list[SeriesRow] = []

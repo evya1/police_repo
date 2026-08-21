@@ -1,0 +1,12 @@
+# Local private configuration example (EXAMPLE — NOT AN OFFICIAL ATTACHED TEMPLATE)
+min_center_intensity = 0.5
+group_id = "local-team"
+seed = 42
+
+[network]
+turn_timeout = 30.0
+connect_timeout = 30.0
+poll_interval = 0.01
+
+[strategy]
+mode = "baseline"

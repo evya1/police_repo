@@ -22,6 +22,7 @@ class StandInEngine:
     board_size: int = 7
     seed: int = 0
     terms: dict | None = None
+    strategy: Any = None
 
     _engine: GameEngine | None = None
     _opponent_terminal: Outcome | None = None
@@ -44,7 +45,12 @@ class StandInEngine:
             )
 
         board = Board(size=board_size)
-        position = (0, 0) if role is Role.POLICE else (3, 3)
+        if role is Role.POLICE:
+            cop_start = t.get("cop_start", (0, 0))
+            position = tuple(cop_start) if isinstance(cop_start, (list, tuple)) else (0, 0)
+        else:
+            thief_start = t.get("thief_start", (3, 3))
+            position = tuple(thief_start) if isinstance(thief_start, (list, tuple)) else (3, 3)
         self._engine = GameEngine(
             board=board,
             role=role,
@@ -63,7 +69,18 @@ class StandInEngine:
             raise RuntimeError("start_subgame must be called before decide")
 
         legal_moves = self._engine.legal_moves()
-        move = legal_moves[0] if legal_moves else "STAY"
+        if self.strategy is not None and hasattr(self.strategy, "select_action"):
+            view = {
+                "role": self._engine.role.value,
+                "position": list(self._engine.position),
+                "step": self._engine.step,
+                "barriers": [list(b) for b in self._engine.barriers],
+            }
+            move = self.strategy.select_action(legal_moves, view)
+            if move not in legal_moves:
+                move = legal_moves[0] if legal_moves else "STAY"
+        else:
+            move = legal_moves[0] if legal_moves else "STAY"
         self._engine.apply_own_move(move)
 
         res: dict[str, Any] = {

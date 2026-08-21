@@ -36,11 +36,19 @@ class Budgets(Protocol):
 class PeerConfig:
     """Configuration injected into the series engine."""
 
-    def __init__(self, natural_role: Role, budgets: Budgets, terms: dict, seed: int = 0) -> None:
+    def __init__(
+        self,
+        natural_role: Role,
+        budgets: Budgets,
+        terms: dict,
+        seed: int = 0,
+        locks: dict[str, str] | None = None,
+    ) -> None:
         self.natural_role = natural_role
         self.budgets = budgets
         self.terms = terms
         self.seed = seed
+        self.locks = locks
 
 
 @dataclass
@@ -118,6 +126,7 @@ class PeerFacade:
             group_id=self.name,
             role=self.config.natural_role.value,
             sub_game_number=1,
+            locks=self.config.locks,
         )
         self.channel.send_agreement(greeting)
         deadline = time.monotonic() + self.config.budgets.connect_timeout
@@ -129,7 +138,13 @@ class PeerFacade:
             time.sleep(self.config.budgets.poll_interval)
         if opponent is None:
             raise TimeoutError("opponent greeting not received")
-        agreed = verify_greeting(opponent, self.config.terms, self.name, 1)
+        agreed = verify_greeting(
+            opponent,
+            self.config.terms,
+            self.name,
+            1,
+            our_locks=self.config.locks,
+        )
         self._game_id = agreed.game_id
         self._game_uid = agreed.game_uid
 

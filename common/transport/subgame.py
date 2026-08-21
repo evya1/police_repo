@@ -80,7 +80,6 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
     else:
         result = audit_records(opponent_audit.get("records", []), inbox.played, config.terms, our_records)
         audit_ok, audits_present = result.passed, True
-        if not audit_ok: print("AUDIT FAIL:", result.detail)
     final_outcome, _ = settled_outcome(terminal, audits_present=audits_present, audits_passed=audit_ok)
     return SeriesRow(
         sub_game_number=sub_game,

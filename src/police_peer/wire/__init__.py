@@ -12,7 +12,7 @@ from typing import Any
 from common.domain.board import Board
 from common.domain.rules import GameEngine
 from common.domain.scoring import Outcome, Role
-from common.transport.series import TurnEngine
+from common.transport.series import TurnEngine as TurnEngine
 
 
 @dataclass
@@ -66,18 +66,19 @@ class StandInEngine:
         if "barrier_placed" in message:
             self._engine.observe_barrier(message["barrier_placed"])
 
-        if self._engine.role is Role.THIEF:
-            if "capture_claim" in message:
-                self._pending_claim = tuple(message["capture_claim"]) if isinstance(message["capture_claim"], list) else message["capture_claim"]
+        if self._engine.role is Role.THIEF and "capture_claim" in message:
+            cc = message["capture_claim"]
+            self._pending_claim = tuple(cc) if isinstance(cc, list) else cc
 
         if self._engine.role is Role.POLICE:
-            if "claim_response" in message:
-                if message["claim_response"].get("caught") is True:
-                    self._opponent_terminal = Outcome.CAPTURE
-            if "win_claim" in message:
-                if message["win_claim"].get("type") == "survival":
+            if "claim_response" in message and message["claim_response"].get("caught") is True:
+                self._opponent_terminal = Outcome.CAPTURE
+            win_claim = message.get("win_claim")
+            if win_claim:
+                wtype = win_claim.get("type")
+                if wtype == "survival":
                     self._opponent_terminal = Outcome.SURVIVAL
-                elif message["win_claim"].get("type") == "capture":
+                elif wtype == "capture":
                     self._opponent_terminal = Outcome.CAPTURE
 
     def terminal(self) -> Outcome | None:

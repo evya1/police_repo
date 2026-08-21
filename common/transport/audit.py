@@ -129,20 +129,18 @@ def audit_records(
                     if our_rec:
                         our_pos = _parse_position(our_rec.get("state", ""))
                         claim_pos = tuple(claim) if isinstance(claim, list) else claim
-                        if our_pos and tuple(our_pos) != claim_pos:
-                            if step not in failed:
-                                failed.append(step)
-                                notes.append(f"step {step}: false capture_claim at {claim_pos}")
+                        if our_pos and tuple(our_pos) != claim_pos and step not in failed:
+                            failed.append(step)
+                            notes.append(f"step {step}: false capture_claim at {claim_pos}")
 
             if audited_role == Role.THIEF.value:
                 win_claim = r.get("win_claim")
                 if win_claim:
                     claim_type = win_claim.get("type")
                     if claim_type == "survival":
-                        if step < terms.get("max_steps", 35):
-                            if step not in failed:
-                                failed.append(step)
-                                notes.append(f"step {step}: invalid survival claim before max_steps")
+                        if step < terms.get("max_steps", 35) and step not in failed:
+                            failed.append(step)
+                            notes.append(f"step {step}: invalid survival claim before max_steps")
                     elif claim_type == "capture":
                         state_str = r.get("state", "")
                         thief_pos = _parse_position(state_str)
@@ -156,10 +154,9 @@ def audit_records(
                         if thief_pos:
                             r46 = thief_pos in barriers
                             r47 = board.boxed_in(thief_pos, barriers)
-                            if not (r46 or r47):
-                                if step not in failed:
-                                    failed.append(step)
-                                    notes.append(f"step {step}: invalid self-capture claim")
+                            if not (r46 or r47) and step not in failed:
+                                failed.append(step)
+                                notes.append(f"step {step}: invalid self-capture claim")
 
     passed = len(failed) == 0
     verified = len([r for r in records if int(r.get("step", 0)) >= 1])

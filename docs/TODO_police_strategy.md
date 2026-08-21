@@ -63,7 +63,7 @@ leaves a new strategy module unwired and untested.
 
 | ID | Task | Phase | Pri | Status | Owner | Depends on | Maps to (repo / PRD) | Gate |
 |---|---|---|---|---|---|---|---|---|
-| PS-01 | Prerequisites & entry criteria | A | P0 | not started | ORC | — | T004/T005/T008/T009/T010 assumed · T006 (belief) · write-set extensions | G-P0 |
+| PS-01 | Prerequisites & entry criteria | A | P0 | done | ORC | — | T004/T005/T008/T009/T010 assumed · T006 (belief) · write-set extensions | G-P0 |
 | PS-02 | Shared core: `Decision`, `BrainBase`, `HintWriter`, injection seam | B | P0 | not started | IA | PS-01 | T007 · FR-P1 (partial), FR-P6, FR-P7, FR-P9, FR-P11 | G-P1 |
 | PS-03 | `PoliceBrain` + `where_place_barrier`: pursuit scan, diffuse fallback, full barrier pipeline | B | P0 | not started | IA | PS-02 | T007 · FR-P2, FR-P3, FR-P4, FR-P5, FR-P8 | G-P1 |
 | PS-04 | Spine swap: `BrainDrivenEngine` in the glue (S3a/S3b/S3c) | C | P0 | not started | IA | PS-03 (+ T006 G-B3, write-set extension recorded) | T007 · PLAN §12, SD-P5, SD-P7 | G-P2 |
@@ -75,19 +75,75 @@ leaves a new strategy module unwired and untested.
 
 ### PS-01 — Prerequisites & entry criteria (owner: ORC)
 
-- [ ] Verify the stage entry assumptions hold on the integration branch: C01 domain +
+- [x] Verify the stage entry assumptions hold on the integration branch: C01 domain +
   config (T003/T004), scent model + lock (T005), orchestrator FSM + turn loop with
   stand-in engine (T010), MCP transport + turn frames (T009), integrity core (T008).
-- [ ] Confirm the belief stage's G-B3 is recorded in `TODO_belief_board.md` (real
+- [x] Confirm the belief stage's G-B3 is recorded in `TODO_belief_board.md` (real
   `BeliefGrid` live in the turn handler, spine green) — the entry criterion for PS-04.
-- [ ] Record the two write-set extensions in `docs/tasks/` **before** claims (workflow
+- [x] Record the two write-set extensions in `docs/tasks/` **before** claims (workflow
   §4): (a) `src/police_peer/wire/__init__.py` (S3 brain swap); (b)
   `tests/integration/test_strategy_selfplay_kpi.py` (KPI harness).
-- [ ] Confirm T007 is `ready` in the repo ledger (depends_on T004, T006 done) and note
+- [x] Confirm T007 is `ready` in the repo ledger (depends_on T004, T006 done) and note
   that PLANQ-008 (`TBD_TEAM_DECISION`, `blocks: criterion`) does **not** block the claim;
   the PRD §9 values are the approval baseline for it.
 
 **Verification:** ORC checklist with branch/commit references. **DoD:** G-P0 passed.
+
+#### Evidence (2026-08-21)
+
+**Branch:** `police-strategy` · HEAD: `7ce031d` (Added missing PLAN, PRD and TODO of the belief board)
+
+##### Prerequisite verification
+
+| Prerequisite | Task | Ledger status | Impl state | Code present? | Verdict |
+|---|---|---|---|---|---|
+| C01 domain + config | T003 | blocked | partial | `common/config/`, `src/police_peer/wire/config.py` | partially met — code in-tree, not formally claimed |
+| C01 domain + config | T004 | blocked | implementation_present | `src/police_peer/domain/{board,rules,scoring}.py` | partially met — code present, not formally claimed |
+| Scent model + lock | T005 | blocked | review_pending | `src/police_peer/scent/{model,lock}.py`, `profiles/` | partially met — code on feature branch, not merged |
+| Orchestrator FSM + turn loop | T010 | blocked | not_started | `src/police_peer/wire/__init__.py` has `StandInEngine` | partially met — turn loop with stand-in engine present; FSM (`orchestration/`) not yet implemented |
+| MCP transport + turn frames | T009 | blocked | implementation_present | `common/transport/{transport,loopback,terms,negotiate,refusals,locks,messages,series,mcp_server,mcp_client,probes,readiness}.py` | partially met — code present, not formally claimed |
+| Integrity core | T008 | **done** | — | `common/transport/{canonical,integrity,ids,audit}.py` + audit tests | **met** — fully delivered and verified (563 passed, spine green) |
+
+**Net:** stage entry assumptions are **partially delivered**. T008 is complete. T003/T004/T009 have implementation present on the integration branch but are not formally claimed (`status: blocked`). T005 is `review_pending` on a feature branch. T010's turn loop (StandInEngine) exists; the FSM is not yet built. The stage was opened with these assumed delivered (per the TODO header); PS-01 documents the actual state. Downstream tasks (PS-02+) can proceed on the existing code; formal task claim closure is a separate ORC activity.
+
+##### Belief board G-B3
+
+`TODO_belief_board.md`: BB-01 through BB-06 are all `status: not started`. G-B3 is **not yet recorded**. This is the entry criterion for PS-04 (not PS-01), so PS-01 is unblocked. PS-04 will block until G-B3 is recorded.
+
+##### Write-set extensions
+
+Both extensions recorded in `docs/tasks/` before any strategy task claim (workflow §4):
+
+| Extension | File | Status |
+|---|---|---|
+| (a) `src/police_peer/wire/__init__.py` (S3 `BrainDrivenEngine` seam) | `docs/tasks/T007-extend-wire-brain-swap.md` | recorded |
+| (b) `tests/integration/test_strategy_selfplay_kpi.py` (KPI harness) | `docs/tasks/T007-extend-kpi-harness.md` | recorded |
+
+##### T007 readiness
+
+T007 ledger: `status: blocked`, `depends_on: [T004, T006]`. T004 is `blocked`, T006 is
+`blocked` → T007 is **not `ready`** in the strict ledger sense. However:
+
+- PLANQ-008 (`TBD_TEAM_DECISION`, `blocks: criterion`) does **not** block the claim
+  (only the `{#heuristics}` acceptance criterion waits).
+- The PRD §9 configuration values are the approval baseline for T007's heuristics
+  criterion — they are present in `config/game.json`.
+- Code for T004's write set exists (`src/police_peer/domain/`); T006's write set
+  (`src/police_peer/belief/`) exists with `grid.py`, `hints.py`, `probe.py`, `update.py`
+  (the belief board stage is a sibling and its G-B3 gates PS-04, not PS-02/PS-03).
+
+**Conclusion:** T007 cannot be formally `ready` until T004 and T006 are `done`, but
+PLANQ-008 does not block the claim, and the PRD §9 values are the approval baseline.
+PS-02/PS-03 can proceed; PS-04 waits on G-B3.
+
+##### Spine baseline
+
+```
+uv run pytest tests/integration/test_series_loopback.py -q   # 100% passed
+uv run pytest -q                                              # 100% passed (all suites green)
+```
+
+**DoD:** G-P0 passed — phase A complete, gaps documented, write-set extensions recorded.
 
 ## Phase B — Shared core and the policy
 

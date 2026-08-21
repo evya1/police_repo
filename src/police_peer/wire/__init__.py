@@ -1,6 +1,5 @@
-"""Wire glue: StandInEngine over the existing stage-1 domain.
+"""Police peer wire adapter and baseline turn engine.
 
-This module wires the shared transport layer to the role-local domain.
 Both peers import the same shared transport code and parameterize by role.
 """
 
@@ -22,21 +21,47 @@ class StandInEngine:
     natural_role: Role
     board_size: int = 7
     seed: int = 0
+    terms: dict | None = None
 
     _engine: GameEngine | None = None
     _opponent_terminal: Outcome | None = None
     _pending_claim: tuple | None = None
+    _thief_caught: bool = False
 
-    def start_subgame(self, sub_game: int, role: Role) -> None:
+    def start_subgame(self, sub_game: int, role: Role, terms: dict | None = None) -> None:
         """Create a fresh GameEngine for the given sub-game."""
-        board = Board(size=self.board_size)
+        t = terms or self.terms or {}
+        board_size = t.get("board_size", self.board_size)
+        max_steps = int(t.get("max_steps", 35))
+        survival_threshold = int(t.get("survival_threshold", max_steps))
+        max_moves = int(t.get("max_moves", max_steps))
+        barriers_max = int(t.get("barriers_max", 14))
+
+        if max_moves != survival_threshold or max_steps != survival_threshold:
+            raise ValueError(
+                f"divergent max_moves/max_steps ({max_steps}) and survival_threshold "
+                f"({survival_threshold}) refused (OPEN-011)"
+            )
+
+        board = Board(size=board_size)
         position = (0, 0) if role is Role.POLICE else (3, 3)
-        self._engine = GameEngine(board=board, role=role, position=position)
+        self._engine = GameEngine(
+            board=board,
+            role=role,
+            position=position,
+            max_steps=max_steps,
+            survival_threshold=survival_threshold,
+            barriers_max=barriers_max,
+        )
         self._opponent_terminal = None
         self._pending_claim = None
+        self._thief_caught = False
 
     def decide(self) -> dict:
         """Return a move dict for the current sub-game and role."""
+        if self._engine is None:
+            raise RuntimeError("start_subgame must be called before decide")
+
         legal_moves = self._engine.legal_moves()
         move = legal_moves[0] if legal_moves else "STAY"
         self._engine.apply_own_move(move)
@@ -48,21 +73,30 @@ class StandInEngine:
         }
 
         if self._engine.role is Role.POLICE:
-            pass # No random capture_claim
+            pass
 
         if self._engine.role is Role.THIEF:
             if self._pending_claim is not None:
-                res["claim_response"] = self._engine.answer_capture_claim(self._pending_claim)
+                ans = self._engine.answer_capture_claim(self._pending_claim)
+                res["claim_response"] = ans
                 self._pending_claim = None
-            if self._engine.survived():
-                res["win_claim"] = {"type": "survival"}
-            elif self._engine.self_captured():
+                if ans and ans.get("caught") is True:
+                    self._thief_caught = True
+                    res["win_claim"] = {"type": "capture"}
+                    return res
+
+            if self._engine.self_captured():
                 res["win_claim"] = {"type": "capture"}
+            elif self._engine.survived():
+                res["win_claim"] = {"type": "survival"}
 
         return res
 
     def observe_opponent(self, message: dict) -> None:
         """Absorb an opponent's turn message."""
+        if self._engine is None:
+            return
+
         if "barrier_placed" in message:
             self._engine.observe_barrier(message["barrier_placed"])
 
@@ -85,10 +119,11 @@ class StandInEngine:
         """Return terminal outcome if reached."""
         if self._opponent_terminal is not None:
             return self._opponent_terminal
-        if self._engine.role is Role.THIEF:
+        if self._thief_caught:
+            return Outcome.CAPTURE
+        if self._engine is not None and self._engine.role is Role.THIEF:
             if self._engine.self_captured():
                 return Outcome.CAPTURE
             if self._engine.survived():
                 return Outcome.SURVIVAL
         return None
-

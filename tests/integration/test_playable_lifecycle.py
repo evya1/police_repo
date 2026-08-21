@@ -1,15 +1,21 @@
 from __future__ import annotations
 
-from common.domain.scoring import Role
+import threading
+
+import pytest
+
+from common.domain.scoring import Outcome, Role, role_for
 from common.transport.loopback import pair
 from common.transport.series import PeerConfig, run_series
-from src.police_peer.wire import StandInEngine
+from common.transport.subgame import play_subgame
+from police_peer.wire import StandInEngine
 
 
 class DummyBudgets:
     turn_timeout = 5.0
     connect_timeout = 5.0
-    poll_interval = 0.01
+    poll_interval = 0.005
+
 
 _full_terms = {
     "board_size": 7,
@@ -28,7 +34,8 @@ _full_terms = {
     "num_games": 6,
 }
 
-def test_playable_lifecycle_real():
+
+def test_playable_lifecycle_real() -> None:
     ch_a, ch_b = pair()
 
     cfg_a = PeerConfig(Role.POLICE, DummyBudgets(), _full_terms, seed=1)
@@ -41,7 +48,129 @@ def test_playable_lifecycle_real():
 
     assert res_a.settled is True
     assert res_b.settled is True
+    assert len(res_a.ledger) == 6
+    assert len(res_b.ledger) == 6
 
-    for row in res_a.ledger:
-        assert row.audit_ok is True
-        assert row.steps > 0
+    for i in range(6):
+        row_a = res_a.ledger[i]
+        row_b = res_b.ledger[i]
+        assert row_a.sub_game_number == i + 1
+        assert row_b.sub_game_number == i + 1
+        assert row_a.role is role_for(Role.POLICE, i + 1)
+        assert row_b.role is role_for(Role.THIEF, i + 1)
+        assert row_a.outcome == row_b.outcome
+        assert row_a.steps == row_b.steps
+        assert row_a.score_police == row_b.score_police
+        assert row_a.score_thief == row_b.score_thief
+        assert row_a.audit_ok is True
+        assert row_b.audit_ok is True
+        assert row_a.steps > 0
+
+
+class EarlyCapturePoliceEngine(StandInEngine):
+    """Engine that issues a capture claim on step 2 at thief position."""
+
+    def decide(self) -> dict:
+        res = super().decide()
+        if self._engine and self._engine.role is Role.POLICE and self._engine.step == 2:
+            res["capture_claim"] = [3, 3]
+        return res
+
+
+class FixedThiefEngine(StandInEngine):
+    """Thief that stays at (3, 3)."""
+
+    def decide(self) -> dict:
+        if self._engine is None:
+            raise RuntimeError("engine not started")
+        move = "STAY"
+        self._engine.apply_own_move(move)
+        res = {
+            "move": move,
+            "hint": "I am staying",
+            "state": self._engine.state_string(),
+        }
+        if self._pending_claim is not None:
+            ans = self._engine.answer_capture_claim(self._pending_claim)
+            res["claim_response"] = ans
+            self._pending_claim = None
+            if ans and ans.get("caught") is True:
+                self._thief_caught = True
+                res["win_claim"] = {"type": "capture"}
+                return res
+        if self._engine.self_captured():
+            res["win_claim"] = {"type": "capture"}
+        elif self._engine.survived():
+            res["win_claim"] = {"type": "survival"}
+        return res
+
+
+def test_early_capture_deterministic() -> None:
+    """Exercise a legitimate early-capture path at step 3."""
+    ch_a, ch_b = pair("Police", "Thief")
+    cfg_a = PeerConfig(Role.POLICE, DummyBudgets(), _full_terms, seed=1)
+    cfg_b = PeerConfig(Role.THIEF, DummyBudgets(), _full_terms, seed=2)
+
+    eng_a = EarlyCapturePoliceEngine(Role.POLICE, board_size=7, seed=1)
+    eng_b = FixedThiefEngine(Role.THIEF, board_size=7, seed=2)
+
+    row_a = row_b = None
+    errors: list[Exception] = []
+
+    def run_a():
+        nonlocal row_a
+        try:
+            row_a = play_subgame(ch_a, eng_a, cfg_a, 1)
+        except Exception as e:
+            errors.append(e)
+
+    def run_b():
+        nonlocal row_b
+        try:
+            row_b = play_subgame(ch_b, eng_b, cfg_b, 1)
+        except Exception as e:
+            errors.append(e)
+
+    t_a = threading.Thread(target=run_a)
+    t_b = threading.Thread(target=run_b)
+    t_a.start()
+    t_b.start()
+    t_a.join(timeout=10)
+    t_b.join(timeout=10)
+
+    if errors:
+        raise RuntimeError(f"Errors in play_subgame: {errors}")
+
+    assert row_a is not None and row_b is not None
+    assert row_a.outcome == Outcome.CAPTURE
+    assert row_b.outcome == Outcome.CAPTURE
+    assert row_a.steps == 3
+    assert row_b.steps == 3
+    assert row_a.score_police == 20
+    assert row_a.score_thief == 5
+    assert row_a.audit_ok is True
+    assert row_b.audit_ok is True
+
+
+def test_survival_threshold_boundaries() -> None:
+    """Exercise 34/35/36 survival boundaries and divergence refusal."""
+    eng = StandInEngine(Role.THIEF, board_size=7)
+
+    # 35 threshold
+    eng.start_subgame(1, Role.THIEF, terms={"max_steps": 35, "survival_threshold": 35})
+    assert eng._engine.step == 0
+    eng._engine.step = 34
+    assert eng._engine.survived() is False
+    eng._engine.step = 35
+    assert eng._engine.survived() is True
+
+    # 36 threshold
+    eng.start_subgame(1, Role.THIEF, terms={"max_steps": 36, "survival_threshold": 36})
+    eng._engine.step = 35
+    assert eng._engine.survived() is False
+    eng._engine.step = 36
+    assert eng._engine.survived() is True
+
+    # Divergent configuration must refuse
+    with pytest.raises(ValueError, match="OPEN-011"):
+        eng.start_subgame(1, Role.THIEF, terms={"max_steps": 34, "survival_threshold": 35})

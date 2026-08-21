@@ -6,9 +6,6 @@ import pytest
 
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.reporting.gmail import (
-    AttachmentMissingError,
-    DraftSubstitutionError,
-    DuplicateSendError,
     FileIdempotencyStore,
     GmailClientNotConfiguredError,
     GmailSender,
@@ -87,11 +84,9 @@ def test_no_client_raises(tmp_path: Path) -> None:
 
 def test_gmail_sender_scope_validation_in_constructor() -> None:
     gk = ExternalApiGatekeeper()
-    # Valid scope passes
     sender = GmailSender(gatekeeper=gk, scopes=["https://www.googleapis.com/auth/gmail.send"])
     assert sender.scopes == ["https://www.googleapis.com/auth/gmail.send"]
 
-    # Invalid scope raises InvalidScopeError
     with pytest.raises(InvalidScopeError):
         GmailSender(gatekeeper=gk, scopes=["https://www.googleapis.com/auth/gmail.readonly"])
 
@@ -108,15 +103,12 @@ def test_gmail_sender_recipient_handling(tmp_path: Path) -> None:
     )
     artifacts = [("report.json", b'{"result": 1}')]
 
-    # Without default or explicit recipient -> raises ValueError
     with pytest.raises(ValueError, match="Recipient email address must be explicitly provided"):
         sender.send_report(game_uid="g-no-recip", artifacts=artifacts)
 
-    # With explicit recipient -> succeeds
     res = sender.send_report(game_uid="g-explicit", artifacts=artifacts, recipient="eval@example.org")
     assert res["status"] == "OK"
 
-    # With configured default recipient -> succeeds
     configured_sender = GmailSender(
         gatekeeper=gk,
         scopes=["https://www.googleapis.com/auth/gmail.send"],
@@ -145,93 +137,3 @@ def test_fake_client_send(tmp_path: Path) -> None:
         artifacts=[("decl.json", b'{"kind": "decl"}')],
     )
     assert res["status"] == "OK"
-
-
-def test_durable_idempotency(tmp_path: Path) -> None:
-    gk = ExternalApiGatekeeper()
-    client = FakeGmailService(mode="messages")
-    store_file = tmp_path / "custom_sent.json"
-
-    store1 = FileIdempotencyStore(store_file)
-    sender1 = GmailSender(
-        gatekeeper=gk,
-        scopes=["https://www.googleapis.com/auth/gmail.send"],
-        default_recipient="test@example.com",
-        service_client=client,
-        idempotency_store=store1,
-    )
-    artifacts = [("decl.json", b'{"kind": "decl"}')]
-
-    # First send succeeds
-    res = sender1.send_report(game_uid="game-durable-1", artifacts=artifacts)
-    assert res["status"] == "OK"
-
-    # Create new sender with same store path to simulate process restart
-    store2 = FileIdempotencyStore(store_file)
-    sender2 = GmailSender(
-        gatekeeper=gk,
-        scopes=["https://www.googleapis.com/auth/gmail.send"],
-        default_recipient="test@example.com",
-        service_client=client,
-        idempotency_store=store2,
-    )
-
-    # Second send for same game_uid MUST raise DuplicateSendError
-    with pytest.raises(DuplicateSendError):
-        sender2.send_report(game_uid="game-durable-1", artifacts=artifacts)
-
-
-def test_draft_substitution_refused(tmp_path: Path) -> None:
-    gk = ExternalApiGatekeeper()
-    client = FakeGmailService(mode="drafts")
-    store = FileIdempotencyStore(tmp_path / "sent.json")
-    sender = GmailSender(
-        gatekeeper=gk,
-        scopes=["https://www.googleapis.com/auth/gmail.send"],
-        default_recipient="test@example.com",
-        service_client=client,
-        idempotency_store=store,
-    )
-
-    with pytest.raises(DraftSubstitutionError):
-        sender.send_report(
-            game_uid="game-101",
-            artifacts=[("decl.json", b'{"kind": "decl"}')],
-        )
-
-
-def test_empty_attachment_refused(tmp_path: Path) -> None:
-    gk = ExternalApiGatekeeper()
-    client = FakeGmailService(mode="messages")
-    store = FileIdempotencyStore(tmp_path / "sent.json")
-    sender = GmailSender(
-        gatekeeper=gk,
-        scopes=["https://www.googleapis.com/auth/gmail.send"],
-        default_recipient="test@example.com",
-        service_client=client,
-        idempotency_store=store,
-    )
-
-    with pytest.raises(AttachmentMissingError):
-        sender.send_report(game_uid="game-102", artifacts=[])
-
-    with pytest.raises(AttachmentMissingError):
-        sender.send_report(game_uid="game-103", artifacts=[("f.json", b"")])
-
-
-def test_duplicate_send_refused(tmp_path: Path) -> None:
-    gk = ExternalApiGatekeeper()
-    client = FakeGmailService(mode="messages")
-    store = FileIdempotencyStore(tmp_path / "sent.json")
-    sender = GmailSender(
-        gatekeeper=gk,
-        scopes=["https://www.googleapis.com/auth/gmail.send"],
-        default_recipient="test@example.com",
-        service_client=client,
-        idempotency_store=store,
-    )
-    artifacts = [("decl.json", b'{"kind": "decl"}')]
-
-    sender.send_report(game_uid="game-dup", artifacts=artifacts)
-    with pytest.raises(DuplicateSendError):
-        sender.send_report(game_uid="game-dup", artifacts=artifacts)

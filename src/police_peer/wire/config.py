@@ -57,6 +57,38 @@ def load_private(path: Path | str) -> PrivateConfig:
     )
 
 
+class Budgets:
+    """Turn budgets satisfying ``common.transport.series.Budgets``.
+
+    The series engine reads these as attributes, so a plain dict cannot stand in
+    for them -- assembling one the documented way used to hand ``PeerConfig`` a
+    dict and fail with ``AttributeError`` at the first wait.
+    """
+
+    def __init__(
+        self,
+        turn_timeout: float = 30.0,
+        connect_timeout: float = 30.0,
+        poll_interval: float = 0.01,
+    ) -> None:
+        self.turn_timeout = turn_timeout
+        self.connect_timeout = connect_timeout
+        self.poll_interval = poll_interval
+
+
+def build_budgets(
+    private: PrivateConfig,
+    overrides: dict[str, float] | None = None,
+) -> Budgets:
+    """Single construction point for turn budgets: private TOML, then overrides."""
+    merged: dict[str, float] = {**private.budgets, **(overrides or {})}
+    return Budgets(
+        turn_timeout=float(merged.get("turn_timeout", 30.0)),
+        connect_timeout=float(merged.get("connect_timeout", 30.0)),
+        poll_interval=float(merged.get("poll_interval", 0.01)),
+    )
+
+
 def peer_locks(private: PrivateConfig) -> dict[str, str]:
     """Hashes of the physics this peer has pinned, keyed by lock family.
 
@@ -94,19 +126,16 @@ def assemble_peer_config(
 ) -> dict[str, Any]:
     """Full ``PeerConfig`` assembly: terms + metadata.
 
-    Returns a dict with keys ``terms``, ``natural_role``, ``seed`` and ``budgets``
-    so callers can construct a ``common.transport.series.PeerConfig`` directly.
+    Returns a dict with keys ``terms``, ``natural_role``, ``seed``, ``budgets``
+    and ``locks`` so callers can construct a
+    ``common.transport.series.PeerConfig`` directly.
     """
     terms = build_peer_config(json_path, private)
-    merged_budgets: dict[str, float] = {
-        **private.budgets,
-        **(budgets or {}),
-    }
     return {
         "terms": terms,
         "natural_role": natural_role,
         "seed": seed or private.seed,
-        "budgets": merged_budgets,
+        "budgets": build_budgets(private, budgets),
         "locks": peer_locks(private),
     }
 

@@ -11,7 +11,14 @@ from common.transport.loopback import pair
 from common.transport.series import PeerConfig, PeerFacade, SeriesResult
 from police_peer.strategy import BaselineStrategy, Strategy
 from police_peer.wire import StandInEngine
-from police_peer.wire.config import PrivateConfig, load_private, project_terms
+from police_peer.wire.config import (
+    Budgets,
+    PrivateConfig,
+    build_budgets,
+    load_private,
+    peer_locks,
+    project_terms,
+)
 
 __version__ = "1.0.0"
 SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.0", "1.1", "1.2"})
@@ -24,20 +31,6 @@ __all__ = [
     "validate_startup_config",
     "__version__",
 ]
-
-
-class Budgets:
-    """Default turn and connect timeout budgets."""
-
-    def __init__(
-        self,
-        turn_timeout: float = 30.0,
-        connect_timeout: float = 30.0,
-        poll_interval: float = 0.01,
-    ) -> None:
-        self.turn_timeout = turn_timeout
-        self.connect_timeout = connect_timeout
-        self.poll_interval = poll_interval
 
 
 def validate_startup_config(raw_config: dict[str, Any]) -> None:
@@ -90,17 +83,14 @@ def create_peer(
             f"and survival_threshold ({survival_thresh}) must be equal"
         )
 
-    peer_budgets = budgets or Budgets(
-        turn_timeout=private.budgets.get("turn_timeout", 30.0),
-        connect_timeout=private.budgets.get("connect_timeout", 30.0),
-        poll_interval=private.budgets.get("poll_interval", 0.01),
-    )
+    peer_budgets = budgets or build_budgets(private)
 
     peer_cfg = PeerConfig(
         natural_role=role,
         budgets=peer_budgets,
         terms=terms,
         seed=seed or private.seed,
+        locks=peer_locks(private),
         mode=mode,
     )
 

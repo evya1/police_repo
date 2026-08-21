@@ -134,6 +134,7 @@ class BeliefGrid:
         _apply(self, hint, arena, self._board.size, self._hint_reliability)
 
     def _normalize(self) -> None:
+        """Normalize mass over allowed cells. Raises ValueError if no allowed cells remain."""
         for r in range(self._board.size):
             for c in range(self._board.size):
                 if (r, c) not in self._allowed or self._matrix[r][c] < 0.0:

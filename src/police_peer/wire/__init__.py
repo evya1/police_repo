@@ -45,7 +45,12 @@ class StandInEngine:
             )
 
         board = Board(size=board_size)
-        position = (0, 0) if role is Role.POLICE else (3, 3)
+        if role is Role.POLICE:
+            cop_start = t.get("cop_start", (0, 0))
+            position = tuple(cop_start) if isinstance(cop_start, (list, tuple)) else (0, 0)
+        else:
+            thief_start = t.get("thief_start", (3, 3))
+            position = tuple(thief_start) if isinstance(thief_start, (list, tuple)) else (3, 3)
         self._engine = GameEngine(
             board=board,
             role=role,

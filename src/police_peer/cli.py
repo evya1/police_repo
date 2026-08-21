@@ -21,7 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--mode",
         default="warmup",
-        choices=["warmup", "competition", "live"],
+        choices=["warmup", "counted", "competition", "live"],
         help="Execution mode",
     )
     parser.add_argument("--artifacts-dir", default=None, help="Directory to save reporting artifacts")

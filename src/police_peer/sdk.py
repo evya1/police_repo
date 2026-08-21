@@ -62,6 +62,7 @@ def create_peer(
     seed: int = 0,
     group_id: str = "police-local",
     budgets: Budgets | None = None,
+    mode: str = "warmup",
 ) -> PeerFacade:
     """Public factory creating a validated PeerFacade."""
     if isinstance(config_path, (str, Path)):
@@ -100,6 +101,7 @@ def create_peer(
         budgets=peer_budgets,
         terms=terms,
         seed=seed or private.seed,
+        mode=mode,
     )
 
     strat = strategy or BaselineStrategy()
@@ -108,10 +110,17 @@ def create_peer(
         board_size=int(terms.get("board_size", 7)),
         seed=peer_cfg.seed,
         strategy=strat,
+        terms=terms,
     )
 
     if channel is None:
         ch_local, _ = pair(group_id, "loopback-peer")
         channel = ch_local
 
-    return PeerFacade(channel=channel, engine=engine, config=peer_cfg, name=group_id)
+    return PeerFacade(
+        channel=channel,
+        engine=engine,
+        config=peer_cfg,
+        name=group_id,
+        mode=mode,
+    )

@@ -23,12 +23,14 @@ def write_artifacts(
     result: SeriesResult,
     role: Role = Role.POLICE,
     group_id: str = "police-local",
+    mode: str = "warmup",
 ) -> None:
     """Persist series results and ledger to the artifacts directory."""
     path = Path(artifacts_dir)
     path.mkdir(parents=True, exist_ok=True)
     summary = {
         "group_id": group_id,
+        "mode": mode,
         "natural_role": role.value,
         "game_id": result.game_id,
         "game_uid": result.game_uid,
@@ -107,12 +109,13 @@ def run_one_peer(
             seed=seed,
             group_id=group_id,
             budgets=budgets,
+            mode=mode,
         )
 
         result = facade.run()
 
         if artifacts_dir:
-            write_artifacts(artifacts_dir, result, role=role, group_id=group_id)
+            write_artifacts(artifacts_dir, result, role=role, group_id=group_id, mode=mode)
 
         return 0 if result.settled else 6
     except Exception as exc:

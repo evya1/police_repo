@@ -46,3 +46,10 @@ def test_build_parser_custom_args() -> None:
     assert args.mode == "competition"
     assert args.artifacts_dir == "/tmp/artifacts"
     assert args.seed == 123
+
+
+def test_build_parser_counted_mode() -> None:
+    parser = build_parser()
+    args = parser.parse_args(["--mode", "counted"])
+    assert args.mode == "counted"
+

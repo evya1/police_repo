@@ -120,3 +120,22 @@ def test_create_peer_custom_budgets(sample_config: dict[str, object]) -> None:
     budgets = Budgets(turn_timeout=10.0, connect_timeout=5.0, poll_interval=0.001)
     peer = create_peer(sample_config, budgets=budgets)
     assert peer.config.budgets.turn_timeout == 10.0
+
+
+def test_create_peer_custom_mode(sample_config: dict[str, object]) -> None:
+    peer = create_peer(sample_config, mode="counted")
+    assert peer.mode == "counted"
+    assert peer.config.mode == "counted"
+
+
+def test_stand_in_engine_start_positions_from_terms() -> None:
+    from police_peer.wire import StandInEngine
+
+    engine_police = StandInEngine(Role.POLICE)
+    engine_police.start_subgame(1, Role.POLICE, terms={"cop_start": [1, 2], "thief_start": [5, 4]})
+    assert engine_police._engine.position == (1, 2)
+
+    engine_thief = StandInEngine(Role.THIEF)
+    engine_thief.start_subgame(1, Role.THIEF, terms={"cop_start": [1, 2], "thief_start": [5, 4]})
+    assert engine_thief._engine.position == (5, 4)
+

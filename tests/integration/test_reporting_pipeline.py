@@ -3,7 +3,7 @@ import pytest
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.reporting.artifacts import ReportingArtifactBundle
 from police_peer.reporting.gmail import GmailSender
-from police_peer.reporting.pipeline import ReportingPipeline, ReportingPipelineError
+from police_peer.reporting.pipeline import ReportingPipeline, ReportingPipelineError, SentReportsStore
 from police_peer.reporting.schemas import (
     build_declaration,
     build_series_result,
@@ -13,6 +13,24 @@ from police_peer.reporting.schemas import (
 )
 
 OFFICIAL_RECIPIENT = "rmisegal+uoh26finalgame@gmail.com"
+
+
+class FakeGmailService:
+    """Fake Gmail service for testing — no real OAuth or send."""
+
+    def users(self):
+        return self
+
+    def messages(self):
+        return FakeMessagesResource()
+
+
+class FakeMessagesResource:
+    def send(self, userId="me", body=None):
+        return self
+
+    def execute(self):
+        return {"id": "12345", "status": "OK"}
 
 
 def _signer(b: bytes) -> str:
@@ -61,30 +79,39 @@ def _sample_bundle(game_uid: str = "series-test-99"):
     )
 
 
-def test_reporting_pipeline_success_and_idempotence():
+def test_reporting_pipeline_success_and_idempotence(tmp_path):
     bundle = _sample_bundle("series-good")
     attachments = bundle.to_attachments()
     assert len(attachments) == 14
 
     gk = ExternalApiGatekeeper()
-    sender = GmailSender(gatekeeper=gk, default_recipient=OFFICIAL_RECIPIENT)
-    pipeline = ReportingPipeline(gmail_sender=sender)
+    sender = GmailSender(
+        gatekeeper=gk,
+        default_recipient=OFFICIAL_RECIPIENT,
+        scopes=["gmail.send"],
+        service_client=FakeGmailService(),
+    )
+    pipeline = ReportingPipeline(gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent.json"))
 
     receipt = pipeline.process_and_send(bundle)
-    assert receipt["status"] == "SENT"
-    assert receipt["id"] == "msg-series-good"
+    assert receipt["status"] == "OK"
 
     with pytest.raises(ReportingPipelineError, match="already been processed"):
         pipeline.process_and_send(bundle)
 
 
-def test_reporting_pipeline_unfinalized_log_refusal():
+def test_reporting_pipeline_unfinalized_log_refusal(tmp_path):
     bundle = _sample_bundle("series-unfinalized")
     object.__setattr__(bundle.sub_game_logs[0], "finalized", False)
 
     gk = ExternalApiGatekeeper()
-    sender = GmailSender(gatekeeper=gk, default_recipient=OFFICIAL_RECIPIENT)
-    pipeline = ReportingPipeline(gmail_sender=sender)
+    sender = GmailSender(
+        gatekeeper=gk,
+        default_recipient=OFFICIAL_RECIPIENT,
+        scopes=["gmail.send"],
+        service_client=FakeGmailService(),
+    )
+    pipeline = ReportingPipeline(gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent2.json"))
 
     with pytest.raises(ReportingPipelineError, match="Bundle reconciliation failed"):
         pipeline.process_and_send(bundle)

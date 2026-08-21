@@ -2,8 +2,12 @@ import pytest
 
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.reporting.artifacts import ReportingArtifactBundle
-from police_peer.reporting.gmail import GmailSender
-from police_peer.reporting.pipeline import ReportingPipeline, ReportingPipelineError, SentReportsStore
+from police_peer.reporting.gmail import FileIdempotencyStore, GmailSender
+from police_peer.reporting.pipeline import (
+    ReportingPipeline,
+    ReportingPipelineError,
+    SentReportsStore,
+)
 from police_peer.reporting.schemas import (
     build_declaration,
     build_series_result,
@@ -26,7 +30,7 @@ class FakeGmailService:
 
 
 class FakeMessagesResource:
-    def send(self, userId="me", body=None):
+    def send(self, userId="me", body=None):  # noqa: N803
         return self
 
     def execute(self):
@@ -90,6 +94,7 @@ def test_reporting_pipeline_success_and_idempotence(tmp_path):
         default_recipient=OFFICIAL_RECIPIENT,
         scopes=["gmail.send"],
         service_client=FakeGmailService(),
+        idempotency_store=FileIdempotencyStore(tmp_path / "gmail_sent.json"),
     )
     pipeline = ReportingPipeline(gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent.json"))
 
@@ -110,6 +115,7 @@ def test_reporting_pipeline_unfinalized_log_refusal(tmp_path):
         default_recipient=OFFICIAL_RECIPIENT,
         scopes=["gmail.send"],
         service_client=FakeGmailService(),
+        idempotency_store=FileIdempotencyStore(tmp_path / "gmail_sent2.json"),
     )
     pipeline = ReportingPipeline(gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent2.json"))
 

@@ -64,13 +64,6 @@ class FilePairingHistoryStore:
             return []
 
     def save(self, records: list[PriorMatchRecord]) -> None:
-        data = [
-            {k: v for k, v in r.__dict__.items() if not k.startswith("_")}
-            if hasattr(r, "__dict__")
-            else r
-            for r in records
-        ]
-        # Use as_dict-like serialization for dataclass records
         serializable = []
         for r in records:
             serializable.append({

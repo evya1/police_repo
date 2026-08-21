@@ -50,6 +50,7 @@ class SeriesScoreResult:
     diversity_applied: bool
     winner: str | None
     sub_game_scores: list[dict[str, Any]]
+    diversity_bonus: int = 0
 
 
 def calculate_series_scores(
@@ -67,19 +68,18 @@ def calculate_series_scores(
 
     for idx, sg in enumerate(sub_games):
         outcome = sg.get("outcome", "")
-        p_score = sg.get("police_score")
-        if p_score is None:
-            p_score = calculate_subgame_score(outcome=outcome, role="police")
-
-        t_score = sg.get("thief_score")
-        if t_score is None:
-            t_score = calculate_subgame_score(outcome=outcome, role="thief")
+        # Scores are derived ONLY from the verified outcome via the fixed table.
+        # Caller-supplied police_score/thief_score are NEVER trusted — the outcome
+        # is the single source of truth (negative-probe fix: tamper rows with
+        # injected police_score=10 must still score 0/0, not 62/62).
+        p_score = calculate_subgame_score(outcome=outcome, role="police")
+        t_score = calculate_subgame_score(outcome=outcome, role="thief")
 
         police_total += p_score
         thief_total += t_score
 
         scores_detail.append({
-            "sub_game_index": idx,
+            "sub_game_index": idx + 1,  # 1..6, not 0..5
             "outcome": outcome,
             "police_score": p_score,
             "thief_score": t_score,
@@ -87,9 +87,12 @@ def calculate_series_scores(
 
     tie_applied = False
     diversity_applied = False
+    diversity_bonus = 0
     winner = None
 
-    if police_total == thief_total:
+    if police_total == thief_total and police_total > 0:
+        # Tie +2/+2 only for legitimate equal scores, never for all-sanction 0/0
+        # (zeroed rows are sanctions, never tie rows — OPEN-008 interop profile)
         tie_applied = True
         police_total += TIE_SCORE
         thief_total += TIE_SCORE
@@ -97,12 +100,12 @@ def calculate_series_scores(
     elif police_total > thief_total:
         winner = "police"
         if is_new_opponent:
-            police_total += DIVERSITY_REWARD
+            diversity_bonus = DIVERSITY_REWARD
             diversity_applied = True
     else:
         winner = "thief"
         if is_new_opponent:
-            thief_total += DIVERSITY_REWARD
+            diversity_bonus = DIVERSITY_REWARD
             diversity_applied = True
 
     return SeriesScoreResult(
@@ -110,6 +113,7 @@ def calculate_series_scores(
         total_thief_score=thief_total,
         tie_applied=tie_applied,
         diversity_applied=diversity_applied,
+        diversity_bonus=diversity_bonus,
         winner=winner,
         sub_game_scores=scores_detail,
     )

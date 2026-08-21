@@ -1,11 +1,7 @@
 """Tests for the series engine.
 
-TC-27: hint-provider failure path — zero-token template produces hint and legal action.
+TC-27: hint-provider failure path — legal action proceeds.
 TC-28: role alternation across sub-games via role_for.
-
-The facade now plays a strict thief-first alternation against a live opponent, so the
-engine is exercised over a real loopback pair (two facades) rather than a one-sided mock:
-a peer that never receives a turn would wait out its budget by design.
 """
 
 from __future__ import annotations
@@ -13,6 +9,7 @@ from __future__ import annotations
 from common.domain.scoring import Role, role_for
 from common.transport.loopback import pair
 from common.transport.series import PeerConfig, SeriesResult, run_series
+from police_peer.wire import StandInEngine
 
 
 class DummyBudgets:
@@ -21,16 +18,6 @@ class DummyBudgets:
     turn_timeout = 10.0
     connect_timeout = 10.0
     poll_interval = 0.005
-
-
-class DummyEngine:
-    """Minimal turn engine for testing."""
-
-    def __init__(self, natural_role: Role) -> None:
-        self.natural_role = natural_role
-
-    def step(self, sub_game: int, role: Role) -> dict:
-        return {"move": "STAY", "hint": "I am here"}
 
 
 _test_terms = {
@@ -52,15 +39,15 @@ _test_terms = {
 
 
 def _run_pair() -> tuple[SeriesResult, SeriesResult]:
-    """Run a full six-sub-game series over loopback with the dummy engines."""
+    """Run a full six-sub-game series over loopback."""
     a, b = pair("A", "B")
     config_a = PeerConfig(natural_role=Role.POLICE, budgets=DummyBudgets(), terms=_test_terms)
     config_b = PeerConfig(natural_role=Role.THIEF, budgets=DummyBudgets(), terms=_test_terms)
-    return run_series(a, b, config_a, config_b, DummyEngine(Role.POLICE), DummyEngine(Role.THIEF))
+    return run_series(a, b, config_a, config_b, StandInEngine(Role.POLICE), StandInEngine(Role.THIEF))
 
 
 class TestRunSeries:
-    """Tests for the run_series function (the facade exercised end to end)."""
+    """Tests for the run_series function."""
 
     def test_run_series_returns_two_results(self) -> None:
         result_a, result_b = _run_pair()
@@ -89,16 +76,16 @@ class TestPolicyStub:
     """TC-27: hint-provider failure path tests."""
 
     def test_zero_token_template_produces_hint(self) -> None:
-        """A zero-token template hint should still produce a valid hint string."""
+        """A zero-token template hint should produce a valid hint string."""
         hint = "I am here"
         assert isinstance(hint, str)
         assert len(hint) > 0
-        # FR-27: hint should not contain numeric positions
         assert not any(c.isdigit() for c in hint)
 
     def test_legal_action_proceeds(self) -> None:
         """When hint provider fails, legal action should still proceed."""
-        engine = DummyEngine(Role.POLICE)
-        move = engine.step(1, Role.POLICE)
+        engine = StandInEngine(Role.POLICE)
+        engine.start_subgame(1, Role.POLICE)
+        move = engine.decide()
         assert "move" in move
         assert move["move"] in ("MOVE:N", "MOVE:S", "MOVE:E", "MOVE:W", "STAY")

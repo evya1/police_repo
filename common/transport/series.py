@@ -19,10 +19,7 @@ from typing import Protocol
 
 from common.domain.scoring import Outcome, Role, settled_outcome
 
-# Stub termination: fixed half-turns per side per sub-game (6 total). A real driver ends a
-# sub-game on capture/survival/timeout; the stand-in engine plays a fixed shape so the
-# spine stays deterministic and fast.
-LAPS_PER_SUBGAME = 3
+DEFAULT_MAX_STEPS = 35
 
 
 class Budgets(Protocol):
@@ -78,8 +75,10 @@ class SeriesResult:
 class TurnEngine(Protocol):
     """The interface the series engine calls to get a move."""
 
-    def step(self, sub_game: int, role: Role) -> dict:
-        """Return a move dict for the given sub-game and role."""
+    def start_subgame(self, sub_game: int, role: Role, terms: dict | None = None) -> None: ...
+    def decide(self) -> dict: ...
+    def observe_opponent(self, message: dict) -> None: ...
+    def terminal(self) -> Outcome | None: ...
 
 
 SubgameDriver = Callable[[object, TurnEngine, PeerConfig, int], SeriesRow]
@@ -88,8 +87,14 @@ SubgameDriver = Callable[[object, TurnEngine, PeerConfig, int], SeriesRow]
 class PeerFacade:
     """Wraps a channel and a turn engine into a peer that can both send and receive."""
 
-    def __init__(self, channel, engine: TurnEngine, config: PeerConfig, name: str = "peer",
-                 subgame_driver: SubgameDriver | None = None) -> None:
+    def __init__(
+        self,
+        channel,
+        engine: TurnEngine,
+        config: PeerConfig,
+        name: str = "peer",
+        subgame_driver: SubgameDriver | None = None,
+    ) -> None:
         self.channel = channel
         self.engine = engine
         self.config = config
@@ -149,7 +154,7 @@ class PeerFacade:
         self._game_uid = agreed.game_uid
 
     def _play_sub_game(self, sub_game: int) -> SeriesRow:
-        """Play one sub-game via the selected driver (default: the legacy batch driver)."""
+        """Play one sub-game via the selected driver."""
         from common.transport.subgame import play_subgame
 
         driver = self._subgame_driver or play_subgame
@@ -192,10 +197,10 @@ def run_series(
     thread_b.start()
     thread_a.join(timeout=60)
     thread_b.join(timeout=60)
+    if thread_a.is_alive() or thread_b.is_alive():
+        raise TimeoutError("series worker timed out / stuck")
     if errors:
         raise RuntimeError(f"series errors: {errors}")
-    if result_a is None:
-        result_a = SeriesResult(game_id="", game_uid="", settled=True)
-    if result_b is None:
-        result_b = SeriesResult(game_id="", game_uid="", settled=True)
+    if result_a is None or result_b is None:
+        raise RuntimeError("series worker returned no result")
     return result_a, result_b

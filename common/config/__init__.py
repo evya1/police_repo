@@ -163,6 +163,19 @@ def validate_config(data: dict[str, Any]) -> None:
     _validate_fixed_values(data)
     _validate_minimums(data)
     _validate_num_agents(data)
+    _validate_operational_contract(data)
+
+
+def _validate_operational_contract(data: dict[str, Any]) -> None:
+    """Validate operational contract: max_moves == survival_threshold (OPEN-011)."""
+    movement = data.get("movement_and_barriers", {})
+    max_moves = movement.get("max_moves")
+    survival_thresh = movement.get("survival_threshold")
+    if max_moves is not None and survival_thresh is not None and max_moves != survival_thresh:
+        raise ConfigError(
+            f"Operational contract violation (OPEN-011): max_moves ({max_moves}) "
+            f"and survival_threshold ({survival_thresh}) must be equal"
+        )
 
 
 def _validate_sections(data: dict[str, Any]) -> None:

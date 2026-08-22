@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import pytest
 
 from police_peer.reporting.schemas import (
     SignatureError,
     build_declaration,
+    build_sub_game_log,
+    finalize_log,
     sign_artifact,
     verify_artifact,
 )
@@ -46,3 +50,27 @@ def test_signing_seam():
     # Test tampered artifact
     declaration.team = "tampered_team"
     assert not verify_artifact(declaration, signature, fake_verifier)
+
+
+def test_finalize_log_atomicity_on_signer_failure():
+    log = build_sub_game_log(game_uid="g-atom", game_id="g-atom:0")
+    assert log.finalized is False
+    assert log.signature is None
+
+    def failing_signer(data: bytes) -> str:
+        raise RuntimeError("Signer hardware failure")
+
+    with pytest.raises(RuntimeError, match="Signer hardware failure"):
+        finalize_log(log, failing_signer)
+
+    # Verify log was atomically rolled back to unfinalized state
+    assert log.finalized is False
+    assert log.signature is None
+
+    # Verify that a subsequent successful sign works cleanly
+    def good_signer(data: bytes) -> str:
+        return "valid-sig-123"
+
+    finalize_log(log, good_signer)
+    assert log.finalized is True
+    assert log.signature == "valid-sig-123"

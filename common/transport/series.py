@@ -13,15 +13,13 @@ from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Protocol
 
 from common.domain.scoring import Outcome, Role, settled_outcome
 
-# Stub termination: fixed half-turns per side per sub-game (6 total). A real driver ends a
-# sub-game on capture/survival/timeout; the stand-in engine plays a fixed shape so the
-# spine stays deterministic and fast.
-LAPS_PER_SUBGAME = 3
+DEFAULT_MAX_STEPS = 35
 
 
 class Budgets(Protocol):
@@ -35,11 +33,21 @@ class Budgets(Protocol):
 class PeerConfig:
     """Configuration injected into the series engine."""
 
-    def __init__(self, natural_role: Role, budgets: Budgets, terms: dict, seed: int = 0) -> None:
+    def __init__(
+        self,
+        natural_role: Role,
+        budgets: Budgets,
+        terms: dict,
+        seed: int = 0,
+        locks: dict[str, str] | None = None,
+        mode: str = "warmup",
+    ) -> None:
         self.natural_role = natural_role
         self.budgets = budgets
         self.terms = terms
         self.seed = seed
+        self.locks = locks
+        self.mode = mode
 
 
 @dataclass
@@ -69,21 +77,44 @@ class SeriesResult:
 class TurnEngine(Protocol):
     """The interface the series engine calls to get a move."""
 
-    def step(self, sub_game: int, role: Role) -> dict:
-        """Return a move dict for the given sub-game and role."""
+    def start_subgame(self, sub_game: int, role: Role, terms: dict | None = None) -> None: ...
+    def decide(self) -> dict: ...
+    def observe_opponent(self, message: dict) -> None: ...
+    def terminal(self) -> Outcome | None: ...
+    def terminal_final(self) -> dict | None:
+        """Payload of the game-ending final step owed after settling, or None.
+
+        A thief that saw its own capture (rules 46/47 — a fact only the thief can see)
+        owes a concession: a STAY carrying claim_response {"claim": own cell, "caught": true}.
+        A police settling from the thief's final owes a plain sealed STAY. Without the
+        concession the cop waits out its budget and two honest reports fork (rule 35).
+        """
+
+
+SubgameDriver = Callable[[object, TurnEngine, PeerConfig, int], SeriesRow]
 
 
 class PeerFacade:
     """Wraps a channel and a turn engine into a peer that can both send and receive."""
 
-    def __init__(self, channel, engine: TurnEngine, config: PeerConfig, name: str = "peer") -> None:
+    def __init__(
+        self,
+        channel,
+        engine: TurnEngine,
+        config: PeerConfig,
+        name: str = "peer",
+        subgame_driver: SubgameDriver | None = None,
+        mode: str | None = None,
+    ) -> None:
         self.channel = channel
         self.engine = engine
         self.config = config
         self.name = name
+        self.mode = mode or getattr(config, "mode", "warmup")
         self._game_id = ""
         self._game_uid = ""
         self._ledgers: list[SeriesRow] = []
+        self._subgame_driver = subgame_driver
 
     def run(self) -> SeriesResult:
         """Run a full six-sub-game series. Return the result."""
@@ -112,6 +143,7 @@ class PeerFacade:
             group_id=self.name,
             role=self.config.natural_role.value,
             sub_game_number=1,
+            locks=self.config.locks,
         )
         self.channel.send_agreement(greeting)
         deadline = time.monotonic() + self.config.budgets.connect_timeout
@@ -123,15 +155,22 @@ class PeerFacade:
             time.sleep(self.config.budgets.poll_interval)
         if opponent is None:
             raise TimeoutError("opponent greeting not received")
-        agreed = verify_greeting(opponent, self.config.terms, self.name, 1)
+        agreed = verify_greeting(
+            opponent,
+            self.config.terms,
+            self.name,
+            1,
+            our_locks=self.config.locks,
+        )
         self._game_id = agreed.game_id
         self._game_uid = agreed.game_uid
 
     def _play_sub_game(self, sub_game: int) -> SeriesRow:
-        """Play one sub-game (strict alternation + mutual audit) via the subgame module."""
+        """Play one sub-game via the selected driver."""
         from common.transport.subgame import play_subgame
 
-        return play_subgame(self.channel, self.engine, self.config, sub_game)
+        driver = self._subgame_driver or play_subgame
+        return driver(self.channel, self.engine, self.config, sub_game)
 
 
 def run_series(
@@ -141,10 +180,11 @@ def run_series(
     config_b: PeerConfig,
     engine_a: TurnEngine,
     engine_b: TurnEngine,
+    subgame_driver: SubgameDriver | None = None,
 ) -> tuple[SeriesResult, SeriesResult]:
     """Run a series with two peers on opposite ends of a channel. Returns (a, b)."""
-    facade_a = PeerFacade(channel_a, engine_a, config_a, "A")
-    facade_b = PeerFacade(channel_b, engine_b, config_b, "B")
+    facade_a = PeerFacade(channel_a, engine_a, config_a, "A", subgame_driver=subgame_driver)
+    facade_b = PeerFacade(channel_b, engine_b, config_b, "B", subgame_driver=subgame_driver)
     result_a: SeriesResult | None = None
     result_b: SeriesResult | None = None
     errors: list[Exception] = []
@@ -169,10 +209,10 @@ def run_series(
     thread_b.start()
     thread_a.join(timeout=60)
     thread_b.join(timeout=60)
+    if thread_a.is_alive() or thread_b.is_alive():
+        raise TimeoutError("series worker timed out / stuck")
     if errors:
         raise RuntimeError(f"series errors: {errors}")
-    if result_a is None:
-        result_a = SeriesResult(game_id="", game_uid="", settled=True)
-    if result_b is None:
-        result_b = SeriesResult(game_id="", game_uid="", settled=True)
+    if result_a is None or result_b is None:
+        raise RuntimeError("series worker returned no result")
     return result_a, result_b

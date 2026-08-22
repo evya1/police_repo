@@ -77,7 +77,26 @@ The system reports required inputs but never invents lecturer-side normalization
 
 ## Implementation plan
 
-To be completed immediately before execution.
+`preflight.py` provides pure guards over opponent history and signed
+declarations: enforce 2..10 counted matches total (LEAGUE-002), at most one
+counted match per opponent (LEAGUE-003), truthful prior-count declarations
+signed/compared/retained (LEAGUE-004), warm-up/counted mode separation, and
+hardware/version/token evidence collection with **no** local normalization
+formula (LEAGUE-007). Live endpoint checks are behind the G-LIVE criterion
+and must fail closed until real opponent/endpoint data is present. Error
+model: `TooManyCountedMatches`, `DuplicateOpponent`, `DeclarationMismatch`.
+
+(Reviewed 2026-08-18: analyzed by deepseek-v4-pro, approved by glm-5.2; full rationale in docs/evidence/c06-prep-01/analysis.md sections 2, 3, 5.)
+
+## Behavioral test plan
+
+(gate note: `G-LIVE blocks: criterion` on `pairing_preflight` — live endpoint checks wait)
+- **unit (guards)** — refuse an eleventh counted match; refuse a second counted match against the same opponent; warm-up and counted modes are discrete and cannot share report state.
+- **unit (declarations)** — signed prior counted-match declarations are compared and retained.
+- **integration** — preflight pass/fail cases run against synthetic double data; live endpoint data required only for the G-LIVE criterion.
+- **failure** — a false prior-match declaration returns the LEAGUE-004 disqualification verdict.
+- **security** — hardware/version/token evidence is complete and contains no local fairness-score formula computation (LEAGUE-007).
+- **determinism** — identical opponent history yields an identical eligibility verdict.
 
 ## Handoff contract
 

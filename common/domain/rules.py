@@ -103,17 +103,25 @@ class GameEngine:
             self.barriers.append(cell)
             self.opponent_barriers += 1
 
-    def answer_capture_claim(self, claim: Cell | None) -> dict | None:
+    def answer_capture_claim(self, claim: Cell | None, at: Cell | None = None) -> dict | None:
         """The thief's obligatory honest answer (App. E rules 21-22).
 
         Answering truthfully is not politeness. The sealed ``state`` string in every step record
         carries this peer's own position, so a denial is contradicted by our own revealed log at
         the audit — and the sanction for that is total, not proportional.
+
+        ``at`` is the position that existed WHEN THE CLAIM ARRIVED, not necessarily the
+        engine's current position: a claim answered after this peer's own next move has
+        already been applied must still be judged against the cell it named at delivery
+        time, or "move away, then deny" becomes possible (App. E rule 21 is an answer
+        about a moment, not a running commentary). Callers that have not moved since the
+        claim arrived may omit ``at``; it then defaults to the current position.
         """
         if claim is None or self.role is not Role.THIEF:
             return None
         cell = (int(claim[0]), int(claim[1]))
-        return {"claim": [cell[0], cell[1]], "caught": cell == self.position}
+        judged_position = self.position if at is None else at
+        return {"claim": [cell[0], cell[1]], "caught": cell == judged_position}
 
     # --- what ends it ----------------------------------------------------------------------
 

@@ -37,3 +37,6 @@ artifacts/private/
 reports/outbox/
 logs/
 tmp/
+.sent_reports.json
+.sent_game_uids.json
+.pairing_history.json

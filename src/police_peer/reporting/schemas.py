@@ -231,7 +231,7 @@ class SubGameLog:
             "game_uid": self.game_uid,
             "game_id": self.game_id,
             "schema_version": self.schema_version,
-            "steps": self.steps,
+            "steps": list(self.steps),  # always list for JSON; live object may be tuple after freeze
             "finalized": self.finalized,
             "signature": self.signature,
         }
@@ -508,12 +508,22 @@ def finalize_log(log: SubGameLog, signer: Callable[[bytes], str]) -> SubGameLog:
         raise FinalizedLogMutationError("Log already finalized")
     if signer is None:
         raise SignatureError("Signer cannot be None")
-    # Mark as finalized first
-    object.__setattr__(log, "finalized", True)
-    # Sign over the finalized canonical payload (which now has finalized=True, signature=None)
-    sig = sign_artifact(log, signer)
-    object.__setattr__(log, "signature", sig)
-    return log
+    try:
+        # Deep-freeze: convert mutable steps list to immutable tuple so
+        # in-place mutation (log.steps.append) raises after finalization.
+        # The signature is then computed over the frozen canonical payload.
+        object.__setattr__(log, "steps", tuple(log.steps))
+        # Mark as finalized first
+        object.__setattr__(log, "finalized", True)
+        # Sign over the finalized canonical payload (which now has finalized=True, signature=None)
+        sig = sign_artifact(log, signer)
+        object.__setattr__(log, "signature", sig)
+        return log
+    except Exception:
+        # Atomic rollback on signing failure
+        object.__setattr__(log, "finalized", False)
+        object.__setattr__(log, "signature", None)
+        raise
 
 
 def serialize(artifact: Any) -> bytes:

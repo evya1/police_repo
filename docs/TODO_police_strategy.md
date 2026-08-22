@@ -6,7 +6,7 @@ version: 0.1
 derived_from: PLAN-POLICE-STRATEGY@0.1 · PRD-POLICE-STRATEGY@0.1
 applies_to: police_repo only (role-owned)
 owner: orchestrator
-updated: 2026-08-21 (stage opened; prerequisites assumed delivered per stage entry criteria — C01 domain+config T003/T004, scent model+lock T005, orchestrator FSM+turn loop T010, MCP transport T009, integrity core T008; belief board T006 is the sibling stage-3 work and an entry criterion for PS-04)
+updated: 2026-08-22 (Phase D evidence recorded — PS-06 in progress: TC-P02 full, TC-P20, TC-P21, TC-P23 green, `strategy/` coverage ≥ 85% met; TC-P22 KPI FAIL 35% < 60% (gap), docs-sync items pending; PS-07 blocked on PS-06, sync check not run, preliminary cross-repo diff shows drift. Stage opened 2026-08-21.)
 ---
 
 # TODO — Police Strategy (Stage 3, role-specific part)
@@ -68,8 +68,8 @@ leaves a new strategy module unwired and untested.
 | PS-03 | `PoliceBrain` + `where_place_barrier`: pursuit scan, diffuse fallback, full barrier pipeline | B | P0 | done | IA | PS-02 | T007 · FR-P2, FR-P3, FR-P4, FR-P5, FR-P8 | G-P1 |
 | PS-04 | Spine swap: `BrainDrivenEngine` in the glue (S3a/S3b/S3c) | C | P0 | not started | IA | PS-03 (+ T006 G-B3, write-set extension recorded) | T007 · PLAN §12, SD-P5, SD-P7 | G-P2 |
 | PS-05 | Verbal hardening: isolation, verdict rule, cap, lie rate | C | P0 | not started | IA | PS-03 | T007 · FR-P6, FR-P7, TC-P14…P16 | G-P2 |
-| PS-06 | KPI self-play + property + determinism + perf + coverage close-out | D | P1 | not started | IA | PS-04, PS-05 | T007 + T021 · PRD §2.3 KPIs, NFR-1/2 | G-P3 |
-| PS-07 | Shared-core cross-repo sync + docs sync | D | P1 | not started | ORC | PS-06 + thief counterparts' code (thief TS-02) | — · Goal 7, NFR-6 | G-P3 |
+| PS-06 | KPI self-play + property + determinism + perf + coverage close-out | D | P1 | in progress (TC-P22 gap) | IA | PS-04, PS-05 | T007 + T021 · PRD §2.3 KPIs, NFR-1/2 | G-P3 |
+| PS-07 | Shared-core cross-repo sync + docs sync | D | P1 | blocked (PS-06 TC-P22; sync check not run) | ORC | PS-06 + thief counterparts' code (thief TS-02 — code exists, ledger stale) | — · Goal 7, NFR-6 | G-P3 |
 
 ## Phase A — Prerequisites
 
@@ -328,6 +328,40 @@ cap. **DoD:** G-P2 complete — the verbal layer is bounded, isolated, and audit
 - Coverage to ≥ 85% on `strategy/`; docs sync: M-03 cross-link to the stage docs, C02
   PLAN note, stage-3 index in `docs/` (orchestrator).
 
+#### Evidence (2026-08-22)
+
+**Branch:** `police-strategy` · HEAD: `1cdfefc`
+
+**Done (IA-verified; ORC review pending):**
+
+| Item | Result |
+|---|---|
+| TC-P02 full — 10k random-seeded fixtures (`tests/property/strategy/test_tc_p02.py`, 4 tests; T021 write set) | green |
+| TC-P23 spine (`tests/integration/test_series_loopback.py`, 3 tests) | green (combined run: 7 passed) |
+| KPI harness: `tests/integration/test_strategy_selfplay_kpi.py` (reference `RandomThiefEngine` test double, `KPIResult`, shipped `_terms`) + runner `test_strategy_selfplay_kpi_harness.py` (TC-P22/P20/P21) | in tree |
+| TC-P20 determinism (two 20-game runs, same seed ⇒ identical rows) | pass |
+| TC-P21 perf (≤ 10 ms p99 over 10k `where_place_barrier` iterations) | pass |
+| Coverage on `strategy/` ≥ 85% | met — `barriers.py` 98%, `base.py` 97%, `hints.py` 98%, `police.py` 98%, `baseline.py` 60% (stand-in, non-policy), `decision.py` / `inject.py` / `__init__.py` 100% |
+
+**Gaps (documented, not done):**
+
+- **TC-P22 KPI self-play — FAIL:** capture rate **35% (7/20)** vs the ≥ 60% requirement (seed 7,
+  20 role-pinned Police games, shipped config, reference `RandomThiefEngine` double). The two
+  remaining sub-KPI asserts (median rounds-to-capture ≤ 28; ≥ 50% of captures using ≤ 8
+  barriers) were not reached — the test aborts on the first assert. KPI numbers are therefore
+  **not recorded** (G-P3 DoD item open); closing requires a policy fix or an ORC-approved
+  threshold review.
+- **Docs-sync items — not done:** M-03 cross-link to the stage docs, C02 PLAN note, stage-3 index
+  in `docs/` (orchestrator) — none present (grep of `police_repo/docs/` finds no references).
+- **Repo-wide coverage gate:** pyproject `fail_under = 85` (whole repo) fails on strategy-scoped
+  runs (32.65% on the unit + property + KPI + loopback set) — outside this stage's DoD
+  (`strategy/`-scoped, met); a T021-scope blocker.
+- **Deviation (write set + verification command):** PLAN §15 runs
+  `tests/integration/test_strategy_selfplay_kpi.py`, which holds only the harness (0 tests
+  collected); the executable TC-P22/P20/P21 tests live in `test_strategy_selfplay_kpi_harness.py`.
+  Write-set extension (b) (PS-01) covers only `test_strategy_selfplay_kpi.py` — the runner file
+  was created outside the recorded extension; ORC reconciliation needed.
+
 **Verification:** full command set of PLAN §15 in the police repo; ORC evidence review.
 **DoD:** G-P3 close-out candidate — KPI numbers recorded, property suite green,
 determinism/latency inside budget.
@@ -343,6 +377,34 @@ determinism/latency inside budget.
   thief mirrors are mutually consistent (same schema, same invariants, same wording
   modulo role words); record G-P3 evidence; reconcile T007/T021 state in
   `docs/TODO.md`.
+
+#### Evidence (2026-08-22)
+
+**Branch:** `police-strategy` · HEAD: `1cdfefc` · **Status: not done — blocked on PS-06
+(TC-P22 gap).**
+
+- **Thief counterparts' code — exists (gate cleared on the code side):**
+  `thief_repo/src/thief_peer/strategy/{decision,base,hints,inject,__init__}.py` + role-specific
+  `thief.py`, `scoring.py`, `baseline.py`. The thief ledger
+  `thief_repo/docs/TODO_thief_strategy.md` still shows TS-02…TS-07 as `not started` — stale
+  relative to the in-tree code; ORC should reconcile both ledgers.
+- **TC-P24 sync check — not run / not recorded.** Preliminary normalized diff (2026-08-22; police
+  content with `police_peer` → `thief_peer` substituted, vs the thief files) shows drift beyond
+  the import path + role constant and beyond the three pre-recorded wording divergences
+  (PLAN §5 sync notes):
+
+  | File | Unified diff | Drift observed |
+  |---|---|---|
+  | `decision.py` | 10 lines | mirror-reference docstring only (each file names the other repo) |
+  | `base.py` | ~97 lines | mechanism ref M-03 (police) vs M-04 (thief) for the same `{#hint_isolation}` anchor; police class docstring expanded |
+  | `hints.py` | ~89 lines | per-role template banks (POLICE vs THIEF phrasing) |
+  | `inject.py` | ~117 lines | `ThiefBrain` import; default-brain lines (SD-P7 vs SD-T7); role-specific default |
+  | `__init__.py` | ~34 lines | exports (police adds `where_place_barrier` + `PoliceBrain`; thief adds `ThiefBrain`) |
+
+  The pre-recorded divergence list (PLAN §5) is incomplete against the actual drift — closing
+  PS-07 needs deliberate ORC normalization decisions, not just a mechanical check.
+- **T007/T021 reconciliation in `docs/TODO.md` — not done:** both still `status: blocked`,
+  `impl state: not_started` (G-P3 DoD item open).
 
 **Verification:** sync check output + ORC evidence review in both repos. **DoD:** G-P3
 passed — stage done.

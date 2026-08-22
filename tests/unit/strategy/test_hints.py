@@ -10,7 +10,7 @@ import random
 
 from common.domain.board import Cell, chebyshev
 from police_peer.belief.hints import parse_landmarks
-from src.police_peer.strategy.hints import HintWriter
+from police_peer.strategy.hints import HintWriter
 
 
 class TestTemplateHint:

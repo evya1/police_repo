@@ -12,7 +12,7 @@ from __future__ import annotations
 from common.domain.board import Board
 from common.domain.rules import GameEngine
 from common.domain.scoring import Role
-from src.police_peer.strategy.barriers import cut_value, where_place_barrier
+from police_peer.strategy.barriers import cut_value, where_place_barrier
 
 
 class _Belief:

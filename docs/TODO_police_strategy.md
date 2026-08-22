@@ -470,7 +470,7 @@ Recorded by the orchestrator **after** the code evidence was final. Code SHAs on
 | P3 | `9fc8a78aa170af946e203c880f1429e3e48461b4` | MEDIUM-5, MEDIUM-7, TC-P24 comparison |
 | Boundary | `4aaf9d74c5898733b1359996b5ca433289f773ad` | sub-game boundary leak (byte-for-byte port from `thief_repo@a5c9e06`), found by the real two-process run once captures became reachable |
 
-Measured evidence at `9fc8a78` (commands and full results are in the task handoffs):
+Measured evidence at branch head `38bbed2` — the last commit of the wave, after the boundary fix `4aaf9d7` (an earlier draft of this paragraph cited `9fc8a78`, which predates that commit):
 
 - `uv run pytest -q` — exit 0, **coverage 93.16%** against the enforced 85% floor.
 - `uv run ruff check .` — clean. `uv run python scripts/run_quality_gates.py` — all 7 gates pass.

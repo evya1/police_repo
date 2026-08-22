@@ -1,7 +1,7 @@
 ---
 id: T045
 status: ready
-priority: P2
+priority: P1
 task_type: component
 component: C02
 optional: false
@@ -27,7 +27,7 @@ write_set:
   - src/police_peer/strategy/inject.py
   - tests/unit/strategy/test_hints.py
   - tests/unit/strategy/test_inject.py
-risk: low
+risk: medium
 ---
 
 # T045 — Shared-core drift found by the TC-P24 comparison (police_repo)
@@ -40,7 +40,11 @@ behaviour and `police_repo` does not.
 
 ## Defects
 
-1. **`hints.py` — a configured `hint_max_words` is ignored.** `_cap` is a `@staticmethod`
+1. **`hints.py` — a configured `hint_max_words` is ignored.** *(P1 driver: `hint_max_words`
+   is one of the 14 negotiated terms in `common/transport/terms.py`, signed at handshake and
+   enforced by SPAR-N02/N03. Under the shipped `config/game.json` it is `15`, identical to the
+   hard-coded default, so the bug is invisible today — but any organiser shipping another value
+   makes this repository breach a term it signed, while `thief_repo` complies.)* `_cap` is a `@staticmethod`
    with `max_words: int | None = None` defaulting to a hard-coded 15, and it is always called
    as `self._cap(text)`. A `HintWriter` built with a smaller cap therefore never truncates to
    it. Repro: `HintWriter(Role.POLICE, Random(0), "New York", 3)._cap("one two three four five six seven")`

@@ -18,6 +18,7 @@ depends_on:
   - T008
   - T010
   - T014
+  - T033
 gates: []
 parallel_safe: true
 claimed_by:
@@ -25,7 +26,6 @@ claim_expires_at:
 write_set:
   - src/police_peer/ui/replay.py
   - tests/unit/replay/
-  - tests/integration/test_replay_tamper.py
 risk: high
 ---
 
@@ -64,8 +64,8 @@ Replay is evidence, not a second rules engine. It consumes immutable artifacts a
 
 ## Verification
 
-- `uv run pytest tests/unit/replay tests/integration/test_replay_tamper.py`
-- `uv run ruff check src/police_peer/ui/replay.py tests/unit/replay tests/integration/test_replay_tamper.py`
+- `uv run pytest tests/unit/replay`
+- `uv run ruff check src/police_peer/ui/replay.py tests/unit/replay`
 
 ## Implementation plan
 

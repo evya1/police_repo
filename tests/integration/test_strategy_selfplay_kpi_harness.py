@@ -3,38 +3,59 @@
 TC-P22 — 20 seeded games, role-pinned Police sub-games, shipped config.
 TC-P20 — determinism: two runs, same seed + same wire transcript => identical rows.
 TC-P21 — performance: <= 10 ms p99 over 10k iterations, incl. where_place_barrier.
+
+The Police side is built by ``create_peer`` — the production composition root — reading the
+shipped ``config/game.json`` with the normal private-config default, so this measures what
+the CLI actually ships and not a hand-assembled engine. Only the budgets are swapped, for a
+fast in-process loopback.
 """
 
 from __future__ import annotations
 
+import json
+import os
 import random
 import statistics
+import subprocess
+import sys
 import threading
-import time
+from pathlib import Path
 
-from common.domain.board import Board
-from common.domain.rules import GameEngine
 from common.domain.scoring import Outcome, Role
 from common.transport.loopback import pair
-from common.transport.series import PeerConfig, SeriesRow
+from common.transport.series import PeerConfig, PeerFacade, SeriesRow
 from common.transport.subgame import play_subgame
-from police_peer.wire import BrainDrivenEngine
-from src.police_peer.strategy.barriers import where_place_barrier
+from police_peer.sdk import create_peer
 from tests.integration.test_strategy_selfplay_kpi import (
     DummyBudgets,
     KPIResult,
-    RandomThiefEngine,
-    _terms,
+    UniformRandomThief,
 )
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_SHIPPED_CONFIG = _REPO_ROOT / "config" / "game.json"
+_LATENCY_PROBE = _REPO_ROOT / "tests" / "perf" / "police_latency_probe.py"
+
+
+def _production_police(channel, seed: int) -> PeerFacade:
+    """The Police peer exactly as production composes it, minus the real budgets."""
+    return create_peer(
+        config_path=_SHIPPED_CONFIG,
+        channel=channel,
+        role=Role.POLICE,
+        seed=seed,
+        group_id="Police",
+        budgets=DummyBudgets(),
+    )
 
 
 def _play_one_game(i: int, seed: int) -> KPIResult:
     """One cop-pinned sub-game (odd number) over loopback, two worker threads."""
     a, b = pair("Police", "Thief")
-    cfg_a = PeerConfig(Role.POLICE, DummyBudgets(), _terms, seed=seed + i)
-    cfg_b = PeerConfig(Role.THIEF, DummyBudgets(), _terms, seed=seed + i)
-    police_engine = BrainDrivenEngine(Role.POLICE, seed=seed + i, config={})
-    thief_engine = RandomThiefEngine(random.Random(seed + i + 1000))
+    facade = _production_police(a, seed + i)
+    police_engine, cfg_a = facade.engine, facade.config
+    cfg_b = PeerConfig(Role.THIEF, DummyBudgets(), cfg_a.terms, seed=seed + i)
+    thief_engine = UniformRandomThief(random.Random(seed + i + 1000))
     row_a: SeriesRow | None = None
     errors: list[Exception] = []
 
@@ -76,7 +97,7 @@ def _run_kpi_games(num_games: int, seed: int) -> list[KPIResult]:
 
 
 def test_tc_p22_kpi_selfplay() -> None:
-    """TC-P22: 20 seeded games, role-pinned Police, shipped config."""
+    """TC-P22: 20 seeded games, role-pinned Police, production-composed shipped config."""
     results = _run_kpi_games(20, seed=7)
     captures = [r for r in results if r.captured]
     capture_rate = len(captures) / len(results)
@@ -84,15 +105,13 @@ def test_tc_p22_kpi_selfplay() -> None:
         f"capture rate {capture_rate:.2%} < 60% "
         f"({len(captures)}/{len(results)})"
     )
-    if captures:
-        median_rtc = statistics.median(r.steps for r in captures)
-        assert median_rtc <= 28, f"median rounds-to-capture {median_rtc} > 28"
-        low_barrier = sum(1 for r in captures if r.barriers_used <= 8)
-        low_rate = low_barrier / len(captures)
-        assert low_rate >= 0.50, (
-            f"captures with <=8 barriers {low_rate:.2%} < 50% "
-            f"({low_barrier}/{len(captures)})"
-        )
+    median_rtc = statistics.median(r.steps for r in captures)
+    assert median_rtc <= 28, f"median rounds-to-capture {median_rtc} > 28"
+    low_barrier = sum(1 for r in captures if r.barriers_used <= 8)
+    low_rate = low_barrier / len(captures)
+    assert low_rate >= 0.50, (
+        f"captures with <=8 barriers {low_rate:.2%} < 50% ({low_barrier}/{len(captures)})"
+    )
     for r in results:
         assert r.outcome in (Outcome.CAPTURE, Outcome.SURVIVAL), (
             f"unexpected outcome {r.outcome} in sub-game {r.sub_game}"
@@ -114,39 +133,23 @@ def test_tc_p20_determinism() -> None:
         )
 
 
-def test_tc_p21_performance() -> None:
-    """TC-P21: <= 10 ms p99 over 10k iterations, including where_place_barrier."""
-    engine = GameEngine(board=Board(size=7), role=Role.POLICE, position=(3, 3))
-
-    class _Belief:
-        def __init__(self):
-            self._peak = (5, 5)
-
-        def most_likely(self):
-            return self._peak
-
-        def peak_probability(self) -> float:
-            return 0.5
-
-        def prob(self, cell):
-            return 0.5 if cell == self._peak else 0.01
-
-    belief = _Belief()
-    cfg: dict[str, object] = {
-        "barrier_mass_floor": 0.05,
-        "w_mass": 1.0,
-        "w_cut": 0.5,
-        "route_slack": 1,
-        "barrier_reserve": 3,
-        "strong_threshold": 0.8,
-        "barrier_score_threshold": 0.3,
+def run_latency_probe() -> dict:
+    """Run the measured loop in a clean, uninstrumented child process."""
+    env = {
+        k: v for k, v in os.environ.items()
+        if not k.startswith(("COV_CORE", "COVERAGE", "PYTEST"))
     }
-    times: list[float] = []
-    n = 10_000
-    for _ in range(n):
-        start = time.perf_counter()
-        where_place_barrier(engine, belief, cfg)
-        times.append(time.perf_counter() - start)
-    times.sort()
-    p99_ms = times[int(n * 0.99)] * 1000
-    assert p99_ms <= 10.0, f"p99 latency {p99_ms:.2f} ms > 10 ms"
+    proc = subprocess.run(  # noqa: S603
+        [sys.executable, str(_LATENCY_PROBE)],
+        capture_output=True, text=True, env=env, cwd=_REPO_ROOT, timeout=600, check=True,
+    )
+    return json.loads(proc.stdout)
+
+
+def test_tc_p21_performance() -> None:
+    """TC-P21: <= 10 ms p99 over 10k measured iterations, after a 1k warm-up."""
+    sample = run_latency_probe()
+    assert sample["warmup"] == 1000 and sample["measured"] == 10000
+    assert not sample["traced"], "the measured loop ran under a tracer"
+    assert not sample["coverage_imported"], "the measured loop ran under coverage"
+    assert sample["p99_ms"] <= 10.0, f"p99 latency {sample['p99_ms']:.2f} ms > 10 ms"

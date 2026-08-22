@@ -1,8 +1,12 @@
-"""KPI self-play harness: PoliceBrain vs reference ThiefBrain test double.
+"""KPI self-play fixtures: the production PoliceBrain against a random-walk baseline.
 
 TC-P22 — 20 seeded games, role-pinned Police sub-games, shipped config: capture rate
-within 35 rounds vs the reference ThiefBrain >= 60%; median rounds-to-capture <= 28;
+within 35 rounds vs the baseline opponent >= 60%; median rounds-to-capture <= 28;
 captures using <= 8 barriers >= 50% (registered evidence, non-authoritative).
+
+``UniformRandomThief`` is a seeded random-walk TEST DOUBLE, not the sibling repository's
+ThiefBrain and not a port of it (ADR-007 keeps any such port evaluation-only): it is the
+weak baseline the capture bar is a floor against.
 """
 
 from __future__ import annotations
@@ -23,24 +27,6 @@ class DummyBudgets:
     poll_interval = 0.005
 
 
-_terms = {
-    "board_size": 7,
-    "smell_grid_size": 5,
-    "decay_per_step": 0.1,
-    "emit_intensity": 0.9,
-    "min_center_intensity": 0.5,
-    "max_steps": 35,
-    "barriers_max": 14,
-    "setting": "New York",
-    "hint_max_words": 15,
-    "axis_origin_corner": "top-left",
-    "axis_start_index": 0,
-    "thief_start": [3, 3],
-    "cop_start": [0, 0],
-    "num_games": 6,
-}
-
-
 @dataclass
 class KPIResult:
     """One role-pinned Police sub-game row in the KPI ledger."""
@@ -52,8 +38,8 @@ class KPIResult:
     captured: bool
 
 
-class RandomThiefEngine(TurnEngine):
-    """Reference baseline ThiefBrain test double: uniformly random legal moves."""
+class UniformRandomThief(TurnEngine):
+    """Baseline opponent test double: picks uniformly at random from the legal moves."""
 
     def __init__(self, rng: random.Random) -> None:
         self._rng = rng

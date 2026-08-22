@@ -57,7 +57,6 @@ class _PeakBelief:
 def _random_barrier_targets(board, position, num_barriers, rng):
     """Generate a list of random barrier cells near the position."""
     barriers = []
-    candidates = board.barrier_targets(position, [])
     # Add some random barriers elsewhere on the board
     for _ in range(num_barriers):
         r = rng.randint(0, board.size - 1)

@@ -208,8 +208,11 @@ class BrainBase:
         1. legal = state.legal_moves(); if legal == ["STAY"]:
            return Decision("STAY", fallback=True)   # forced STAY; no barrier (pinned order)
         2. action, barrier = self._decide_move(state, belief)   # pure Python
-        3. on an orthogonal MOVE: visited.add(dest)
-        4. hint, verdict = hint_writer.say(state.position, deadline=deadline)
+        3. dest = destination of the chosen action; on an orthogonal MOVE:
+           visited.add(dest)
+        4. hint, verdict = hint_writer.say(dest, deadline=deadline)   # FROM the
+           chosen destination, never the pre-move position: the engine applies
+           the move only after decide() returns.
         5. return Decision(action, barrier, hint, verdict, fallback=False)
         """
 

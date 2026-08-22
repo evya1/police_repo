@@ -12,7 +12,7 @@ import pytest
 from common.domain.board import Board
 from common.domain.rules import GameEngine
 from common.domain.scoring import Role
-from src.police_peer.strategy import Decision, resolve_brain
+from police_peer.strategy import Decision, resolve_brain
 
 
 class TestDecisionConstruction:

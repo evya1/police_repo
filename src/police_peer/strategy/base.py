@@ -74,8 +74,12 @@ class BrainBase(ABC):
         1. legal = state.legal_moves(); if legal == ["STAY"]:
            return Decision("STAY", fallback=True)   # forced STAY; no barrier (pinned order)
         2. action, barrier = self._decide_move(state, belief)   # pure Python
-        3. on an orthogonal MOVE: visited.add(dest)
-        4. hint, verdict = hint_writer.say(state.position, deadline=deadline)
+        3. dest = destination of the chosen action; on an orthogonal MOVE:
+           visited.add(dest)
+        4. hint, verdict = hint_writer.say(dest, deadline=deadline)   # FROM the
+           chosen destination, never the pre-move position (the engine applies
+           the move after decide() returns). Hint generation can never feed
+           back into move selection — the action above is already final.
         5. return Decision(action, barrier, hint, verdict, fallback=False)
         """
         legal = state.legal_moves()
@@ -84,12 +88,15 @@ class BrainBase(ABC):
 
         action, barrier = self._decide_move(state, belief)
 
-        # Update visited on orthogonal MOVE only (FR-P8)
+        # Destination of the ALREADY-SELECTED action. STAY — including a
+        # barrier turn, which forfeits the move (GAME-006) — stays put.
+        # Update visited on orthogonal MOVE only (FR-P8); the hint below is
+        # generated from this destination, never from the pre-move position.
+        dest = state.board.step(state.position, action) if action != "STAY" else state.position
         if action != "STAY":
-            dest = state.board.step(state.position, action)
             self.visited.add(dest)
 
-        hint, verdict = self.hint_writer.say(state.position, deadline=deadline)
+        hint, verdict = self.hint_writer.say(dest, deadline=deadline)
         return Decision(
             action=action,
             barrier_cell=barrier,

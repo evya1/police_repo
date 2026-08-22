@@ -13,9 +13,9 @@ import sys
 import pytest
 
 from common.domain.scoring import Role
-from src.police_peer.strategy import resolve_brain, resolve_brain_cls
-from src.police_peer.strategy.base import BrainBase
-from src.police_peer.strategy.police import PoliceBrain
+from police_peer.strategy import resolve_brain, resolve_brain_cls
+from police_peer.strategy.base import BrainBase
+from police_peer.strategy.police import PoliceBrain
 
 
 class _FakeModule:

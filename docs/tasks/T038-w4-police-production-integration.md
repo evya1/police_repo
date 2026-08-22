@@ -16,8 +16,8 @@ implements:
   - H5
 context_files:
   - docs/mechanisms/M-03-police-strategy.md
-  - docs/tasks/T007-extend-wire-brain-swap.md
-  - docs/tasks/T007-extend-kpi-harness.md
+  - docs/tasks/T042-extend-wire-brain-swap.md
+  - docs/tasks/T043-extend-kpi-harness.md
 read_set:
   - src/police_peer/wire/__init__.py
   - src/police_peer/sdk.py
@@ -46,9 +46,9 @@ real brain into production the way thief_repo's PR #36 did.
 
 - `sdk.py`'s `create_peer` returns a brain-driven engine for the POLICE role by default
   (real `PoliceBrain`/strategy from `T037`, not a stand-in).
-- The write-set extensions already pre-approved in `T007-extend-wire-brain-swap` (the
+- The write-set extensions already pre-approved in `T042-extend-wire-brain-swap` (the
   `BrainDrivenEngine` seam in `src/police_peer/wire/__init__.py`) and
-  `T007-extend-kpi-harness` (`tests/integration/test_strategy_selfplay_kpi.py`) are used
+  `T043-extend-kpi-harness` (`tests/integration/test_strategy_selfplay_kpi.py`) are used
   as-is; this task does not re-litigate those extensions.
 - Wire-boundary evidence normalization exists for untrusted inbound smell/hint data before
   it reaches belief/brain (mirrors thief_repo's H3 `wire/evidence.py`).

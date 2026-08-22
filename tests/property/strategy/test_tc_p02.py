@@ -13,7 +13,7 @@ import random
 from common.domain.board import Board
 from common.domain.rules import GameEngine
 from common.domain.scoring import Role
-from src.police_peer.strategy.police import PoliceBrain
+from police_peer.strategy.police import PoliceBrain
 
 
 class _UniformBelief:

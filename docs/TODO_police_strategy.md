@@ -6,7 +6,7 @@ version: 0.1
 derived_from: PLAN-POLICE-STRATEGY@0.1 · PRD-POLICE-STRATEGY@0.1
 applies_to: police_repo only (role-owned)
 owner: orchestrator
-updated: 2026-08-22 (Phase D evidence recorded — PS-06 in progress: TC-P02 full, TC-P20, TC-P21, TC-P23 green, `strategy/` coverage ≥ 85% met; TC-P22 KPI FAIL 35% < 60% (gap), docs-sync items pending; PS-07 blocked on PS-06, sync check not run, preliminary cross-repo diff shows drift. Stage opened 2026-08-21.)
+updated: 2026-08-22 (review remediation T044 landed — BLOCKER-1/HIGH-2/HIGH-3/MEDIUM-4/5/6/7 and LOW-11 closed; TC-P22 now measures the production composition and PASSES at 80% (16/20) against the 60% gate, superseding the earlier 35% FAIL recorded here; TC-P20/TC-P21/TC-P23 green, TC-P24 run as a normalized semantic comparison with the drift logged as T045; see the Review remediation section below. Stage opened 2026-08-21.)
 ---
 
 # TODO — Police Strategy (Stage 3, role-specific part)
@@ -66,10 +66,10 @@ leaves a new strategy module unwired and untested.
 | PS-01 | Prerequisites & entry criteria | A | P0 | done | ORC | — | T004/T005/T008/T009/T010 assumed · T006 (belief) · write-set extensions | G-P0 |
 | PS-02 | Shared core: `Decision`, `BrainBase`, `HintWriter`, injection seam | B | P0 | done | IA | PS-01 | T007 · FR-P1 (partial), FR-P6, FR-P7, FR-P9, FR-P11 | G-P1 |
 | PS-03 | `PoliceBrain` + `where_place_barrier`: pursuit scan, diffuse fallback, full barrier pipeline | B | P0 | done | IA | PS-02 | T007 · FR-P2, FR-P3, FR-P4, FR-P5, FR-P8 | G-P1 |
-| PS-04 | Spine swap: `BrainDrivenEngine` in the glue (S3a/S3b/S3c) | C | P0 | not started | IA | PS-03 (+ T006 G-B3, write-set extension recorded) | T007 · PLAN §12, SD-P5, SD-P7 | G-P2 |
+| PS-04 | Spine swap: `BrainDrivenEngine` in the glue (S3a/S3b/S3c) | C | P0 | implementation present (T044 — reachable from the CLI; G-P2 not re-audited) | IA | PS-03 (+ T006 G-B3, write-set extension recorded) | T007 · PLAN §12, SD-P5, SD-P7 | G-P2 |
 | PS-05 | Verbal hardening: isolation, verdict rule, cap, lie rate | C | P0 | not started | IA | PS-03 | T007 · FR-P6, FR-P7, TC-P14…P16 | G-P2 |
-| PS-06 | KPI self-play + property + determinism + perf + coverage close-out | D | P1 | in progress (TC-P22 gap) | IA | PS-04, PS-05 | T007 + T021 · PRD §2.3 KPIs, NFR-1/2 | G-P3 |
-| PS-07 | Shared-core cross-repo sync + docs sync | D | P1 | blocked (PS-06 TC-P22; sync check not run) | ORC | PS-06 + thief counterparts' code (thief TS-02 — code exists, ledger stale) | — · Goal 7, NFR-6 | G-P3 |
+| PS-06 | KPI self-play + property + determinism + perf + coverage close-out | D | P1 | in progress (TC-P22 gap CLOSED by T044 at 80%; TC-P20/P21/P23 green, coverage 93.16%) | IA | PS-04, PS-05 | T007 + T021 · PRD §2.3 KPIs, NFR-1/2 | G-P3 |
+| PS-07 | Shared-core cross-repo sync + docs sync | D | P1 | in progress (T044 ran TC-P24 as a normalized semantic comparison; residual drift opened as T045; docs reconciled) | ORC | PS-06 + thief counterparts' code (thief TS-02 — code exists, ledger stale) | — · Goal 7, NFR-6 | G-P3 |
 
 ## Phase A — Prerequisites
 
@@ -457,3 +457,55 @@ passed — stage done.
 - **Assumed delivered (stage entry criteria):** C01 domain + config (T003/T004), scent
   model + lock (T005), orchestrator FSM + turn loop (T010), MCP transport + turn frames
   (T009), integrity core (T008).
+
+## Review remediation (independent review, 2026-08-22) — T044
+
+Recorded by the orchestrator **after** the code evidence was final. Code SHAs on
+`claude/police-thief-review-remediation-v0k8tg`, branched from `police-strategy@697855b`:
+
+| Step | SHA | What it closed |
+|---|---|---|
+| P1 | `7cd15fba179e24ab8735f623a586fa4399b06a48` | BLOCKER-1, HIGH-3, MEDIUM-6, LOW-11 |
+| P2 | `85f943f38325f37cc1a981f1fc6ff2a68eebf821` | HIGH-2 (byte-for-byte port from `thief_repo@429b8d6`), MEDIUM-4 |
+| P3 | `9fc8a78aa170af946e203c880f1429e3e48461b4` | MEDIUM-5, MEDIUM-7, TC-P24 comparison |
+| Boundary | `4aaf9d74c5898733b1359996b5ca433289f773ad` | sub-game boundary leak (byte-for-byte port from `thief_repo@a5c9e06`), found by the real two-process run once captures became reachable |
+
+Measured evidence at `9fc8a78` (commands and full results are in the task handoffs):
+
+- `uv run pytest -q` — exit 0, **coverage 93.16%** against the enforced 85% floor.
+- `uv run ruff check .` — clean. `uv run python scripts/run_quality_gates.py` — all 7 gates pass.
+- **TC-P22, production-composed** (`create_peer` + shipped `config/game.json`, 20 seeded
+  role-pinned games, seed 7): **16/20 captures = 80%** against the unchanged 60% gate; median
+  rounds-to-capture **10.5** (gate <= 28); **16/16** captures used <= 8 barriers (gate >= 50%).
+  This supersedes the 35% FAIL recorded earlier in this ledger, which measured a
+  hand-assembled `BrainDrivenEngine(..., config={})` rather than the shipped composition.
+  The earlier P1 measurement of 17/20 was taken before MEDIUM-7; the hint writer shares the
+  brain's RNG, so hinting from the post-move cell shifts the stream and the seeded ledger.
+- **TC-P20** determinism: two 20-game runs at seed 99 produce identical rows.
+- **TC-P21**, three serial runs of the uninstrumented child probe (1k warm-up, 10k measured):
+  p99 **1.179 / 0.967 / 1.021 ms** against the unchanged 10 ms bar; the probe reports
+  `traced=False` and `coverage_imported=False`, and repository coverage stays enforced.
+- `rg -n 'src\.police_peer' tests` — no matches.
+- `common/` is byte-identical to `thief_repo` (identical git blob hashes for every tracked
+  path under `common/`).
+
+Scope explicitly **not** touched: OPEN-011 termination semantics, group scoring, reporting,
+GUI, branch hygiene. **ADR-007 is unchanged and `T041` remains evaluation-only.**
+
+### TC-P24 outcome
+
+Run as a normalized semantic comparison (package path, role constant, role words and
+requirement-ID prefixes normalized), not a byte diff and not a copy. `decision.py` and
+`base.py` now agree behaviourally; `police.py` / `barriers.py` are declared role-specific in
+PLAN section 5.5; the three wording divergences pre-recorded in PLAN section 5 are unchanged.
+Three real drifts in `hints.py` / `inject.py` where `thief_repo` already carries the corrected
+behaviour are opened as **T045** rather than absorbed into T044's write set. No Thief weights
+were copied and no Police barrier behaviour was erased.
+
+### Reconciled documents
+
+- `docs/PLAN_police_strategy.md` section 5.2 step 4 said `hint_writer.say(state.position, ...)`;
+  the shipped code now hints from the post-move destination.
+- `docs/tasks/T038-w4-police-production-integration.md` referenced two non-existent task
+  files (`T007-extend-wire-brain-swap`, `T007-extend-kpi-harness`); the real records are
+  `T042` and `T043`.

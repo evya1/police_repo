@@ -13,7 +13,7 @@ from common.transport.mcp_client import McpChannel, edge_answers
 from common.transport.mcp_server import serve_background
 from common.transport.series import SeriesResult
 from police_peer.sdk import Budgets, create_peer
-from police_peer.strategy import BaselineStrategy, Strategy
+from police_peer.strategy import Strategy
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,11 @@ def run_one_peer(
             config_path=shared_config,
             private_config_path=private_config,
             channel=channel,
-            strategy=strategy or BaselineStrategy(),
+            # Pass through, do NOT default to BaselineStrategy() here: an
+            # explicit strategy opts into the legacy stand-in path; otherwise
+            # create_peer wires the real configured brain (BrainDrivenEngine)
+            # for POLICE sub-games.
+            strategy=strategy,
             role=role,
             seed=seed,
             group_id=group_id,

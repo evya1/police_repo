@@ -1,14 +1,11 @@
 """BrainDrivenEngine — the S3 glue swap: real PoliceBrain on POLICE sub-games.
 
-Composes a ``SubgameSession`` (does NOT subclass ``StandInEngine``, and is
-not subclassed by it — both adapters compose the shared session). On POLICE
-sub-games this adapter resolves the configured brain + belief, feeds every
-valid received half-turn through the canonical ``apply_half_turn`` order (the
-previous wiring called ``observe_smell``/``apply_hint`` directly and never
-called ``apply_half_turn`` in production at all), and normalizes incoming
-scent at the wire boundary before it reaches the brain or the belief.
-
-THIEF sub-games keep the stand-in behaviour (SD-P7) via the same
+Composes a ``SubgameSession`` (does NOT subclass ``StandInEngine``, and is not subclassed
+by it — both adapters compose the shared session). On POLICE sub-games it resolves the
+configured brain + belief, normalizes incoming scent at the wire boundary, and drives the
+belief through the canonical ``apply_half_turn`` order once per accepted half-turn. A
+barrier this peer places itself is excluded from the belief as soon as the domain
+placement succeeds. THIEF sub-games keep the stand-in behaviour (SD-P7) via the same
 ``SubgameSession``, duplicated minimally rather than inherited.
 """
 
@@ -75,7 +72,12 @@ class BrainDrivenEngine:
             )
             # Barrier first: place barrier if decided, then apply move (FR-P2/FR-P4).
             if decision.barrier_cell is not None:
+                # Domain placement first: it raises IllegalMoveError before it mutates, so a
+                # refused placement must not leave the belief believing in a barrier that the
+                # board never got. Only a placement that actually happened excludes the cell.
                 self._session.engine.place_own_barrier(decision.barrier_cell)
+                if self._belief is not None:
+                    self._belief.exclude(decision.barrier_cell)
             self._session.apply_move(decision.action)
             return self._session.build_result(
                 move=decision.action,
@@ -97,9 +99,16 @@ class BrainDrivenEngine:
     def observe_opponent(self, message: dict) -> None:
         """Absorb an opponent's turn message; drive the belief through apply_half_turn exactly
         once per valid received half-turn, in the canonical pinned order.
+
+        Semantic preflight FIRST: ``observe_barrier_and_claims`` is the only step that can
+        still refuse a wire-valid turn (a quota-breaking or off-board barrier declaration).
+        It raises before it mutates, so a refused turn leaves board, session and belief
+        exactly as they were; the evidence order below runs only for an accepted turn.
         """
         if self._session is None or self._session.engine is None:
             return
+
+        self._session.observe_barrier_and_claims(message)
 
         if self._belief is not None:
             from police_peer.belief.update import apply_half_turn
@@ -125,8 +134,6 @@ class BrainDrivenEngine:
             )
         if "hint" in message:
             self._last_opponent_hint = str(message["hint"])
-
-        self._session.observe_barrier_and_claims(message)
 
     def terminal(self) -> Outcome | None:
         if self._session is None:

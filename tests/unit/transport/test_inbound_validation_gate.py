@@ -13,6 +13,8 @@ from common.transport.inbox import Inbox
 from common.transport.refusals import Refused
 from common.transport.subgame import _wait_for_step
 
+_BOARD_SIZE = 7  # the negotiated board size; the gate never assumes a hard-coded 7
+
 
 class _Budgets:
     turn_timeout = 0.05
@@ -51,7 +53,7 @@ def test_malformed_field_refused_before_inbox_mutation(bad_field: str, bad_value
     applied: dict[int, dict] = {}
 
     with pytest.raises(Refused) as excinfo:
-        _wait_for_step(_FakeChannel([bad]), inbox, applied, 1, _Budgets())
+        _wait_for_step(_FakeChannel([bad]), inbox, applied, 1, _Budgets(), _BOARD_SIZE)
 
     assert excinfo.value.code == "SPAR-N11"
     assert applied == {}
@@ -64,7 +66,7 @@ def test_valid_turn_applies_normally() -> None:
     good = _valid_turn()
     inbox = Inbox()
     applied: dict[int, dict] = {}
-    _wait_for_step(_FakeChannel([good]), inbox, applied, 1, _Budgets())
+    _wait_for_step(_FakeChannel([good]), inbox, applied, 1, _Budgets(), _BOARD_SIZE)
     assert 1 in applied
     assert inbox.played[1] == good["commit"]
 
@@ -73,6 +75,6 @@ def test_unknown_extension_keys_are_tolerated() -> None:
     good = _valid_turn(future_field="anything")
     inbox = Inbox()
     applied: dict[int, dict] = {}
-    _wait_for_step(_FakeChannel([good]), inbox, applied, 1, _Budgets())
+    _wait_for_step(_FakeChannel([good]), inbox, applied, 1, _Budgets(), _BOARD_SIZE)
     assert 1 in applied
     assert applied[1]["future_field"] == "anything"

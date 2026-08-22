@@ -8,18 +8,21 @@ from __future__ import annotations
 
 from .barriers import where_place_barrier
 from .base import BrainBase
+from .baseline import BaselineStrategy, Strategy
 from .decision import Decision
 from .hints import HintWriter, TextProvider
 from .inject import resolve_brain, resolve_brain_cls
 from .police import PoliceBrain
 
 __all__ = [
+    "BaselineStrategy",
     "BrainBase",
     "Decision",
     "HintWriter",
-    "TextProvider",
     "PoliceBrain",
-    "where_place_barrier",
+    "Strategy",
+    "TextProvider",
     "resolve_brain",
     "resolve_brain_cls",
+    "where_place_barrier",
 ]

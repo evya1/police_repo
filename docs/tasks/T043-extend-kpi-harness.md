@@ -1,5 +1,5 @@
 ---
-id: T007-extend-kpi-harness
+id: T043-extend-kpi-harness
 status: done
 priority: P0
 task_type: governance
@@ -21,7 +21,7 @@ write_set:
 risk: low
 ---
 
-# T007-extend-kpi-harness — Write-set extension: KPI self-play harness
+# T043-extend-kpi-harness — Write-set extension: KPI self-play harness
 
 ## Purpose
 
@@ -44,7 +44,7 @@ this extension.
 
 ## Evidence
 
-- Recorded in `docs/tasks/T007-extend-kpi-harness.md` before any strategy task is
+- Recorded in `docs/tasks/T043-extend-kpi-harness.md` before any strategy task is
   claimed (workflow §4: no silent scope expansion).
 - ORC-verified: the path `tests/integration/test_strategy_selfplay_kpi.py` does not
   yet exist on the `police-strategy` branch (`7ce031d`); it will be created by PS-06

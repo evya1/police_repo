@@ -127,6 +127,7 @@ def audit_records(
                 break
 
         survival_threshold = int(terms.get("survival_threshold", terms.get("max_steps", 35)))
+        records_by_step = {int(r["step"]): r for r in records if "step" in r}
 
         for r in records:
             step = int(r.get("step", -1))
@@ -157,7 +158,15 @@ def audit_records(
                         is_claim_caught = False
                         if claim_resp and claim_resp.get("caught") is True:
                             cpos = claim_resp.get("claim")
-                            if cpos and thief_pos and tuple(thief_pos) == tuple(cpos):
+                            # The claim was answered against the position that existed
+                            # WHEN IT ARRIVED (the pre-move snapshot, GAME-009/SEC-007) —
+                            # this record's own `state` is already the POST-move position,
+                            # so the answer must be re-derived from the thief's PREVIOUS
+                            # revealed step (its position before this step's move), not
+                            # from this step's own state.
+                            prev = records_by_step.get(step - 1)
+                            pre_move_pos = _parse_position(prev.get("state", "")) if prev else None
+                            if cpos and pre_move_pos and tuple(pre_move_pos) == tuple(cpos):
                                 is_claim_caught = True
 
                         if thief_pos:

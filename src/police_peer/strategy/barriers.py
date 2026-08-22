@@ -65,12 +65,18 @@ def where_place_barrier(
     current_barriers = frozenset(state.barriers)
     baseline_dist = _bfs_distance(state.board, police_pos, peak, current_barriers)
 
+    # Candidate-independent: the same for every candidate this turn, so computed once
+    # rather than re-flooded from `peak` on every iteration (both here and inside
+    # cut_value, which used to recompute it too).
+    before = _reachable(state.board, peak, current_barriers)
+    assert before >= 1, "belief excludes barrier cells (FR-B4), so reachable >= 1"
+
     best_candidate: Cell | None = None
     best_score = -1.0
 
     for c in candidates:
         mass = belief.prob(c)
-        cut = cut_value(state, c, peak)
+        cut = cut_value(state, c, peak, before=before)
 
         # Skip: no value (low mass AND zero cut).
         if mass < floor and cut == 0:
@@ -82,11 +88,6 @@ def where_place_barrier(
         if new_dist > baseline_dist + slack:
             continue
 
-        # Compute score.
-        before = cut + int(belief.prob(peak) > 0)  # before = cut + after; after = before - cut
-        # More precisely: before = _reachable from peak with current barriers.
-        before = _reachable(state.board, peak, current_barriers)
-        assert before >= 1, "belief excludes barrier cells (FR-B4), so reachable >= 1"
         score = w_mass * mass + w_cut * (cut / before)
 
         # Skip (reserve): save last barriers for the late game.
@@ -103,23 +104,30 @@ def where_place_barrier(
     return None
 
 
-def cut_value(state, c: Cell, peak: Cell) -> int:
+def cut_value(state, c: Cell, peak: Cell, before: int | None = None) -> int:
     """Region collapse from adding barrier c: before - after, where
     before/after are _reachable sizes from `peak` (orthogonal, barriers
     impassable). If c == peak: returns `before` — full region collapse plus
     the rule-46 capture gamble (GAME-010): a barrier on the Thief's cell is a
     capture the Thief must honestly acknowledge. `before` is >= 1 because the
     belief excludes barrier cells (belief FR-B4); a defensive assert pins it.
+
+    `before` is candidate-independent (same `peak`, same current barrier set
+    for every candidate scanned in one ``where_place_barrier`` call), so a
+    caller scanning multiple candidates should compute it once and pass it in
+    rather than re-flooding from `peak` on every call; the default (``None``)
+    recomputes it for standalone use.
     """
     board: Board = state.board
     current_barriers = frozenset(state.barriers)
-    if c == peak:
-        # Full region collapse: barrier on the peak eliminates the entire reachable region.
+    if before is None:
         before = _reachable(board, peak, current_barriers)
         assert before >= 1, "belief excludes barrier cells (FR-B4), so reachable >= 1"
+
+    if c == peak:
+        # Full region collapse: barrier on the peak eliminates the entire reachable region.
         return before
 
-    before = _reachable(board, peak, current_barriers)
     new_barriers = current_barriers | {c}
     after = _reachable(board, peak, new_barriers)
     return before - after

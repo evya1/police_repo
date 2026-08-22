@@ -65,7 +65,7 @@ def _play_one_game(i: int, seed: int) -> KPIResult:
         sub_game=2 * i - 1,
         outcome=row_a.outcome,
         steps=row_a.steps,
-        barriers_used=police_engine._engine.barriers_placed,
+        barriers_used=police_engine._session.engine.barriers_placed,
         captured=row_a.outcome is Outcome.CAPTURE,
     )
 

@@ -133,9 +133,9 @@ def test_stand_in_engine_start_positions_from_terms() -> None:
 
     engine_police = StandInEngine(Role.POLICE)
     engine_police.start_subgame(1, Role.POLICE, terms={"cop_start": [1, 2], "thief_start": [5, 4]})
-    assert engine_police._engine.position == (1, 2)
+    assert engine_police._session.engine.position == (1, 2)
 
     engine_thief = StandInEngine(Role.THIEF)
     engine_thief.start_subgame(1, Role.THIEF, terms={"cop_start": [1, 2], "thief_start": [5, 4]})
-    assert engine_thief._engine.position == (5, 4)
+    assert engine_thief._session.engine.position == (5, 4)
 

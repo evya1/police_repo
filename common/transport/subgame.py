@@ -12,16 +12,17 @@ instead of forking (rule 35).
 
 from __future__ import annotations
 
-import time
-
 from common.domain.scoring import Outcome, Role, role_for, score_for, settled_outcome
 from common.transport.audit import audit_records
 from common.transport.inbox import Inbox
-from common.transport.refusals import Refused
 from common.transport.series import PeerConfig, SeriesRow, TurnEngine
 from common.transport.state import PeerState, PeerStateMachine
+from common.transport.turnfeed import (
+    reconcile_subgame_boundary,
+    wait_audit,
+    wait_for_step,
+)
 from common.transport.turnseal import audit_payload, seal_turn, settle_final
-from common.transport.validators import validate_turn
 
 
 def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int) -> SeriesRow:
@@ -47,9 +48,12 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
     machine = PeerStateMachine()
     engine.start_subgame(sub_game, role, terms=terms)
 
+    # Rule 35: the previous sub-game's owed final STAY is still in the transport.
+    reconcile_subgame_boundary(channel, inbox, applied, board_size)
+
     if not is_thief:
         # Police honours thief-first (FR-18): hold thief's first move before sending own
-        _wait_for_step(channel, inbox, applied, 1, config.budgets, board_size)
+        wait_for_step(channel, inbox, applied, 1, config.budgets, board_size)
 
     flush = getattr(channel, "flush", None)
     terminal: Outcome | None = None
@@ -66,7 +70,7 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
             flush()
 
         machine.to(PeerState.AWAITING_REVEAL)
-        _wait_for_step(channel, inbox, applied, lap, config.budgets, board_size)
+        wait_for_step(channel, inbox, applied, lap, config.budgets, board_size)
 
         machine.to(PeerState.VERIFYING)
         _observe_once(applied, applied_seen, engine, lap)
@@ -85,7 +89,7 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
         # A terminal arriving there settles with a sealed STAY (step lap+1) so both
         # ledgers record the same final step; the thief was still owed that step.
         if not is_thief and lap < max_steps:
-            _wait_for_step(channel, inbox, applied, lap + 1, config.budgets, board_size)
+            wait_for_step(channel, inbox, applied, lap + 1, config.budgets, board_size)
             _observe_once(applied, applied_seen, engine, lap + 1)
             terminal = engine.terminal()
             if terminal is not None:
@@ -96,7 +100,7 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
         # A thief captured on the FINAL lap owes the max_steps+1 concession; a silent
         # thief stays TECHNICAL_LOSS. The police never seals past the physics ceiling.
         try:
-            _wait_for_step(channel, inbox, applied, max_steps + 1, config.budgets, board_size)
+            wait_for_step(channel, inbox, applied, max_steps + 1, config.budgets, board_size)
             _observe_once(applied, applied_seen, engine, max_steps + 1)
             terminal = engine.terminal()
         except TimeoutError:
@@ -106,7 +110,7 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
         terminal = Outcome.TECHNICAL_LOSS
 
     channel.send_audit(audit_payload(role, our_records, terminal))
-    opponent_audit = _wait_audit(channel, config.budgets)
+    opponent_audit = wait_audit(channel, config.budgets)
     if opponent_audit is None:
         audit_ok, audits_present = False, False
     else:
@@ -142,37 +146,3 @@ def _observe_once(applied: dict[int, dict], seen: set[int], engine: TurnEngine, 
 def _our_move(engine, role: Role, is_thief: bool, lap: int, sub_game: int) -> tuple[dict, dict]:
     """Ask the engine for a move; return (turn message, sealed record)."""
     return seal_turn(engine.decide(), role, is_thief, lap)
-
-
-def _wait_for_step(
-    channel, inbox: Inbox, applied: dict[int, dict], step: int, budgets, board_size: int,
-) -> None:
-    """Feed the turn channel into the inbox until the opponent's `step` move has applied.
-
-    Every inbound message is validated (FR-25) before it ever reaches ``inbox.offer`` —
-    the only mutation point for delivery state — so a malformed turn is refused with
-    zero partial mutation instead of corrupting the reorder window.
-    """
-    deadline = time.monotonic() + budgets.turn_timeout
-    while time.monotonic() < deadline:
-        while (msg := channel.poll_turn()) is not None:
-            verdict = validate_turn(msg, board_size=board_size)
-            if verdict != "accept":
-                raise Refused("SPAR-N11", verdict)
-            for ready in inbox.offer(msg):
-                applied[int(ready["step"])] = ready
-        if step in applied:
-            return
-        time.sleep(budgets.poll_interval)
-    raise TimeoutError(f"timed out waiting for opponent turn {step}")
-
-
-def _wait_audit(channel, budgets) -> dict | None:
-    """Poll for the opponent's audit payload until deadline."""
-    deadline = time.monotonic() + budgets.turn_timeout
-    while time.monotonic() < deadline:
-        msg = channel.poll_audit()
-        if msg is not None:
-            return msg
-        time.sleep(budgets.poll_interval)
-    return None

@@ -1,6 +1,6 @@
 """HIGH-2: a hostile inbound turn is refused BEFORE any state changes.
 
-The preflight in ``_wait_for_step`` is the one authoritative gate: every message is
+The preflight in ``turnfeed.wait_for_step`` is the one authoritative gate: every message is
 validated against the negotiated board size before ``inbox.offer`` — the only mutation
 point for delivery state — so a refusal leaves the inbox and the applied window untouched.
 The role-local semantic gate in ``BrainDrivenEngine.observe_opponent`` covers what the wire
@@ -17,7 +17,7 @@ from common.domain.rules import IllegalMoveError
 from common.domain.scoring import Role
 from common.transport.inbox import Inbox
 from common.transport.refusals import Refused
-from common.transport.subgame import _wait_for_step
+from common.transport.turnfeed import reconcile_subgame_boundary, wait_for_step
 from police_peer.wire.brain import BrainDrivenEngine
 
 _TERMS = {
@@ -82,7 +82,7 @@ def test_hostile_turn_refused_with_zero_mutation(message: object) -> None:
     inbox, applied = Inbox(), {}
     before = _inbox_snapshot(inbox)
     with pytest.raises(Refused) as excinfo:
-        _wait_for_step(_ScriptedChannel(message), inbox, applied, 1, _Budgets(), 7)
+        wait_for_step(_ScriptedChannel(message), inbox, applied, 1, _Budgets(), 7)
     assert excinfo.value.code == "SPAR-N11"
     assert applied == {}
     assert _inbox_snapshot(inbox) == before
@@ -90,7 +90,7 @@ def test_hostile_turn_refused_with_zero_mutation(message: object) -> None:
 
 def test_valid_turn_still_applies_once() -> None:
     inbox, applied = Inbox(), {}
-    _wait_for_step(
+    wait_for_step(
         _ScriptedChannel(_turn(barrier_placed=[0, 6])), inbox, applied, 1, _Budgets(), 7,
     )
     assert applied[1]["barrier_placed"] == [0, 6]
@@ -140,3 +140,41 @@ def test_valid_barrier_is_applied_and_excluded_exactly_once() -> None:
     assert game.opponent_barriers == 1
     assert engine._belief.prob((0, 6)) == 0.0
     assert (0, 6) not in engine._belief.allowed_cells
+
+
+class _ReplayChannel:
+    """A transport still holding the previous sub-game's unread tail."""
+
+    def __init__(self, *messages: dict) -> None:
+        self._messages = list(messages)
+
+    def poll_turn(self) -> dict | None:
+        return self._messages.pop(0) if self._messages else None
+
+
+def test_boundary_drops_the_previous_subgames_owed_final() -> None:
+    """Rule 35: the settling peer's last sealed STAY must not enter the new window."""
+    inbox, applied = Inbox(), {}
+    channel = _ReplayChannel(_turn(step=14), _turn(step=15))
+    dropped = reconcile_subgame_boundary(channel, inbox, applied, 7)
+    assert dropped == 2
+    assert applied == {} and inbox.next_step == 1
+
+
+def test_boundary_keeps_a_step_one_that_belongs_to_the_new_subgame() -> None:
+    """Only step 1 can belong to the new sub-game, so it is handed to the fresh inbox."""
+    inbox, applied = Inbox(), {}
+    channel = _ReplayChannel(_turn(step=14), _turn(step=1, hint="new subgame"))
+    assert reconcile_subgame_boundary(channel, inbox, applied, 7) == 1
+    assert applied[1]["hint"] == "new subgame"
+    assert inbox.next_step == 2
+
+
+def test_boundary_still_refuses_a_malformed_tail() -> None:
+    """A boundary is not an excuse to absorb a malformed turn."""
+    inbox, applied = Inbox(), {}
+    with pytest.raises(Refused) as excinfo:
+        reconcile_subgame_boundary(_ReplayChannel(_turn(step=14, sender="referee")),
+                                   inbox, applied, 7)
+    assert excinfo.value.code == "SPAR-N11"
+    assert applied == {}

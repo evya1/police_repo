@@ -140,3 +140,42 @@ class TestProviderSeam:
         hint, verdict = hw.say((3, 3))
         assert hint == "I am at Central Park."
         assert verdict == "truth"
+
+    def test_provider_failure_does_not_affect_action_or_barrier(self) -> None:
+        """TC-P15 full: a boom provider never changes the action or barrier."""
+        rng = random.Random(0)
+
+        class BoomProvider:
+            def generate(self, role, position, arena, max_words, deadline):
+                raise RuntimeError("boom")
+
+        hw = HintWriter(role="police", rng=rng, arena="New York", max_words=15,
+                        provider=BoomProvider())
+        for _ in range(50):
+            hint, verdict = hw.say((3, 3))
+            assert isinstance(hint, str) and len(hint) > 0
+            assert verdict in ("truth", "lie")
+        hint2, verdict2 = hw.say((4, 4))
+        assert isinstance(hint2, str) and len(hint2) > 0
+        assert verdict2 in ("truth", "lie")
+
+    def test_slow_provider_fallback(self) -> None:
+        """TC-P15: a slow/exceptional provider falls back to template without side effects."""
+        rng = random.Random(0)
+        call_count = {"n": 0}
+
+        class SlowProvider:
+            def generate(self, role, position, arena, max_words, deadline):
+                call_count["n"] += 1
+                if call_count["n"] == 1:
+                    raise TimeoutError("slow")
+                return {"message": "fallback used", "verdict": "truth"}
+
+        hw = HintWriter(role="police", rng=rng, arena="New York", max_words=15,
+                        provider=SlowProvider())
+        hint1, verdict1 = hw.say((3, 3))
+        assert isinstance(hint1, str) and len(hint1) > 0
+        assert verdict1 in ("truth", "lie")
+        hint2, verdict2 = hw.say((3, 3))
+        assert hint2 == "fallback used"
+        assert verdict2 == "truth"

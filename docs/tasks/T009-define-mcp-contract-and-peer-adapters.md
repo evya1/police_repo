@@ -1,6 +1,8 @@
 ---
 id: T009
-status: blocked
+status: in_review
+review_status: changes_requested_repaired_pending_rereview
+evidence: docs/evidence/a2-runtime-boundary-handoff/analysis.md
 priority: P0
 task_type: component
 component: C03

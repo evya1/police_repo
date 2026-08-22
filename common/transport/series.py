@@ -40,12 +40,14 @@ class PeerConfig:
         terms: dict,
         seed: int = 0,
         locks: dict[str, str] | None = None,
+        mode: str = "warmup",
     ) -> None:
         self.natural_role = natural_role
         self.budgets = budgets
         self.terms = terms
         self.seed = seed
         self.locks = locks
+        self.mode = mode
 
 
 @dataclass
@@ -79,6 +81,14 @@ class TurnEngine(Protocol):
     def decide(self) -> dict: ...
     def observe_opponent(self, message: dict) -> None: ...
     def terminal(self) -> Outcome | None: ...
+    def terminal_final(self) -> dict | None:
+        """Payload of the game-ending final step owed after settling, or None.
+
+        A thief that saw its own capture (rules 46/47 — a fact only the thief can see)
+        owes a concession: a STAY carrying claim_response {"claim": own cell, "caught": true}.
+        A police settling from the thief's final owes a plain sealed STAY. Without the
+        concession the cop waits out its budget and two honest reports fork (rule 35).
+        """
 
 
 SubgameDriver = Callable[[object, TurnEngine, PeerConfig, int], SeriesRow]
@@ -94,11 +104,13 @@ class PeerFacade:
         config: PeerConfig,
         name: str = "peer",
         subgame_driver: SubgameDriver | None = None,
+        mode: str | None = None,
     ) -> None:
         self.channel = channel
         self.engine = engine
         self.config = config
         self.name = name
+        self.mode = mode or getattr(config, "mode", "warmup")
         self._game_id = ""
         self._game_uid = ""
         self._ledgers: list[SeriesRow] = []

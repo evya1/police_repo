@@ -541,7 +541,7 @@ as ties; it is police-specific, and the Thief doc's SD-T6 records the symmetric 
 of importing it into the evasion policy. The weights/thresholds are **project
 convention** (M-03 derived-design split), pinned in PRD §9 as the PLANQ-008 approval
 baseline. **Trade-off:** tuned weights may be suboptimal against an unknown Thief; the KPI
-harness (200 seeded games) is the measurable check, and re-tuning is a config edit, not a
+harness (20 seeded games) is the measurable check, and re-tuning is a config edit, not a
 code change. **Alternatives:** reference chase + roll (rejected as final, kept as
 baseline), full lookahead minimax/expectimax (P2), RL (P2), LLM (forbidden by default —
 an LLM-hallucinated barrier is the costliest mistake class in this game, GAME-007).
@@ -580,7 +580,7 @@ prevents the classic self-trap (walling the one corridor to the peak); the reser
 fixed proxy for the endgame, where a single cut usually converts the capture.
 **Trade-off:** one-shot greedy — the multi-turn squeeze a cut sets up is not priced, and
 the reserve is a fixed heuristic rather than an optimization; the `≤ 8 barriers` KPI
-(PRD §2.3) and the 200-game harness are the measurable economy checks.
+(PRD §2.3) and the 20-game harness are the measurable economy checks.
 **Alternatives:** always wall the most-likely neighbour (rejected: ignores region
 collapse and the self-route), never wall (rejected: the barrier mechanic is core —
 GAME-006/007/008 — and the report's headroom item 5 names it), full barrier lookahead

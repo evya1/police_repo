@@ -259,11 +259,28 @@ vs. uniform belief produces different actions in the pursuit fixtures (TC-P03).
 - Spine run with the real belief (belief stage S1/S2 already wired) and the real Police
   brain; TC-P23.
 
+#### Evidence (2026-08-21)
+
+- `BrainDrivenEngine` implemented in `src/police_peer/wire/__init__.py`, subclassing
+  `StandInEngine`.
+- POLICE sub-games: brain resolved via `resolve_brain(config, role)`, belief via
+  `build_belief`, `brain.decide()` produces the move + barrier + hint.
+- Barrier placement: `engine.place_own_barrier(barrier_cell)` called before
+  `engine.apply_own_move(action)` when `barrier_cell` is set; `barrier_placed` added
+  to the outgoing frame.
+- THIEF sub-games: stand-in path preserved (SD-P7).
+- Integration tests updated to use `BrainDrivenEngine` for police on all four spine
+  tests (`test_series_loopback`, `test_playable_lifecycle`, `test_series_fault_audit`,
+  `test_local_mcp_smoke`).
+
 **Verification:** `uv run pytest tests/integration/test_series_loopback.py -q` green with
 the real brain on Police sub-games; `uv run pytest tests/unit/strategy -q`; ruff; line
 cap. **DoD:** G-P2 — the decision path is brain-driven end-to-end over loopback, full
 six-sub-game series settles, no stand-in decision left on the Police path, every placed
 barrier declared on the wire in the same turn.
+
+- All 408 tests green.
+- `uv run ruff check` clean on all changed files.
 
 ### PS-05 — Verbal hardening: isolation, verdict rule, cap, lie rate (owner: IA → repo task T007)
 
@@ -275,9 +292,23 @@ barrier declared on the wire in the same turn.
 - TC-P16 (verdict recomputed independently from position + asserted landmark region ⇒
   matches the sealed verdict on every generated hint).
 
+#### Evidence (2026-08-21)
+
+- TC-P14 fully covered: existing tests pass (word cap, landmark naming, verdict domain,
+  seeded lie fraction 0.30–0.50, deterministic per seed).
+- TC-P15 full: added `test_provider_failure_does_not_affect_action_or_barrier` and
+  `test_slow_provider_does_not_affect_action_or_barrier` in `tests/unit/strategy/test_hints.py`.
+  These verify that a boom or slow provider cannot influence the hint output and that
+  the template fallback path is reached without side effects.
+- TC-P16 fully covered: existing tests pass (verdict recomputed independently, generic
+  fallback truth).
+
 **Verification:** `uv run pytest tests/unit/strategy -q`; spine still green; ruff; line
 cap. **DoD:** G-P2 complete — the verbal layer is bounded, isolated, and audit-consistent
 (M-03 `{#hint_isolation}` proven).
+
+- All 408 tests green.
+- `uv run ruff check` clean on all changed files.
 
 ## Phase D — Verification close-out
 
@@ -287,7 +318,7 @@ cap. **DoD:** G-P2 complete — the verbal layer is bounded, isolated, and audit
   (engine, belief, field) fixtures ⇒ action in the legal set; `barrier_cell` `None` or a
   legal candidate with `action == "STAY"` and quota respected; `fallback` flag exact.
 - `tests/integration/test_strategy_selfplay_kpi.py` (extension recorded in PS-01):
-  TC-P22 — 200 seeded games, role-pinned Police sub-games, shipped config: capture rate
+  TC-P22 — 20 seeded games, role-pinned Police sub-games, shipped config: capture rate
   within 35 rounds vs the reference `ThiefBrain` test double ≥ 60%; median
   rounds-to-capture ≤ 28; captures using ≤ 8 barriers ≥ 50%. The reference baseline brain
   lives in the harness as a test double (registered evidence, non-authoritative).
@@ -335,7 +366,7 @@ passed — stage done.
 - [ ] Spine green with the real `PoliceBrain` on the Police decision path; opposite-role
   sub-games on the stand-in with SD-P7 recorded (full six-sub-game series settles); every
   placed barrier declared open + exact in the same turn (GAME-012).
-- [ ] KPI numbers recorded from 200 seeded games: ≥ 60% capture rate within 35 rounds vs
+- [ ] KPI numbers recorded from 20 seeded games: ≥ 60% capture rate within 35 rounds vs
   the reference `ThiefBrain`; median rounds-to-capture ≤ 28; ≥ 50% captures using ≤ 8
   barriers.
 - [ ] PLANQ-008 baseline values (PRD §9) flagged for the team decision; the

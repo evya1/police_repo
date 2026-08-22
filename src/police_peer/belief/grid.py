@@ -103,14 +103,24 @@ class BeliefGrid:
                 mass = self._matrix[r][c]
                 if mass <= 0.0:
                     continue
-                neighbourhood = [(r, c)] + self._board.neighbours((r, c))
+                # A cell removed by exclude() is a barrier, impassable for the rest of
+                # the game (board.py), so mass may never spread back into it and the
+                # allowed mask may never widen -- otherwise every earlier barrier is
+                # resurrected on the next diffusion and takes mass again.
+                neighbourhood = [
+                    cell
+                    for cell in [(r, c)] + self._board.neighbours((r, c))
+                    if cell in self._allowed
+                ]
+                if not neighbourhood:
+                    continue
                 share = mass / len(neighbourhood)
                 for nr, nc in neighbourhood:
                     new_matrix[nr][nc] += share
                     new_allowed.add((nr, nc))
         self._matrix = new_matrix
         if new_allowed:
-            self._allowed = new_allowed
+            self._allowed &= new_allowed
         self._normalize()
 
     def observe_smell(self, field: dict[str, float]) -> None:

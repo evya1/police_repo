@@ -81,6 +81,14 @@ class TurnEngine(Protocol):
     def decide(self) -> dict: ...
     def observe_opponent(self, message: dict) -> None: ...
     def terminal(self) -> Outcome | None: ...
+    def terminal_final(self) -> dict | None:
+        """Payload of the game-ending final step owed after settling, or None.
+
+        A thief that saw its own capture (rules 46/47 — a fact only the thief can see)
+        owes a concession: a STAY carrying claim_response {"claim": own cell, "caught": true}.
+        A police settling from the thief's final owes a plain sealed STAY. Without the
+        concession the cop waits out its budget and two honest reports fork (rule 35).
+        """
 
 
 SubgameDriver = Callable[[object, TurnEngine, PeerConfig, int], SeriesRow]

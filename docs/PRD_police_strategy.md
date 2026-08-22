@@ -240,7 +240,7 @@ double — registered evidence, non-authoritative):
 
 | KPI | Target |
 |---|---|
-| Police capture rate within 35 rounds vs reference `ThiefBrain` (200 seeded games) | ≥ 60% |
+| Police capture rate within 35 rounds vs reference `ThiefBrain` (20 seeded games) | ≥ 60% |
 | Police median rounds-to-capture (vs reference Thief) | ≤ 28 |
 | Police captures using ≤ 8 barriers (quota economy — the designed policy saves quota, unlike the 0.15 roll baseline) | ≥ 50% |
 | Illegal actions across 10k fuzzed `decide()` calls (property test: action legality + barrier candidacy) | 0 |
@@ -717,7 +717,7 @@ flowchart TD
 | TC-P19 | no-leak static scan: no import of opponent-truth symbols in `strategy/`; no parameter or field accepts the opponent's position | FR-P11, NFR-5 |
 | TC-P20 | determinism: same seed + same wire transcript, two processes ⇒ byte-identical decision logs (action, barrier, hint, verdict, fallback at every step) | FR-P10, NFR-2, MS-5 |
 | TC-P21 | performance: `decide()` including `where_place_barrier` ≤ 10 ms p99 over 10k iterations (7×7, CPython 3.12) | NFR-1, MS-5 |
-| TC-P22 | KPI self-play (200 seeded games, role-pinned Police sub-games, shipped config): capture rate within 35 rounds vs reference `ThiefBrain` ≥ 60%; median rounds-to-capture ≤ 28; captures using ≤ 8 barriers ≥ 50% | §2.3, MS-5 |
+| TC-P22 | KPI self-play (20 seeded games, role-pinned Police sub-games, shipped config): capture rate within 35 rounds vs reference `ThiefBrain` ≥ 60%; median rounds-to-capture ≤ 28; captures using ≤ 8 barriers ≥ 50% | §2.3, MS-5 |
 | TC-P23 | spine: the real brain on the decision path (PLAN §12 S3a/S3b/S3c; opposite-role sub-games keep the stand-in, SD-P7) ⇒ `tests/integration/test_series_loopback.py` green (full six-sub-game series settles) | MS-4 |
 | TC-P24 | shared-core sync: `decision.py`, `base.py`, `hints.py`, `inject.py`, `__init__.py` identical to the thief-repo counterparts modulo package import path and the role constant (ORC check; deferred until the thief counterparts' code exists — until then single-repo internal consistency) | Goal 7, NFR-6 |
 

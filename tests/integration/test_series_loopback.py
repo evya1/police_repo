@@ -3,7 +3,7 @@
 TC-27 / TC-28: verifies the end-to-end series engine works correctly over
 loopback transport with no fastmcp, no sockets, no sleeping.
 
-Assertions:
+Asserts:
 - Ledger has 6 rows
 - Roles alternate across sub-games per role_for
 - Thief moves first in each sub-game (FR-18)
@@ -19,7 +19,7 @@ from __future__ import annotations
 from common.domain.scoring import Role, role_for
 from common.transport.loopback import pair
 from common.transport.series import PeerConfig, SeriesResult, run_series
-from police_peer.wire import StandInEngine
+from police_peer.wire import BrainDrivenEngine
 
 
 class DummyBudgets:
@@ -65,8 +65,8 @@ def test_full_series_over_loopback() -> None:
         seed=42,
     )
 
-    engine_a = StandInEngine(Role.POLICE, seed=42)
-    engine_b = StandInEngine(Role.THIEF, seed=42)
+    engine_a = BrainDrivenEngine(Role.POLICE, seed=42, config={})
+    engine_b = BrainDrivenEngine(Role.THIEF, seed=42, config={})
 
     result_a, result_b = run_series(a, b, config_a, config_b, engine_a, engine_b)
 
@@ -129,8 +129,8 @@ def test_deterministic_seed() -> None:
             terms=_full_terms,
             seed=42,
         )
-        engine_a = StandInEngine(Role.POLICE, seed=42)
-        engine_b = StandInEngine(Role.THIEF, seed=42)
+        engine_a = BrainDrivenEngine(Role.POLICE, seed=42, config={})
+        engine_b = BrainDrivenEngine(Role.THIEF, seed=42, config={})
         return run_series(a, b, config_a, config_b, engine_a, engine_b)
 
     result_a1, result_b1 = run_once()

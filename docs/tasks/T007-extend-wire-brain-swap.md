@@ -9,8 +9,7 @@ context_files:
   - docs/TODO_police_strategy.md
   - docs/PLAN_police_strategy.md
   - src/police_peer/wire/__init__.py
-read_set:
-  - src/police_peer/wire/__init__.py
+read_set: []
 depends_on:
   - PS-01
 gates: []

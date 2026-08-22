@@ -8,7 +8,7 @@ from common.domain.scoring import Outcome, Role, role_for
 from common.transport.loopback import pair
 from common.transport.series import PeerConfig, run_series
 from common.transport.subgame import play_subgame
-from police_peer.wire import StandInEngine
+from police_peer.wire import BrainDrivenEngine
 
 
 class DummyBudgets:
@@ -41,8 +41,8 @@ def test_playable_lifecycle_real() -> None:
     cfg_a = PeerConfig(Role.POLICE, DummyBudgets(), _full_terms, seed=1)
     cfg_b = PeerConfig(Role.THIEF, DummyBudgets(), _full_terms, seed=2)
 
-    eng_a = StandInEngine(Role.POLICE, board_size=7, seed=1)
-    eng_b = StandInEngine(Role.THIEF, board_size=7, seed=2)
+    eng_a = BrainDrivenEngine(Role.POLICE, board_size=7, seed=1, config={})
+    eng_b = BrainDrivenEngine(Role.THIEF, board_size=7, seed=2, config={})
 
     res_a, res_b = run_series(ch_a, ch_b, cfg_a, cfg_b, eng_a, eng_b)
 
@@ -67,7 +67,7 @@ def test_playable_lifecycle_real() -> None:
         assert row_a.steps > 0
 
 
-class EarlyCapturePoliceEngine(StandInEngine):
+class EarlyCapturePoliceEngine(BrainDrivenEngine):
     """Engine that issues a capture claim on step 2 at thief position."""
 
     def decide(self) -> dict:
@@ -77,7 +77,7 @@ class EarlyCapturePoliceEngine(StandInEngine):
         return res
 
 
-class FixedThiefEngine(StandInEngine):
+class FixedThiefEngine(BrainDrivenEngine):
     """Thief that stays at (3, 3)."""
 
     def decide(self) -> dict:
@@ -111,8 +111,8 @@ def test_early_capture_deterministic() -> None:
     cfg_a = PeerConfig(Role.POLICE, DummyBudgets(), _full_terms, seed=1)
     cfg_b = PeerConfig(Role.THIEF, DummyBudgets(), _full_terms, seed=2)
 
-    eng_a = EarlyCapturePoliceEngine(Role.POLICE, board_size=7, seed=1)
-    eng_b = FixedThiefEngine(Role.THIEF, board_size=7, seed=2)
+    eng_a = EarlyCapturePoliceEngine(Role.POLICE, board_size=7, seed=1, config={})
+    eng_b = FixedThiefEngine(Role.THIEF, board_size=7, seed=2, config={})
 
     row_a = row_b = None
     errors: list[Exception] = []
@@ -154,7 +154,7 @@ def test_early_capture_deterministic() -> None:
 
 def test_survival_threshold_boundaries() -> None:
     """Exercise 34/35/36 survival boundaries and divergence refusal."""
-    eng = StandInEngine(Role.THIEF, board_size=7)
+    eng = BrainDrivenEngine(Role.THIEF, board_size=7, config={})
 
     # 35 threshold
     eng.start_subgame(1, Role.THIEF, terms={"max_steps": 35, "survival_threshold": 35})

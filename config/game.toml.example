@@ -10,3 +10,14 @@ poll_interval = 0.01
 
 [strategy]
 mode = "baseline"
+
+# Optional verbal-hint provider (T027, P2, gated by PLANQ-003/004).
+# Default ``template`` is free/offline and requires no key. ``openai_api``
+# (OpenAI Chat Completions) needs OPENAI_API_KEY in the environment at
+# runtime; ``ollama`` talks to a local model. Any failure degrades to the
+# deterministic template. Never on the movement path (STRAT-008).
+#[trash_talk]
+#provider = "template"        # template | openai_api | ollama
+#model = "gpt-4o-mini"        # only for openai_api (or local model for ollama)
+#every_n_steps = 1
+#ollama_url = "http://localhost:11434/api/generate"

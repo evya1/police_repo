@@ -80,8 +80,10 @@ def resolve_brain(
             max_words = int(world.get("hint_max_words", 15))
 
     from .hints import HintWriter
+    from .providers import resolve_text_provider
 
-    hint_writer = HintWriter(role, rng, arena, max_words)
+    provider = resolve_text_provider(config)
+    hint_writer = HintWriter(role, rng, arena, max_words, provider=provider)
     kwargs: dict[str, object] = {"rng": rng, "arena": arena, "max_words": max_words,
                                   "hint_writer": hint_writer}
     # Apply role-specific config weights (PRD §9).

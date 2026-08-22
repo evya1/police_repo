@@ -24,6 +24,7 @@ from police_peer.infra.external_api_gatekeeper import (
 logger = logging.getLogger(__name__)
 
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+DEFAULT_OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 
 
@@ -80,6 +81,7 @@ class OpenAIProvider:
             return None
         system = _system_prompt(role, arena, int(max_words))
         api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+        base_url = os.environ.get("OPENAI_BASE_URL", DEFAULT_OPENAI_URL).strip()
         if not api_key:
             return None
 
@@ -88,6 +90,7 @@ class OpenAIProvider:
 
             return chat_completion(
                 api_key, self.model, system, 0.4, int(max_words), deadline,
+                base_url=base_url,
             )
 
         try:

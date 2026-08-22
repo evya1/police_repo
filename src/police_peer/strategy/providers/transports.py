@@ -38,7 +38,8 @@ def parse_reply(raw: str) -> dict | None:
     }
 
 
-def chat_completion(api_key, model, system, temperature, max_words, deadline):
+def chat_completion(api_key, model, system, temperature, max_words, deadline,
+                    base_url=_BASE_URL):
     """One OpenAI Chat Completions call (stdlib REST, no SDK)."""
     payload = {
         "model": model,
@@ -47,7 +48,7 @@ def chat_completion(api_key, model, system, temperature, max_words, deadline):
         "max_tokens": max(16, int(max_words) * 20),
     }
     request = urllib.request.Request(
-        _BASE_URL, data=json.dumps(payload).encode(),
+        base_url, data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json",
                  "Authorization": f"Bearer {api_key}"},
         method="POST",

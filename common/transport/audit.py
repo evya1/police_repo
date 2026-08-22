@@ -79,7 +79,7 @@ def audit_records(
         notes.append(f"withheld reveal for committed step(s) {withheld}")
 
     # --- Layer 1: Integrity — re-hash every record -------------------------------
-    for record, payload in zip(records, flat_records):
+    for record, payload in zip(records, flat_records, strict=True):
         step = int(payload.get("step", -1))
         commit = record.get("commit")
         if commit is None:

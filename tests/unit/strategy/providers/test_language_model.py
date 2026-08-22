@@ -21,7 +21,7 @@ from police_peer.strategy.providers.language_model import (
 )
 from police_peer.strategy.providers.transports import _extract_json
 
-API_KEY = "sk-test-do-not-commit"
+API_KEY = "test-sk-do-not-commit"
 
 
 class _FakeGatekeeper:
@@ -106,6 +106,19 @@ class TestOpenAIProvider:
             gk = _FakeGatekeeper(_reply())
             p = OpenAIProvider(gatekeeper=gk)
             assert p.generate("police", (0, 0), "New York", 15, None) is None
+
+    def test_base_url_from_env(self) -> None:
+        from police_peer.strategy.providers.transports import chat_completion
+
+        with _with(), mock.patch(
+            "police_peer.strategy.providers.transports.urllib.request.urlopen"
+        ) as m, mock.patch.dict(os.environ, {"OPENAI_BASE_URL": "https://x/v1"}):
+            m.return_value.__enter__.return_value.read.return_value = (
+                b'{"choices":[{"message":{"content":"ok"}}]}')
+            base_url = os.environ["OPENAI_BASE_URL"]
+            chat_completion(API_KEY, "gpt-4o-mini", "sys", 0.4, 15, 30,
+                            base_url=base_url)
+        assert m.call_args.args[0].full_url == "https://x/v1"
 
     def test_cadence(self) -> None:
         with _with():

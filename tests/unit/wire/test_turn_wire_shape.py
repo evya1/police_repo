@@ -31,10 +31,6 @@ def test_sealed_only_fields_never_leak_into_the_public_turn() -> None:
     engine = BrainDrivenEngine(Role.POLICE, board_size=7, seed=3, config={})
     engine.start_subgame(1, Role.POLICE, terms=_TERMS)
     message, record = _our_move(engine, Role.POLICE, is_thief=False, lap=1, sub_game=1)
-def test_sealed_only_fields_never_leak_into_the_public_turn() -> None:
-    engine = BrainDrivenEngine(Role.POLICE, board_size=7, seed=3, config={})
-    engine.start_subgame(1, Role.POLICE, terms=_TERMS)
-    message, record = _our_move(engine, Role.POLICE, is_thief=False, lap=1, sub_game=1)
     # reference-v3 audits the SIGNED payload (record.payload), not the record envelope.
     # ``nonce`` is a record-envelope field (it is never part of the signed payload); the
     # rest are signed payload fields. None of them may leak into the public turn message.

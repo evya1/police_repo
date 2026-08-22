@@ -1,5 +1,5 @@
 ---
-id: T036
+id: T047
 status: not_started
 priority: P0
 task_type: component
@@ -16,7 +16,7 @@ context_files:
 read_set: []
 depends_on:
   - T033
-  - T035
+  - T046
 gates: []
 parallel_safe: true
 claimed_by:
@@ -28,7 +28,7 @@ write_set:
 risk: medium
 ---
 
-# T036 — Headless replay CLI, integration & tamper evidence
+# T047 — Headless replay CLI, integration & tamper evidence
 
 ## Expected outcome
 

@@ -38,9 +38,9 @@ required by the [PRD §10](PRD_replay_port.md) decisions and the PLAN §13/D-07 
 | ID | Action | Scope |
 |---|---|---|
 | O-01 | **Record ADRs** for D-01 (artifact shape) and D-02 (official-template stance / interop boundary) in both repos' `docs/decisions/` (next free ADR numbers; both repos identical) | AGENTS.md: ADR for a sufficiently important durable technical decision |
-| O-02 | **Create task files** T033, T034, T035, T036 in both repos (`docs/tasks/T033-*.md` … `T036-*.md`, frontmatter sketches below) **and board rows** in both repos' `docs/TODO.md` (after T032) | D-07; new work gets a new task — scope never expands silently |
+| O-02 | **Create task files** T033, T034, T046, T047 in both repos (`docs/tasks/T033-*.md` … `T047-*.md`, frontmatter sketches below) **and board rows** in both repos' `docs/TODO.md` (after T032) | D-07; new work gets a new task — scope never expands silently |
 | O-03 | **Reconcile the board:** T008's row in both repos' `docs/TODO.md` is stale — the task file is `done` (2026-08-18 evidence, ST-09 resolution) while the board says `blocked`/`implementation_present`. Also record the standing ownership note for `common/transport/{subgame,series}.py` (modified by ST-09 outside T008's declared write set, per T008's "Deviations") so T034's claim on those paths is unambiguous | Keeps the "ready" derivation correct; avoids double ownership |
-| O-04 | **T015 re-scope (proposal):** add T033 to T015's `depends_on`; move `tests/integration/test_replay_tamper.py` from T015's write set to T036's; T015 keeps `src/<peer>/ui/replay.py` + `tests/unit/replay/` | D-07; G6/G7. If the orchestrator declines, T036 takes only new test paths and T015's write set stands |
+| O-04 | **T015 re-scope (proposal):** add T033 to T015's `depends_on`; move `tests/integration/test_replay_tamper.py` from T015's write set to T047's; T015 keeps `src/<peer>/ui/replay.py` + `tests/unit/replay/` | D-07; G6/G7. If the orchestrator declines, T047 takes only new test paths and T015's write set stands |
 
 ### Proposed task frontmatter (for O-02)
 
@@ -60,16 +60,16 @@ required by the [PRD §10](PRD_replay_port.md) decisions and the PLAN §13/D-07 
 #   write_set: common/transport/subgame.py, common/transport/series.py,
 #              tests/unit/transport/test_series_evidence.py
 
-# T035 — Replayable kit-shaped artifact emission, interop boundary (C06)
+# T046 — Replayable kit-shaped artifact emission, interop boundary (C06)
 #   implements: REPORT-005..REPORT-009 (consumed via interop); OBS-006 (artifact availability)
 #   depends_on: [T033, T034]
 #   gates: []                    # deliberately NOT gated by INPUT-001/T016 (D-02: interop artifact)
 #   write_set (per repo): src/<peer>/reporting/pipeline.py, src/<peer>/runner.py,
 #              tests/unit/reporting/test_kit_artifacts.py, tests/integration/test_replayable_bundle.py
 
-# T036 — Headless replay CLI, integration & tamper evidence (C05)
+# T047 — Headless replay CLI, integration & tamper evidence (C05)
 #   implements: OBS-006 (rule-20 gate exercised against real artifacts); OBS-007 (evidence honesty, consumed)
-#   depends_on: [T033, T035]
+#   depends_on: [T033, T046]
 #   gates: []
 #   write_set (per repo): scripts/replay.py, tests/integration/test_replay_tamper.py (per O-04),
 #              docs/evidence/replay-port/
@@ -81,8 +81,8 @@ required by the [PRD §10](PRD_replay_port.md) decisions and the PLAN §13/D-07 
 |---|---|---|---|---|---|
 | A | RP-01 Shape adapter + headless harness | T033 (both repos, shared slice) | C03 | T008 (done) | not_started |
 | A | RP-02 Evidence capture in the series engine | T034 (both repos, shared slice) | C03 | T008 (done) + O-03 | not_started |
-| B | RP-03 Replayable artifact emission | T035 (each repo) | C06 | T033, T034 | not_started |
-| C | RP-04 CLI + integration/tamper evidence | T036 (each repo) | C05 | T033, T035 | not_started |
+| B | RP-03 Replayable artifact emission | T046 (each repo) | C06 | T033, T034 | not_started |
+| C | RP-04 CLI + integration/tamper evidence | T047 (each repo) | C05 | T033, T046 | not_started |
 
 Phases A and B are per-repo mirrors of one shared design; Phase 0 must land first.
 RP-01 and RP-02 are parallel-safe once O-01…O-03 are done (disjoint write sets).
@@ -130,7 +130,7 @@ Implements FR-RP-04/05/06 (availability half). D-08 seam, PLAN §12.
 
 ## Phase B — Per-repo emission (each repo, mirrored)
 
-### RP-03 — Replayable artifact emission (owner: IA → repo task T035, each repo)
+### RP-03 — Replayable artifact emission (owner: IA → repo task T046, each repo)
 
 Implements FR-RP-04…06, 11, 12 (emission half).
 
@@ -153,7 +153,7 @@ Implements FR-RP-04…06, 11, 12 (emission half).
 
 ## Phase C — CLI, integration & tamper evidence (each repo, mirrored)
 
-### RP-04 — Headless CLI + tamper suite + submission evidence (owner: IA → repo task T036, each repo)
+### RP-04 — Headless CLI + tamper suite + submission evidence (owner: IA → repo task T047, each repo)
 
 Implements FR-RP-07; closes the rule-20 gate against real repo artifacts (G4).
 
@@ -193,7 +193,7 @@ Implements FR-RP-07; closes the rule-20 gate against real repo artifacts (G4).
 - `uv sync --locked --all-groups`, `uv run ruff check .`, `uv run pytest`,
   `uv run python scripts/run_quality_gates.py` — all green in **both** repos.
 - `diff -rq` over `common/`: 0 differing files; per-repo mirrors in sync.
-- ADRs (D-01, D-02) recorded in both repos; task files T033–T036 + board rows present in
+- ADRs (D-01, D-02) recorded in both repos; task files T033–T034, T046–T047 + board rows present in
   both repos; T008 board rows reconciled; T015 re-scope either approved and applied or
   explicitly declined (O-04).
 - `docs/evidence/replay-port/{verified_ok,tampered}/` exist in both repos with transcripts;

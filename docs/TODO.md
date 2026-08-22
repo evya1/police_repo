@@ -62,5 +62,5 @@ A task is never marked `done` because code exists. `implementation_present` and 
 | T032 | C06 | component | ready | implementation_present | P0 | REPORT-005, REPORT-006, REPORT-007, REPORT-008, REPORT-009 | T002, T003 | yes | — | [task](tasks/T032-internal-reporting-artifact-contract.md) |
 | T033 | C03 | component | not_started | not_started | P0 | SEC-005, SEC-006, OBS-006 | T008 | yes | — | [task](tasks/T033-replay-shape-adapter-headless-harness.md) |
 | T034 | C03 | component | not_started | not_started | P0 | OBS-006, SEC-005, SEC-006 | T008 | yes | — | [task](tasks/T034-per-subgame-evidence-capture.md) |
-| T035 | C06 | component | not_started | not_started | P0 | REPORT-005, REPORT-006, REPORT-007, REPORT-008, REPORT-009, OBS-006 | T033, T034 | yes | — | [task](tasks/T035-replayable-kit-artifact-emission.md) |
-| T036 | C05 | component | not_started | not_started | P0 | OBS-006, OBS-007 | T033, T035 | yes | — | [task](tasks/T036-headless-replay-cli-integration.md) |
+| T046 | C06 | component | not_started | not_started | P0 | REPORT-005, REPORT-006, REPORT-007, REPORT-008, REPORT-009, OBS-006 | T033, T034 | yes | — | [task](tasks/T046-replayable-kit-artifact-emission.md) |
+| T047 | C05 | component | not_started | not_started | P0 | OBS-006, OBS-007 | T033, T046 | yes | — | [task](tasks/T047-headless-replay-cli-integration.md) |

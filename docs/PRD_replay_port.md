@@ -65,7 +65,7 @@ The cryptographic foundation is complete: byte-identical in both repos (`common/
 | G3 | **Record-shape mismatch.** The reference reads nested `{payload, nonce, commit}` and calls `audit_records(recs, board_size=…, barriers_max=…, max_steps=…)`; the repo's `audit_records(records, played, terms, …)` takes flat records with a required positional `played`. Re-hashing is an exact match through the shape adapter; physics is the only real delta. | `common/transport/audit.py` vs reference | FR-RP-09; PLAN §5.1, §10 |
 | G4 | **No headless entrypoint.** No `verify_log`/`verify_dir`/`cross_check_uid`, no CLI, no test loading a persisted artifact. The rule-20 gate is unexercised against real repo artifacts. | repo-wide | FR-RP-01, FR-RP-03, FR-RP-06, FR-RP-07 |
 | G5 | **Official templates OPEN.** T016 is `blocks: start` on INPUT-001. The kit-shaped log must stay an interop artifact behind the existing `KitInteropAdapter` boundary, not a relabeling of the official `SubGameLog`. | `docs/tasks/T016-*.md`, `src/<peer>/reporting/pipeline.py` | FR-RP-12; decision D-02 |
-| G6 | **Task graph blocks the port.** T015 is `blocked` (depends on T008/T010/T014); T014 is gated `blocks: start` by PLANQ-007 (GUI toolkit, `TBD_TEAM_DECISION`). The headless work needs none of that chain. | `docs/TODO.md`, task files | Decision D-07 (re-sequencing: new tasks T033–T036) |
+| G6 | **Task graph blocks the port.** T015 is `blocked` (depends on T008/T010/T014); T014 is gated `blocks: start` by PLANQ-007 (GUI toolkit, `TBD_TEAM_DECISION`). The headless work needs none of that chain. | `docs/TODO.md`, task files | Decision D-07 (re-sequencing: new tasks T033–T034, T046–T047) |
 | G7 | **Write-set mismatch.** T015 declares only `src/<peer>/ui/replay.py` + 2 test paths; the port also touches `common/transport/*` (C03), `src/<peer>/reporting/*` (C06), `src/<peer>/runner.py`, `scripts/replay.py`. `src/<peer>/ui/` does not exist yet (T014 owns it). | T015 frontmatter, AGENTS.md write-set governance | Decision D-07; TODO Phase 0 |
 | G8 | **`log_*.json` filename collision.** The internal `SubGameLog` filename is `log_{game_uid}_{game_id}.json` (`kind == "log"`), which matches the reference's `verify_dir` glob. A mixed directory false-fails on the internal log (`steps`, not `records`) → "no records" on honest artifacts. | `src/<peer>/reporting/schemas.py` | FR-RP-11; decision D-05 |
 | G9 | **Foreign-log degradation.** Repo physics parses the `state` string (foreign kit payloads carry `position` lists instead) → position checks silently inert; and repo layer 1 flags missing `intent` as TAMPERED (the kit audit has no such requirement) → false tamper accusation, violating T015's "unknown optional fields degrade…" acceptance criterion. Own artifacts always carry both fields, so the primary use case is unaffected. | `common/transport/audit.py`, `common/transport/audit_physics.py` | FR-RP-10; decision D-03; PLAN §7 flow |
@@ -94,7 +94,7 @@ The cryptographic foundation is complete: byte-identical in both repos (`common/
 | M2 — evidence plumbing | `play_subgame`/`PeerFacade` carry per-subgame evidence up to `SeriesResult`; existing suites unchanged in verdicts |
 | M3 — emission | a warmup run writes `artifacts/replay/` with declaration + 6 config + 6 log + 1 result, one `game_uid`; internal bundle artifacts untouched |
 | M4 — headless proof | `scripts/replay.py artifacts/replay/` → `Verified OK` (all records, both halves counted); tampered copy → `TAMPERED` with named step; mixed internal+kit directory does not false-fail |
-| M5 — governance | ADRs recorded; task graph updated (T033–T036 created, T015 re-scoped if approved); both repos' boards reconciled |
+| M5 — governance | ADRs recorded; task graph updated (T033–T034, T046–T047 created, T015 re-scoped if approved); both repos' boards reconciled |
 
 ### 2.3 KPIs
 
@@ -231,7 +231,7 @@ The case families mirror the reference closure suite (`sparring/tests/test_audit
 - **M2** — evidence plumbing in `common/transport/{subgame,series}.py` (+ tests). Deliverable: unchanged verdicts on the existing series suites + new evidence-capture tests.
 - **M3** — per-repo emission (`src/<peer>/reporting/pipeline.py` extension, `src/<peer>/runner.py`). Deliverable: a warmup-run `artifacts/replay/` directory (both repos) with all four artifact kinds and one `game_uid`.
 - **M4** — `scripts/replay.py` + integration/tamper suite. Deliverable: Verified-OK and TAMPERED evidence directories under `docs/evidence/replay-port/` (both repos), feeding T023's real-evidence requirements.
-- **M5** — governance closeout: ADRs, task files T033–T036, board rows, T015 re-scope (if approved), board reconciliation for T008.
+- **M5** — governance closeout: ADRs, task files T033–T034, T046–T047, board rows, T015 re-scope (if approved), board reconciliation for T008.
 
 ## 9. Out of Scope (for this workstream)
 
@@ -254,7 +254,7 @@ Decisions D-01…D-08 are recorded in [PLAN_replay_port.md](PLAN_replay_port.md)
 | D-04 | Terms lookup (G2) | Emit kit-shaped `config_*.json` with top-level `terms` (harness stays reference-identical; directory self-contained) |
 | D-05 | Replayable-directory layout (G8) | Dedicated `replay/` subdirectory under the artifacts root; `verify_dir`/`cross_check_uid` operate on that clean set |
 | D-06 | Two-sided logs | Seal `opponent_records` in our own kit-shaped logs (stronger evidence; matches the counted league logs) |
-| D-07 | Task-graph re-sequencing (G6/G7) | New tasks T033 (shared adapter+harness), T034 (evidence plumbing), T035 (per-repo emission), T036 (CLI + integration/tamper evidence); T015 stays the GUI viewer and gains a dependency on T033; orchestrator approves the widened/new write sets |
+| D-07 | Task-graph re-sequencing (G6/G7) | New tasks T033 (shared adapter+harness), T034 (evidence plumbing), T046 (per-repo emission), T047 (CLI + integration/tamper evidence); T015 stays the GUI viewer and gains a dependency on T033; orchestrator approves the widened/new write sets |
 | D-08 | Record-capture seam (G1) | `play_subgame` returns row + per-subgame evidence; `SeriesResult` carries an additive optional `evidence` map (PLAN §12) |
 
 ## 11. References

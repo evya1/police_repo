@@ -1,5 +1,5 @@
 ---
-id: T035
+id: T046
 status: not_started
 priority: P0
 task_type: component
@@ -33,7 +33,7 @@ write_set:
 risk: medium
 ---
 
-# T035 — Replayable kit-shaped artifact emission, interop boundary
+# T046 — Replayable kit-shaped artifact emission, interop boundary
 
 ## Expected outcome
 

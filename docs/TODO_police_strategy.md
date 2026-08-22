@@ -116,8 +116,8 @@ Both extensions recorded in `docs/tasks/` before any strategy task claim (workfl
 
 | Extension | File | Status |
 |---|---|---|
-| (a) `src/police_peer/wire/__init__.py` (S3 `BrainDrivenEngine` seam) | `docs/tasks/T007-extend-wire-brain-swap.md` | recorded |
-| (b) `tests/integration/test_strategy_selfplay_kpi.py` (KPI harness) | `docs/tasks/T007-extend-kpi-harness.md` | recorded |
+| (a) `src/police_peer/wire/__init__.py` (S3 `BrainDrivenEngine` seam) | `docs/tasks/T042-extend-wire-brain-swap.md` | recorded |
+| (b) `tests/integration/test_strategy_selfplay_kpi.py` (KPI harness) | `docs/tasks/T043-extend-kpi-harness.md` | recorded |
 
 ##### T007 readiness
 

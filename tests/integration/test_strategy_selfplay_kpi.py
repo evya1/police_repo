@@ -2,8 +2,7 @@
 
 TC-P22 — 20 seeded games, role-pinned Police sub-games, shipped config: capture rate
 within 35 rounds vs the reference ThiefBrain >= 60%; median rounds-to-capture <= 28;
-captures using <= 8 barriers >= 50%. The reference baseline brain lives in the
-harness as a test double (registered evidence, non-authoritative).
+captures using <= 8 barriers >= 50% (registered evidence, non-authoritative).
 """
 
 from __future__ import annotations
@@ -61,8 +60,8 @@ class RandomThiefEngine(TurnEngine):
         self._engine: GameEngine | None = None
         self._trail = None
         self._pending_claim: tuple | None = None
-        self._thief_caught: bool = False
-        self._opponent_terminal: Outcome | None = None
+        self._pending_claim_position: tuple | None = None  # snapshot at claim receipt
+        self._thief_caught, self._opponent_terminal = False, None
 
     def start_subgame(self, sub_game: int, role: Role, terms: dict | None = None) -> None:
         t = terms or {}
@@ -74,7 +73,7 @@ class RandomThiefEngine(TurnEngine):
             survival_threshold=int(t.get("survival_threshold", t.get("max_steps", 35))),
             barriers_max=int(t.get("barriers_max", 14)),
         )
-        self._pending_claim = None
+        self._pending_claim = self._pending_claim_position = None
         self._thief_caught = False
         self._opponent_terminal = None
         self._trail = make_trail(
@@ -100,9 +99,9 @@ class RandomThiefEngine(TurnEngine):
             res["smell_grid"] = self._trail.full_turn(self._engine.position)
         if self._engine.role is Role.THIEF:
             if self._pending_claim is not None:
-                ans = self._engine.answer_capture_claim(self._pending_claim)
+                ans = self._engine.answer_capture_claim(self._pending_claim, at=self._pending_claim_position)
                 res["claim_response"] = ans
-                self._pending_claim = None
+                self._pending_claim = self._pending_claim_position = None
                 if ans and ans.get("caught") is True:
                     self._thief_caught = True
                     res["win_claim"] = {"type": "capture"}
@@ -121,6 +120,7 @@ class RandomThiefEngine(TurnEngine):
         if self._engine.role is Role.THIEF and "capture_claim" in message:
             cc = message["capture_claim"]
             self._pending_claim = tuple(cc) if isinstance(cc, list) else cc
+            self._pending_claim_position = self._engine.position
         if self._engine.role is Role.POLICE:
             if "claim_response" in message and message["claim_response"].get("caught") is True:
                 self._opponent_terminal = Outcome.CAPTURE

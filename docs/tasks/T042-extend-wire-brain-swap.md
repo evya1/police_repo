@@ -1,5 +1,5 @@
 ---
-id: T007-extend-wire-brain-swap
+id: T042-extend-wire-brain-swap
 status: done
 priority: P0
 task_type: governance
@@ -21,7 +21,7 @@ write_set:
 risk: low
 ---
 
-# T007-extend-wire-brain-swap — Write-set extension: S3 BrainDrivenEngine seam
+# T042-extend-wire-brain-swap — Write-set extension: S3 BrainDrivenEngine seam
 
 ## Purpose
 
@@ -43,7 +43,7 @@ modulo the `BrainDrivenEngine` subclass.
 
 ## Evidence
 
-- Recorded in `docs/tasks/T007-extend-wire-brain-swap.md` before any strategy task is
+- Recorded in `docs/tasks/T042-extend-wire-brain-swap.md` before any strategy task is
   claimed (workflow §4: no silent scope expansion).
 - ORC-verified: `src/police_peer/wire/__init__.py` exists on the `police-strategy`
   branch (`7ce031d`), contains `StandInEngine`, and is the intended substitution

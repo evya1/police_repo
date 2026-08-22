@@ -13,12 +13,15 @@ instead of forking (rule 35).
 from __future__ import annotations
 
 import time
+from datetime import UTC, datetime
 
 from common.domain.scoring import Outcome, Role, role_for, score_for, settled_outcome
 from common.transport.audit import audit_records
 from common.transport.inbox import Inbox
+from common.transport.refusals import Refused
 from common.transport.series import PeerConfig, SeriesRow, TurnEngine
 from common.transport.state import PeerState, PeerStateMachine
+from common.transport.validators import validate_turn
 
 
 def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int) -> SeriesRow:
@@ -145,13 +148,14 @@ def _seal_turn(decision: dict, role: Role, is_thief: bool, step: int) -> tuple[d
     payload["step"] = step
     payload["sender"] = role.value
     payload["intent"] = "evade" if is_thief else "chase"
+    payload["timestamp"] = datetime.now(UTC).isoformat()
 
     commit = hash_commit(payload, nonce)
     record = dict(payload, nonce=nonce, commit=commit)
 
     public_keys = {
         "step", "sender", "hint", "smell_grid", "barrier_placed",
-        "capture_claim", "claim_response", "win_claim",
+        "capture_claim", "claim_response", "win_claim", "timestamp",
     }
     message = {key: payload[key] for key in public_keys if key in payload}
     message["commit"] = commit
@@ -206,10 +210,18 @@ def _audit_payload(role: Role, our_records: list[dict], terminal: Outcome) -> di
 
 
 def _wait_for_step(channel, inbox: Inbox, applied: dict[int, dict], step: int, budgets) -> None:
-    """Feed the turn channel into the inbox until the opponent's `step` move has applied."""
+    """Feed the turn channel into the inbox until the opponent's `step` move has applied.
+
+    Every inbound message is validated (FR-25) before it ever reaches ``inbox.offer`` —
+    the only mutation point for delivery state — so a malformed turn is refused with
+    zero partial mutation instead of corrupting the reorder window.
+    """
     deadline = time.monotonic() + budgets.turn_timeout
     while time.monotonic() < deadline:
         while (msg := channel.poll_turn()) is not None:
+            verdict = validate_turn(msg)
+            if verdict != "accept":
+                raise Refused("SPAR-N11", verdict)
             for ready in inbox.offer(msg):
                 applied[int(ready["step"])] = ready
         if step in applied:

@@ -22,8 +22,15 @@ def check_physics(records: list[dict], terms: dict) -> list[tuple[int, str]]:
         if step < 1:
             continue
 
+        # Reference-v3 ships the position as a ``position`` list on the signed
+        # payload; police's own flat records embed it in the ``state`` string. Audit
+        # the reference against the canonical list so its physics engine validates
+        # police's movement against the trail the thief actually revealed.
         state = record.get("state", "")
-        pos = _parse_position(state)
+        pos = record.get("position")
+        if pos is None:
+            # legacy / own-shape fallback: recover it from the sealed state string
+            pos = _parse_position(state)
 
         if pos is not None:
             r, c = pos

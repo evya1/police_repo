@@ -69,6 +69,19 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
         if flush is not None:
             flush()
 
+        # The THIEF's game can end on the move it just applied, and only it knows:
+        # the survival threshold crossed, a barrier on its own cell or no legal move
+        # (rules 46/47), or an answered cop claim. In every one the referee settles
+        # on what it just received and owes NO same-numbered reply — the reference's
+        # settling POLICE sends no terminal turn (``netplay._play_one`` ->
+        # ``terminal_message`` is nil without a concession/answer/survival). Waiting
+        # for an orphaned next opponent turn deadlocks a sub-game the thief already
+        # won, so settle here on our own knowledge, before the wait.
+        terminal = engine.terminal() if is_thief else None
+        if terminal is not None:
+            settle_final(channel, machine, engine, role, is_thief, lap + 1, our_records, flush)
+            break
+
         machine.to(PeerState.AWAITING_REVEAL)
         wait_for_step(channel, inbox, applied, lap, config.budgets, board_size)
 

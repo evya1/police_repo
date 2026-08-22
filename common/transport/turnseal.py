@@ -21,17 +21,26 @@ PUBLIC_TURN_KEYS = frozenset({
 })
 
 
-def seal_turn(decision: dict, role: Role, is_thief: bool, step: int) -> tuple[dict, dict]:
-    """Seal a decision into (public turn message, sealed record)."""
+def seal_turn(decision: dict, role: Role, is_thief: bool, step: int,
+              sub_game: int = 1) -> tuple[dict, dict]:
+    """Seal a decision into (public turn message, sealed record).
+
+    The sealed record follows the reference-v3 audit wire: ``{payload, nonce, commit}``
+    where ``commit`` binds the nested ``payload`` (reference ``audit_records`` re-hashes
+    ``payload`` and compares against ``commit``). The public ``message`` stays flat and
+    unchanged — that is the reference-v3 ``TurnMessage`` surface.
+    """
     nonce = new_nonce()
     payload = dict(decision)
     payload["step"] = step
     payload["sender"] = role.value
+    payload["role"] = role.value          # reference-v3 records name the role inside payload
+    payload["sub_game"] = sub_game
     payload["intent"] = "evade" if is_thief else "chase"
     payload["timestamp"] = datetime.now(UTC).isoformat()
 
     commit = hash_commit(payload, nonce)
-    record = dict(payload, nonce=nonce, commit=commit)
+    record = {"payload": payload, "nonce": nonce, "commit": commit}
 
     message = {key: payload[key] for key in PUBLIC_TURN_KEYS if key in payload}
     message["commit"] = commit
@@ -67,10 +76,15 @@ def settle_final(
 def audit_payload(role: Role, our_records: list[dict], terminal: Outcome) -> dict:
     """Seal the step-0 identity record and pack our audit payload (FR-19, FR-42)."""
     nonce = new_nonce()
-    step0_payload = {"step": 0, "sender": role.value, "intent": "declare"}
-    step0 = dict(step0_payload, nonce=nonce, commit=hash_commit(step0_payload, nonce))
+    step0_payload = {"step": 0, "sender": role.value, "role": role.value, "intent": "declare"}
+    step0 = {"payload": step0_payload, "nonce": nonce,
+             "commit": hash_commit(step0_payload, nonce)}
     records = [step0] + our_records
     return {
+        # reference-v3 audit wire: sender + records + result_claim (SPEC §7.5).
+        # ``sender`` is required by the opponent's AuditPayload.from_wire; ``nonces``
+        # is our own extra that a conformant receiver tolerates (unknown keys pass).
+        "sender": role.value,
         "records": records,
         "nonces": [r["nonce"] for r in records],
         "result_claim": terminal.value,

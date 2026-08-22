@@ -146,6 +146,7 @@ class SubgameSession:
         smell_grid = self.trail.full_turn(self.engine.position)
         res: dict[str, Any] = {
             "move": move,
+            "position": list(self.engine.position),
             "barrier_cell": list(barrier_cell) if barrier_cell is not None else None,
             "hint": hint,
             "verdict": verdict,

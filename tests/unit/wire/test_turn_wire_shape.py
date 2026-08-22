@@ -31,6 +31,16 @@ def test_sealed_only_fields_never_leak_into_the_public_turn() -> None:
     engine = BrainDrivenEngine(Role.POLICE, board_size=7, seed=3, config={})
     engine.start_subgame(1, Role.POLICE, terms=_TERMS)
     message, record = _our_move(engine, Role.POLICE, is_thief=False, lap=1, sub_game=1)
-    for sealed_only in ("state", "verdict", "reasoning", "prompt_text", "nonce"):
+def test_sealed_only_fields_never_leak_into_the_public_turn() -> None:
+    engine = BrainDrivenEngine(Role.POLICE, board_size=7, seed=3, config={})
+    engine.start_subgame(1, Role.POLICE, terms=_TERMS)
+    message, record = _our_move(engine, Role.POLICE, is_thief=False, lap=1, sub_game=1)
+    # reference-v3 audits the SIGNED payload (record.payload), not the record envelope.
+    # ``nonce`` is a record-envelope field (it is never part of the signed payload); the
+    # rest are signed payload fields. None of them may leak into the public turn message.
+    signed = record["payload"]
+    for sealed_only in ("state", "verdict", "reasoning", "prompt_text"):
         assert sealed_only not in message, f"sealed field {sealed_only} leaked into public turn"
-        assert sealed_only in record, f"sealed field {sealed_only} missing from the audit record"
+        assert sealed_only in signed, f"sealed field {sealed_only} missing from the audit record"
+    assert "nonce" not in message, "sealed field nonce leaked into public turn"
+    assert "nonce" in record, "sealed field nonce missing from the audit record"

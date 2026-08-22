@@ -39,6 +39,19 @@ class AuditResult:
         return AuditVerdict.TAMPERED if not self.passed else AuditVerdict.PASSED
 
 
+def _signed_payload(record: dict) -> dict:
+    """Return the exact dict the record's commit binds.
+
+    The reference-v3 wire nests the signed dict under ``payload``; police's own
+    flat records (step-0 seal, unit-test bundles) carry it inline. In both shapes
+    the signed payload is exactly what the commit binds, so this single flat form
+    is what re-hash and every downstream check operate on.
+    """
+    if record.get("payload") is not None:
+        return record["payload"]
+    return {k: v for k, v in record.items() if k not in ("commit", "nonce")}
+
+
 def audit_records(
     records: list[dict],
     played: dict[int, str],
@@ -53,10 +66,12 @@ def audit_records(
     skipped: list[int] = []
     notes: list[str] = []
 
+    flat_records = [_signed_payload(r) for r in records]
+
     # A reveal must account for every step that was actually committed on the wire.
     # Verifying only the records we are handed lets a peer drop the step it tampered
     # with -- or reveal nothing at all -- and still settle clean.
-    revealed = {int(r.get("step", -1)) for r in records}
+    revealed = {int(r.get("step", -1)) for r in flat_records}
     withheld = sorted(step for step in played if step not in revealed)
     if withheld:
         failed.extend(withheld)
@@ -64,8 +79,8 @@ def audit_records(
         notes.append(f"withheld reveal for committed step(s) {withheld}")
 
     # --- Layer 1: Integrity — re-hash every record -------------------------------
-    for record in records:
-        step = int(record.get("step", -1))
+    for record, payload in zip(records, flat_records):
+        step = int(payload.get("step", -1))
         commit = record.get("commit")
         if commit is None:
             failed.append(step)
@@ -73,14 +88,17 @@ def audit_records(
             notes.append(f"step {step}: missing commit")
             continue
 
-        intent = record.get("intent")
-        if not intent or not isinstance(intent, str) or not intent.strip():
+        intent = payload.get("intent")
+        # Only game-turn records (step >= 1) carry an intent. The step-0 declaration
+        # is a system_spec reveal that both the reference (no ``intent``) and police
+        # (``declare``) send; requiring intent there would flag a conformant
+        # opponent's reveal as tampered. The reference itself never checks intent.
+        if step >= 1 and (not intent or not isinstance(intent, str) or not intent.strip()):
             failed.append(step)
             tampered.append(step)
             notes.append(f"step {step}: missing or empty intent field")
             continue
 
-        payload = {k: v for k, v in record.items() if k not in ("commit", "nonce")}
         nonce = record.get("nonce", "")
         computed = hash_commit(payload, nonce)
         if computed != commit:
@@ -101,7 +119,7 @@ def audit_records(
             continue
 
     # --- Layer 3: Physics -------------------------------------------------------
-    physics_problems = check_physics(records, terms)
+    physics_problems = check_physics(flat_records, terms)
     for step, problem in physics_problems:
         if step not in failed:
             failed.append(step)
@@ -121,15 +139,15 @@ def audit_records(
 
     if our_records is not None:
         audited_role = None
-        for r in records:
+        for r in flat_records:
             if "sender" in r:
                 audited_role = r["sender"]
                 break
 
         survival_threshold = int(terms.get("survival_threshold", terms.get("max_steps", 35)))
-        records_by_step = {int(r["step"]): r for r in records if "step" in r}
+        records_by_step = {int(r["step"]): r for r in flat_records if "step" in r}
 
-        for r in records:
+        for r in flat_records:
             step = int(r.get("step", -1))
             if step < 1:
                 continue
@@ -177,7 +195,7 @@ def audit_records(
                                 notes.append(f"step {step}: invalid capture claim")
 
     passed = len(failed) == 0
-    verified = len([r for r in records if int(r.get("step", 0)) >= 1])
+    verified = len([r for r in flat_records if int(r.get("step", 0)) >= 1])
     detail = "; ".join(notes[:3]) if notes else ""
 
     return AuditResult(

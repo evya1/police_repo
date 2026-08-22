@@ -89,14 +89,31 @@ def hottest(field: dict[str, float]) -> Cell | None:
 
     Deterministic tie-breaking matters more than it looks: it is what lets a seeded self-play run
     reproduce byte-for-byte, which is what makes the golden test in CI meaningful.
+
+    Total: a malformed field (bad key shape, non-numeric intensity) must never crash a game
+    (H3) -- this is defense in depth on top of the wire-boundary normalization in
+    ``police_peer.wire.evidence``, which is where malformed evidence is expected to be
+    rejected first. Any entry this function cannot parse is skipped rather than raising.
     """
-    if not field:
-        return None
-    best = max(
-        field.items(),
-        key=lambda kv: (kv[1], -_cell(kv[0])[0], -_cell(kv[0])[1]),
-    )
-    return _cell(best[0])
+    best: Cell | None = None
+    best_key: tuple[float, int, int] | None = None
+    for key, intensity in field.items():
+        cell = _cell(key)
+        if cell is None:
+            continue
+        if not isinstance(intensity, (int, float)) or isinstance(intensity, bool):
+            continue
+        try:
+            score = float(intensity)
+        except (TypeError, ValueError):
+            continue
+        if score != score or score in (float("inf"), float("-inf")):  # NaN / inf guard
+            continue
+        candidate_key = (score, -cell[0], -cell[1])
+        if best_key is None or candidate_key > best_key:
+            best_key = candidate_key
+            best = cell
+    return best
 
 
 def make_trail(board_size: int, model: str | None = None,
@@ -111,6 +128,14 @@ def make_trail(board_size: int, model: str | None = None,
     return Trail(model, board_size, **params)
 
 
-def _cell(key: str) -> Cell:
-    r, c = key.split(",")
-    return (int(r), int(c))
+def _cell(key: str) -> Cell | None:
+    """Parse a ``"r,c"`` wire key, or ``None`` if it is not exactly two integers."""
+    if not isinstance(key, str):
+        return None
+    parts = key.split(",")
+    if len(parts) != 2:
+        return None
+    try:
+        return (int(parts[0]), int(parts[1]))
+    except ValueError:
+        return None

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.police_peer.wire.config import (
+from police_peer.wire.config import (
     PrivateConfig,
     assemble_peer_config,
     build_peer_config,

@@ -3,18 +3,26 @@
 Strict thief-first alternation: thief sends first; police waits for thief step 1 before
 computing its first move; each subsequent half-turn pairs commits and reveals with FSM
 state tracking. Survival occurs when thief reaches survival_threshold; early capture
-terminates both peers cleanly without deadlock.
+terminates both peers cleanly without deadlock: a thief that saw its own capture
+(rules 46/47 — a fact only the thief can see) owes one last sealed STAY carrying the
+concession, and the police that settles from it answers with a plain sealed STAY, so
+both ledgers record the same final step and the audits corroborate one outcome
+instead of forking (rule 35).
 """
 
 from __future__ import annotations
-
-import time
 
 from common.domain.scoring import Outcome, Role, role_for, score_for, settled_outcome
 from common.transport.audit import audit_records
 from common.transport.inbox import Inbox
 from common.transport.series import PeerConfig, SeriesRow, TurnEngine
 from common.transport.state import PeerState, PeerStateMachine
+from common.transport.turnfeed import (
+    reconcile_subgame_boundary,
+    wait_audit,
+    wait_for_step,
+)
+from common.transport.turnseal import audit_payload, seal_turn, settle_final
 
 
 def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int) -> SeriesRow:
@@ -29,18 +37,23 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
             f"({survival_threshold}) refused (OPEN-011)"
         )
 
+    board_size = int(terms.get("board_size", 7))
     role = role_for(config.natural_role, sub_game)
     is_thief = role is Role.THIEF
     inbox = Inbox()
     applied: dict[int, dict] = {}
+    applied_seen: set[int] = set()
     our_records: list[dict] = []
 
     machine = PeerStateMachine()
     engine.start_subgame(sub_game, role, terms=terms)
 
+    # Rule 35: the previous sub-game's owed final STAY is still in the transport.
+    reconcile_subgame_boundary(channel, inbox, applied, board_size)
+
     if not is_thief:
         # Police honours thief-first (FR-18): hold thief's first move before sending own
-        _wait_for_step(channel, inbox, applied, 1, config.budgets)
+        wait_for_step(channel, inbox, applied, 1, config.budgets, board_size)
 
     flush = getattr(channel, "flush", None)
     terminal: Outcome | None = None
@@ -57,25 +70,47 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
             flush()
 
         machine.to(PeerState.AWAITING_REVEAL)
-        _wait_for_step(channel, inbox, applied, lap, config.budgets)
+        wait_for_step(channel, inbox, applied, lap, config.budgets, board_size)
 
         machine.to(PeerState.VERIFYING)
-        engine.observe_opponent(applied[lap])
+        _observe_once(applied, applied_seen, engine, lap)
 
         machine.to(PeerState.WAITING_FOR_OPPONENT)
         terminal = engine.terminal()
         if terminal is not None:
+            # In-loop settle. A thief owes the rules-46/47 concession (step lap+1);
+            # a police settles silently — the signal rode the thief's own step, and an
+            # extra police step would make the ledgers diverge.
+            if is_thief:
+                settle_final(channel, machine, engine, role, is_thief, lap + 1, our_records, flush)
             break
 
-        # For strict alternation after step 1: police waits for thief's next step
-        if not is_thief and lap < max_steps and terminal is None:
-            _wait_for_step(channel, inbox, applied, lap + 1, config.budgets)
+        # For strict alternation after step 1: police pre-waits for thief's next step.
+        # A terminal arriving there settles with a sealed STAY (step lap+1) so both
+        # ledgers record the same final step; the thief was still owed that step.
+        if not is_thief and lap < max_steps:
+            wait_for_step(channel, inbox, applied, lap + 1, config.budgets, board_size)
+            _observe_once(applied, applied_seen, engine, lap + 1)
+            terminal = engine.terminal()
+            if terminal is not None:
+                settle_final(channel, machine, engine, role, is_thief, lap + 1, our_records, flush)
+                break
+
+    if terminal is None and not is_thief:
+        # A thief captured on the FINAL lap owes the max_steps+1 concession; a silent
+        # thief stays TECHNICAL_LOSS. The police never seals past the physics ceiling.
+        try:
+            wait_for_step(channel, inbox, applied, max_steps + 1, config.budgets, board_size)
+            _observe_once(applied, applied_seen, engine, max_steps + 1)
+            terminal = engine.terminal()
+        except TimeoutError:
+            pass
 
     if terminal is None:
         terminal = Outcome.TECHNICAL_LOSS
 
-    channel.send_audit(_audit_payload(role, our_records, terminal))
-    opponent_audit = _wait_audit(channel, config.budgets)
+    channel.send_audit(audit_payload(role, our_records, terminal))
+    opponent_audit = wait_audit(channel, config.budgets)
     if opponent_audit is None:
         audit_ok, audits_present = False, False
     else:
@@ -100,65 +135,14 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
     )
 
 
+def _observe_once(applied: dict[int, dict], seen: set[int], engine: TurnEngine, step: int) -> None:
+    """Observe an applied step exactly once — observe_opponent is not idempotent."""
+    if step in seen:
+        return
+    seen.add(step)
+    engine.observe_opponent(applied[step])
+
+
 def _our_move(engine, role: Role, is_thief: bool, lap: int, sub_game: int) -> tuple[dict, dict]:
     """Ask the engine for a move; return (turn message, sealed record)."""
-    from common.transport.canonical import commit as hash_commit
-    from common.transport.integrity import new_nonce
-
-    nonce = new_nonce()
-    decision = dict(engine.decide())
-    payload = dict(decision)
-    payload["step"] = lap
-    payload["sender"] = role.value
-    payload["intent"] = "evade" if is_thief else "chase"
-
-    commit = hash_commit(payload, nonce)
-    record = dict(payload, nonce=nonce, commit=commit)
-
-    public_keys = {
-        "step", "sender", "hint", "barrier_placed",
-        "capture_claim", "claim_response", "win_claim",
-    }
-    message = {key: payload[key] for key in public_keys if key in payload}
-    message["commit"] = commit
-    return message, record
-
-
-def _audit_payload(role: Role, our_records: list[dict], terminal: Outcome) -> dict:
-    """Seal the step-0 identity record and pack our audit payload (FR-19, FR-42)."""
-    from common.transport.canonical import commit as hash_commit
-    from common.transport.integrity import new_nonce
-
-    nonce = new_nonce()
-    step0_payload = {"step": 0, "sender": role.value, "intent": "declare"}
-    step0 = dict(step0_payload, nonce=nonce, commit=hash_commit(step0_payload, nonce))
-    records = [step0] + our_records
-    return {
-        "records": records,
-        "nonces": [r["nonce"] for r in records],
-        "result_claim": terminal.value,
-    }
-
-
-def _wait_for_step(channel, inbox: Inbox, applied: dict[int, dict], step: int, budgets) -> None:
-    """Feed the turn channel into the inbox until the opponent's `step` move has applied."""
-    deadline = time.monotonic() + budgets.turn_timeout
-    while time.monotonic() < deadline:
-        while (msg := channel.poll_turn()) is not None:
-            for ready in inbox.offer(msg):
-                applied[int(ready["step"])] = ready
-        if step in applied:
-            return
-        time.sleep(budgets.poll_interval)
-    raise TimeoutError(f"timed out waiting for opponent turn {step}")
-
-
-def _wait_audit(channel, budgets) -> dict | None:
-    """Poll for the opponent's audit payload until deadline."""
-    deadline = time.monotonic() + budgets.turn_timeout
-    while time.monotonic() < deadline:
-        msg = channel.poll_audit()
-        if msg is not None:
-            return msg
-        time.sleep(budgets.poll_interval)
-    return None
+    return seal_turn(engine.decide(), role, is_thief, lap)

@@ -1,4 +1,4 @@
-"""TC-17 (final): clean vs fault-injected seeded series ⇒ byte-identical ledger.
+"""TC-17 (final): clean vs fault-injected seeded series => byte-identical ledger.
 
 The flagship receiver-contract test at the series level. The same seeded six-sub-game
 series runs twice — once over a clean loopback and once over a ``FaultyTransport``
@@ -13,7 +13,7 @@ from common.transport.canonical import canonical_bytes
 from common.transport.faults import FaultyTransport
 from common.transport.loopback import pair
 from common.transport.series import PeerConfig, SeriesResult, run_series
-from police_peer.wire import StandInEngine
+from police_peer.wire import BrainDrivenEngine
 
 _full_terms = {
     "board_size": 7,
@@ -49,7 +49,7 @@ def _configs() -> tuple[PeerConfig, PeerConfig]:
 def _run_clean() -> tuple[SeriesResult, SeriesResult]:
     a, b = pair("Police", "Thief")
     config_a, config_b = _configs()
-    return run_series(a, b, config_a, config_b, StandInEngine(Role.POLICE, seed=42), StandInEngine(Role.THIEF, seed=42))
+    return run_series(a, b, config_a, config_b, BrainDrivenEngine(Role.POLICE, seed=42, config={}), BrainDrivenEngine(Role.THIEF, seed=42, config={}))
 
 
 def _run_faulty() -> tuple[SeriesResult, SeriesResult]:
@@ -57,7 +57,7 @@ def _run_faulty() -> tuple[SeriesResult, SeriesResult]:
     faulty_a = FaultyTransport(ta, duplicate_every=3, reorder_every=5, drop_then_retry_every=7)
     faulty_b = FaultyTransport(tb, duplicate_every=4, reorder_every=6, drop_then_retry_every=9)
     config_a, config_b = _configs()
-    return run_series(faulty_a, faulty_b, config_a, config_b, StandInEngine(Role.POLICE, seed=42), StandInEngine(Role.THIEF, seed=42))
+    return run_series(faulty_a, faulty_b, config_a, config_b, BrainDrivenEngine(Role.POLICE, seed=42, config={}), BrainDrivenEngine(Role.THIEF, seed=42, config={}))
 
 
 def _ledger_bytes(result: SeriesResult) -> bytes:

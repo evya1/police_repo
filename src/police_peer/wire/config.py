@@ -18,6 +18,7 @@ from common.config import ConfigError, load_config
 from common.transport.terms import TERMS_KEYS, project_terms
 from police_peer.scent.lock import model_lock_hash
 from police_peer.scent.model import DEFAULT_MODEL, MODELS
+from police_peer.wire.strategy_settings import StrategySettings, load_strategy_settings
 
 
 @dataclass
@@ -34,6 +35,7 @@ class PrivateConfig:
     seed: int = 0
     budgets: dict[str, float] = field(default_factory=dict)
     scent_model: str = DEFAULT_MODEL
+    strategy: StrategySettings = field(default_factory=StrategySettings)
 
 
 def load_private(path: Path | str) -> PrivateConfig:
@@ -54,6 +56,7 @@ def load_private(path: Path | str) -> PrivateConfig:
         seed=int(toml_data.get("seed", 0)),
         budgets={k: float(v) for k, v in toml_data.get("network", {}).items()},
         scent_model=scent_model,
+        strategy=load_strategy_settings(toml_data),
     )
 
 

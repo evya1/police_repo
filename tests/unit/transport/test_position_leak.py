@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from common.transport.validators import assert_no_position_leak
+from common.transport.validators import assert_no_position_leak, validate_turn
 
 
 def _valid_turn(**overrides: object) -> dict:
@@ -84,3 +84,19 @@ class TestTc13PositionLeak:
             win_claim=None,
         )
         assert_no_position_leak(turn)
+
+
+class TestLeakIsRefusedByThePreflight:
+    """The leak scan runs INSIDE validate_turn, so the wire preflight refuses it as a verdict."""
+
+    def test_extension_coordinate_becomes_a_verdict_not_an_exception(self) -> None:
+        result = validate_turn(_valid_turn(shadow_position=[1, 2]), board_size=7)
+        assert "position leak" in result
+
+    def test_declared_position_fields_still_pass_the_preflight(self) -> None:
+        turn = _valid_turn(barrier_placed=[0, 0], capture_claim=[1, 1])
+        assert validate_turn(turn, board_size=7) == "accept"
+
+    def test_step_and_smell_grid_numerics_still_pass_the_preflight(self) -> None:
+        turn = _valid_turn(step=9, smell_grid={"0,0": 0.9, "1,1": 0.1})
+        assert validate_turn(turn, board_size=7) == "accept"

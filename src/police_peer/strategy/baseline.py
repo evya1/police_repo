@@ -1,4 +1,10 @@
-"""Strategy protocol and deterministic baseline implementation."""
+"""Strategy protocol and deterministic baseline implementation.
+
+Lives inside the ``strategy`` package (not a sibling ``strategy.py`` module)
+so the package is the single, unambiguous ``police_peer.strategy`` import
+target — a co-existing ``strategy.py`` module shadowed by this package broke
+``import police_peer`` outright (mirror of the thief repo's PR #34 fix).
+"""
 
 from __future__ import annotations
 

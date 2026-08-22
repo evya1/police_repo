@@ -23,7 +23,7 @@ from common.transport.loopback import Inboxes  # noqa: E402
 from common.transport.mcp_client import McpChannel, edge_answers  # noqa: E402
 from common.transport.mcp_server import TOOL_NAMES, serve_background  # noqa: E402
 from common.transport.series import PeerConfig, SeriesResult, run_series  # noqa: E402
-from police_peer.wire import StandInEngine  # noqa: E402
+from police_peer.wire import BrainDrivenEngine  # noqa: E402
 
 
 class DummyBudgets:
@@ -87,7 +87,7 @@ def test_full_series_over_real_http(two_peers) -> None:
     config_t = PeerConfig(natural_role=Role.THIEF, budgets=DummyBudgets(), terms=_full_terms, seed=42)
     result_p, result_t = run_series(
         police_ch, thief_ch, config_p, config_t,
-        StandInEngine(Role.POLICE), StandInEngine(Role.THIEF),
+        BrainDrivenEngine(Role.POLICE, config={}), BrainDrivenEngine(Role.THIEF, config={}),
     )
     assert isinstance(result_p, SeriesResult) and isinstance(result_t, SeriesResult)
     assert len(result_p.ledger) == 6 and len(result_t.ledger) == 6

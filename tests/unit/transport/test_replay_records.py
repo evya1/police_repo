@@ -1,124 +1,138 @@
-"""Tests for the replay shape adapter (replay_records.py).
+"""Tests for strict record decoding (replay_records.py).
 
-TC-RP-06: differential round-trip identity over a fixture sweep.
-TC-RP-09: step-0 handling — declaration record round-trips correctly.
+TC-RP-06: nested and flat encodings of the same payload decode to an identical SealedRecord.
+TC-RP-09: step-0 declaration records decode and are classified foreign (no state string).
 """
 
 from __future__ import annotations
 
 import pytest
 
+from common.transport.canonical import canonical_bytes
 from common.transport.canonical import commit as hash_commit
-from common.transport.integrity import new_nonce
 from common.transport.replay_records import (
-    flat_steps_to_kit_doc,
-    from_kit_record,
+    RecordDecodeError,
+    decode_half,
+    decode_record,
     is_foreign_record,
-    to_kit_record,
 )
+from tests.unit.transport.replay_fixtures import honest_steps, seal
 
 
-def _flat(step: int, sender: str, intent: str, **extra: object) -> dict:
-    nonce = new_nonce()
-    payload = {"step": step, "sender": sender, "intent": intent, **extra}
-    return {**payload, "nonce": nonce, "commit": hash_commit(payload, nonce)}
+def _raw_pair(payload: dict) -> tuple[dict, dict]:
+    nonce = "a" * 32
+    commit = hash_commit(payload, nonce)
+    flat = {**payload, "nonce": nonce, "commit": commit}
+    kit = {"payload": payload, "nonce": nonce, "commit": commit}
+    return flat, kit
 
 
-def _steps(n: int = 3) -> list[dict]:
-    steps = [_flat(0, "thief", "declare")]
-    for i in range(1, n + 1):
-        steps.append(_flat(i, "thief", "evade",
-                          state=f"grid=7x7;self=[{i}, {i}];barriers=[]",
-                          move=f"MOVE:{"N" if i % 2 else "E"}", hint="hint"))
-    return steps
+class TestShapeEquivalence:
+    def test_flat_and_nested_decode_identically(self) -> None:
+        payload = {"step": 2, "sender": "police", "intent": "chase", "state": "s", "move": "MOVE:S"}
+        flat, kit = _raw_pair(payload)
+        assert decode_record(flat) == decode_record(kit)
+
+    def test_payload_bytes_is_canonical(self) -> None:
+        payload = {"step": 1, "sender": "thief", "intent": "evade"}
+        flat, _ = _raw_pair(payload)
+        assert decode_record(flat).payload_bytes == canonical_bytes(payload)
+
+    def test_step_0_decodes_and_is_foreign(self) -> None:
+        flat = seal({"step": 0, "sender": "thief", "intent": "declare"})
+        rec = decode_record(flat)
+        assert rec.step == 0
+        payload = {k: v for k, v in flat.items() if k not in ("nonce", "commit")}
+        assert is_foreign_record(payload) is True
 
 
-def _opp_steps(n: int = 2) -> list[dict]:
-    steps = [_flat(0, "police", "declare")]
-    for i in range(1, n + 1):
-        steps.append(_flat(i, "police", "chase",
-                          state=f"grid=7x7;self=[0, {i}];barriers=[]",
-                          move=f"MOVE:{"E" if i % 2 else "S"}", hint="hint"))
-    return steps
+class TestDecodeRecordRejects:
+    @pytest.mark.parametrize("bad_step", [True, False, -1, "1", None, 1.5])
+    def test_bad_step(self, bad_step: object) -> None:
+        flat, _ = _raw_pair({"step": bad_step})
+        with pytest.raises(RecordDecodeError) as exc:
+            decode_record(flat)
+        assert exc.value.code == "bad_step"
+
+    @pytest.mark.parametrize("bad_nonce", ["", None, 7])
+    def test_bad_nonce(self, bad_nonce: object) -> None:
+        flat, _ = _raw_pair({"step": 1})
+        flat["nonce"] = bad_nonce
+        with pytest.raises(RecordDecodeError) as exc:
+            decode_record(flat)
+        assert exc.value.code == "bad_nonce"
+
+    @pytest.mark.parametrize("bad_commit", ["ABCD" * 16, "a" * 63, "not-hex" * 8, None, 5])
+    def test_bad_commitment(self, bad_commit: object) -> None:
+        flat, _ = _raw_pair({"step": 1})
+        flat["commit"] = bad_commit
+        with pytest.raises(RecordDecodeError) as exc:
+            decode_record(flat)
+        assert exc.value.code == "bad_commitment"
+
+    def test_unknown_shape(self) -> None:
+        with pytest.raises(RecordDecodeError) as exc:
+            decode_record({"nonce": "a" * 32, "commit": "b" * 64})
+        assert exc.value.code == "unknown_shape"
+
+    def test_nested_payload_not_a_dict(self) -> None:
+        with pytest.raises(RecordDecodeError) as exc:
+            decode_record({"payload": "nope", "nonce": "a" * 32, "commit": "b" * 64})
+        assert exc.value.code == "bad_payload"
 
 
-# TC-RP-06 + TC-RP-09: round-trip identity (including step-0)
-class TestRoundTripIdentity:
-    @pytest.mark.parametrize(("step", "sender", "intent", "extra"), [
-        (0, "thief", "declare", {}),
-        (1, "thief", "evade", {"state": "grid=7x7;self=[1, 1];barriers=[]", "move": "MOVE:N", "hint": "north"}),
-        (2, "police", "chase", {"state": "grid=7x7;self=[2, 2];barriers=[]", "move": "MOVE:S"}),
-        (3, "thief", "evade", {"state": "grid=7x7;self=[3, 3];barriers=[[1,1],[2,2]]",
-                               "move": "MOVE:W", "hint": "west", "barrier_placed": True}),
-    ])
-    def test_round_trip(self, step: int, sender: str, intent: str, extra: dict) -> None:
-        flat = _flat(step, sender, intent, **extra)
-        assert from_kit_record(to_kit_record(flat)) == flat
+class TestDecodeHalf:
+    def test_empty_is_clean(self) -> None:
+        assert decode_half([], "own") == ([], [])
 
-    def test_preserves_commit(self) -> None:
-        flat = _flat(2, "police", "chase", state="grid=7x7;self=[2, 2];barriers=[]", move="MOVE:S")
-        back = from_kit_record(to_kit_record(flat))
-        assert back["commit"] == flat["commit"]
-        assert back["nonce"] == flat["nonce"]
-        assert hash_commit({k: v for k, v in back.items() if k not in ("nonce", "commit")},
-                           back["nonce"]) == back["commit"]
+    def test_not_a_list(self) -> None:
+        _, issues = decode_half({"oops": True}, "own")
+        assert [i.code for i in issues] == ["bad_half_shape"]
 
-    def test_fixture_sweep(self) -> None:
-        for flat in _steps(5):
-            assert from_kit_record(to_kit_record(flat)) == flat
+    def test_mixed_shape_rejected(self) -> None:
+        payload = {"step": 1, "sender": "thief", "intent": "evade"}
+        flat, kit = _raw_pair(payload)
+        _, issues = decode_half([flat, kit], "own")
+        assert [i.code for i in issues] == ["mixed_shape"]
 
-    def test_fixture_sweep_opponent(self) -> None:
-        for flat in _opp_steps(4):
-            assert from_kit_record(to_kit_record(flat)) == flat
+    def test_duplicate_step(self) -> None:
+        recs = [seal({"step": 0}), seal({"step": 1}), seal({"step": 1})]
+        _, issues = decode_half(recs, "own")
+        assert "duplicate_step" in [i.code for i in issues]
 
-    def test_step_0_is_foreign(self) -> None:
-        """Step-0 has no state string — it is foreign by the adapter's definition."""
-        assert is_foreign_record(to_kit_record(_flat(0, "thief", "declare"))["payload"]) is True
+    def test_out_of_order_step(self) -> None:
+        recs = [seal({"step": 0}), seal({"step": 2}), seal({"step": 1})]
+        _, issues = decode_half(recs, "own")
+        assert "out_of_order_step" in [i.code for i in issues]
 
-    def test_step_0_round_trips(self) -> None:
-        flat = _flat(0, "thief", "declare")
-        back = from_kit_record(to_kit_record(flat))
-        assert back["step"] == 0
-        assert back["sender"] == "thief"
-        assert back["intent"] == "declare"
-        assert back["commit"] == flat["commit"]
+    def test_skipped_step(self) -> None:
+        recs = [seal({"step": 0}), seal({"step": 1}), seal({"step": 3})]
+        _, issues = decode_half(recs, "own")
+        assert [i.code for i in issues] == ["skipped_step"]
 
-    def test_step_0_rehashes(self) -> None:
-        back = from_kit_record(to_kit_record(_flat(0, "thief", "declare")))
-        assert hash_commit({k: v for k, v in back.items() if k not in ("nonce", "commit")},
-                           back["nonce"]) == back["commit"]
+    def test_malformed_record_reported_with_half(self) -> None:
+        bad = seal({"step": -1})
+        _, issues = decode_half([bad], "opponent")
+        assert issues[0].code == "bad_step"
+        assert issues[0].half == "opponent"
+
+    def test_honest_sequence_clean(self) -> None:
+        records, issues = decode_half(honest_steps(3), "own")
+        assert issues == []
+        assert [r.step for r in records] == [0, 1, 2, 3]
 
 
-# flat_steps_to_kit_doc
-def test_records_only() -> None:
-    doc = flat_steps_to_kit_doc(_steps(2), None)
-    assert len(doc["records"]) == 3
-    assert "opponent_records" not in doc
-
-
-def test_both_halves() -> None:
-    doc = flat_steps_to_kit_doc(_steps(2), _opp_steps(1))
-    assert len(doc["records"]) == 3
-    assert len(doc["opponent_records"]) == 2
-
-
-def test_kit_records_nested() -> None:
-    rec = flat_steps_to_kit_doc(_steps(1), None)["records"][0]
-    assert "payload" in rec
-    assert "nonce" in rec
-    assert "commit" in rec
-    assert "step" not in rec
-
-
-# is_foreign_record
-@pytest.mark.parametrize(("payload", "expected"), [
-    ({"state": "grid=7x7;self=[3, 3];barriers=[]", "move": "MOVE:N"}, False),
-    ({"state": "grid=7x7;self=[0, 0];barriers=[[1, 1]]", "move": "MOVE:S"}, False),
-    ({"state": "grid=7x7;self=[-1, -1];barriers=[]", "move": "MOVE:S"}, False),
-    ({"move": "MOVE:N"}, True),
-    ({"state": "", "move": "MOVE:N"}, True),
-    ({"position": [3, 3], "move": "MOVE:N"}, True),
-    ({"state": "position=[3,3]", "move": "MOVE:N"}, True),
-])
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        ({"state": "grid=7x7;self=[3, 3];barriers=[]", "move": "MOVE:N"}, False),
+        ({"state": "grid=7x7;self=[0, 0];barriers=[[1, 1]]", "move": "MOVE:S"}, False),
+        ({"state": "grid=7x7;self=[-1, -1];barriers=[]", "move": "MOVE:S"}, False),
+        ({"move": "MOVE:N"}, True),
+        ({"state": "", "move": "MOVE:N"}, True),
+        ({"position": [3, 3], "move": "MOVE:N"}, True),
+        ({"state": "position=[3,3]", "move": "MOVE:N"}, True),
+    ],
+)
 def test_foreign_detection(payload: dict, expected: bool) -> None:
     assert is_foreign_record(payload) is expected

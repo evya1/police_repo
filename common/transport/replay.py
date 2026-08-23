@@ -1,117 +1,189 @@
-"""Headless replay verification — the book's Replay Viewer, minus the GUI.
+"""Pure replay verification — reproduces the four-layer live audit offline from parsed
+documents only. No filesystem, clock, or network: the caller supplies ``log_doc``/``config_doc``
+already parsed; file discovery and bundle membership are a later task (T047), not this one.
 
-Verdicts are exactly ``Verified OK``, ``TAMPERED``, or ``ILLEGAL`` (FR-RP-08).
+Trust statement (ARCHITECTURE_AUDIT): a matching commit proves only that the revealed payload
+matches that commit. A party able to rewrite payload, nonce, commit, and manifest together can
+make an unanchored local bundle internally consistent, so ``VERIFIED_OK`` here means "every
+locally available check passed" — never "historically authentic" (see ``external_authenticity``).
 """
 
 from __future__ import annotations
 
 import json
-from pathlib import Path
+import re
 
-from common.transport.audit import AuditResult, audit_records
-from common.transport.canonical import commit as hash_commit
-from common.transport.replay_records import from_kit_record, is_foreign_record
+from common.domain.board import Board
+from common.domain.scoring import Role
+from common.transport.audit_physics import _parse_position, check_physics
+from common.transport.canonical import verify_commit
+from common.transport.replay_records import decode_half, is_foreign_record
+from common.transport.replay_types import (
+    ReplayIssue,
+    ReplayReport,
+    ReplayVerdict,
+    VerificationCoverage,
+)
+
+_BARRIERS_RE = re.compile(r"barriers=\[(.*)\]")
+_CELL_RE = re.compile(r"\[(\d+),\s*(\d+)\]")
+_TAMPER_CODES = ("commitment_mismatch", "withheld_reveal")
+_NO_COVERAGE = VerificationCoverage(False, False, False, False, False, False)
+_IDENTITY_KEYS = ("game_uid", "game_id", "sub_game_index")
 
 
-def _terms_beside(path: Path) -> dict:
-    for cfg in sorted(path.parent.glob("config_*.json")):
-        try:
-            terms = json.loads(cfg.read_text(encoding="utf-8")).get("terms")
-        except (ValueError, UnicodeDecodeError):
+def _report(
+    verdict: ReplayVerdict, coverage: VerificationCoverage, checked: int, issues: list[ReplayIssue]
+) -> ReplayReport:
+    return ReplayReport(verdict=verdict, coverage=coverage, checked_records=checked, issues=tuple(issues))
+
+
+def _check_identity(log_doc: object, config_doc: object) -> list[ReplayIssue]:
+    """Exact pairing: same game_uid, game_id, and sub_game_index — never "the first config"."""
+    if not isinstance(log_doc, dict) or not isinstance(config_doc, dict):
+        return [ReplayIssue("bad_document", "log_doc and config_doc must both be objects")]
+    issues: list[ReplayIssue] = []
+    for key in _IDENTITY_KEYS:
+        if key not in log_doc or key not in config_doc:
+            issues.append(ReplayIssue("missing_identity", f"'{key}' missing from log or config"))
+        elif log_doc[key] != config_doc[key]:
+            msg = f"{key} mismatch: log={log_doc.get(key)!r} config={config_doc.get(key)!r}"
+            issues.append(ReplayIssue("identity_mismatch", msg))
+    return issues
+
+
+def _parse_barriers(state: str) -> set[tuple[int, int]]:
+    match = _BARRIERS_RE.search(state)
+    if not match:
+        return set()
+    return {(int(r), int(c)) for r, c in _CELL_RE.findall(match.group(1))}
+
+
+def _claim_answered(record: dict, by_step: dict[int, dict], step: int) -> bool:
+    """A capture claim is answered against the thief's *pre-move* snapshot (GAME-009/SEC-007)."""
+    resp = record.get("claim_response")
+    if not resp or resp.get("caught") is not True:
+        return False
+    prev = by_step.get(step - 1)
+    pre_pos = _parse_position(prev.get("state", "")) if prev else None
+    claimed = resp.get("claim")
+    return pre_pos is not None and claimed is not None and tuple(pre_pos) == tuple(claimed)
+
+
+def _outcome_issues(flat: list[dict], terms: dict, half: str) -> list[ReplayIssue]:
+    """Layer 4: capture/survival ``win_claim`` semantics — thief-only, role- and board-checked."""
+    board = Board(size=int(terms.get("board_size", 7)))
+    threshold = int(terms.get("survival_threshold", terms.get("max_steps", 35)))
+    by_step = {r["step"]: r for r in flat}
+    issues: list[ReplayIssue] = []
+    for r in flat:
+        step, claim = r["step"], r.get("win_claim")
+        if step < 1 or not claim:
             continue
-        if isinstance(terms, dict):
-            return terms
-    return {}
+        role, ctype = r.get("sender"), claim.get("type")
+        if ctype == "survival":
+            if role != Role.THIEF.value or step < threshold:
+                msg = f"survival claim invalid for role={role} at step {step}"
+                issues.append(ReplayIssue("invalid_survival_claim", msg, step, half))
+        elif ctype == "capture":
+            pos = _parse_position(r.get("state", ""))
+            barriers = _parse_barriers(r.get("state", ""))
+            caught = _claim_answered(r, by_step, step)
+            valid = (
+                role == Role.THIEF.value
+                and pos is not None
+                and (caught or pos in barriers or board.boxed_in(pos, barriers))
+            )
+            if not valid:
+                msg = f"capture claim invalid for role={role} at step {step}"
+                issues.append(ReplayIssue("invalid_capture_claim", msg, step, half))
+    return issues
 
 
-def _verify_foreign_half(records: list[dict]) -> AuditResult:
-    failed, tampered, notes, verified = [], [], [], 0
-    for rec in records:
-        flat = from_kit_record(rec)
-        step = int(flat.get("step", -1))
-        commit = flat.get("commit")
-        if commit is None:
-            failed.append(step)
-            tampered.append(step)
-            notes.append(f"step {step}: missing commit")
+def _withheld_issues(committed: list[int] | None, revealed: set[int], half: str) -> list[ReplayIssue]:
+    """Mirrors audit.py's withheld-reveal logic — only when the doc supplies committed steps."""
+    if committed is None:
+        return []
+    withheld = sorted(set(committed) - revealed)
+    return [
+        ReplayIssue("withheld_reveal", f"step {s} committed but never revealed", s, half)
+        for s in withheld
+    ]
+
+
+def verify_replay(log_doc: dict, config_doc: dict) -> ReplayReport:
+    """Verify one log against its exact config. Pure: no I/O, no clock, no guessed shape."""
+    id_issues = _check_identity(log_doc, config_doc)
+    if id_issues:
+        return _report(ReplayVerdict.INVALID, _NO_COVERAGE, 0, id_issues)
+
+    terms = config_doc.get("terms")
+    if not isinstance(terms, dict):
+        return _report(
+            ReplayVerdict.INCOMPLETE, _NO_COVERAGE, 0,
+            [ReplayIssue("missing_terms", "config_doc has no 'terms' object")],
+        )
+
+    own_raw = log_doc.get("records")
+    if not isinstance(own_raw, list) or not own_raw:
+        return _report(
+            ReplayVerdict.INCOMPLETE, _NO_COVERAGE, 0,
+            [ReplayIssue("no_records", "log_doc has no own records")],
+        )
+
+    halves = [("own", own_raw, log_doc.get("own_committed_steps"))]
+    opp_raw = log_doc.get("opponent_records")
+    if opp_raw is not None:
+        if not isinstance(opp_raw, list) or not opp_raw:
+            return _report(
+                ReplayVerdict.INCOMPLETE, _NO_COVERAGE, 0,
+                [ReplayIssue("empty_opponent_half", "opponent_records is present but empty")],
+            )
+        halves.append(("opponent", opp_raw, log_doc.get("opponent_committed_steps")))
+
+    sealed_by_half = {}
+    checked = 0
+    for half, raw, _committed in halves:
+        sealed, decode_issues = decode_half(raw, half)
+        checked += len(sealed)
+        if decode_issues:
+            return _report(ReplayVerdict.INVALID, _NO_COVERAGE, checked, decode_issues)
+        sealed_by_half[half] = sealed
+
+    issues: list[ReplayIssue] = []
+    binding_supplied = True
+    all_native = True
+    for half, _raw, committed in halves:
+        sealed = sealed_by_half[half]
+        flat = [json.loads(r.payload_bytes) for r in sealed]
+        for rec, payload in zip(sealed, flat, strict=True):
+            if not verify_commit(payload, rec.nonce, rec.commitment):
+                msg = f"step {rec.step}: revealed payload does not reproduce its commitment"
+                issues.append(ReplayIssue("commitment_mismatch", msg, rec.step, half))
+
+        binding_supplied = binding_supplied and committed is not None
+        issues.extend(_withheld_issues(committed, {r.step for r in sealed}, half))
+
+        if any(r["step"] >= 1 and is_foreign_record(r) for r in flat):
+            all_native = False
             continue
-        payload = {k: v for k, v in flat.items() if k not in ("commit", "nonce")}
-        computed = hash_commit(payload, flat.get("nonce", ""))
-        if computed != commit:
-            failed.append(step)
-            tampered.append(step)
-            notes.append(f"step {step}: committed {commit}, rehash {computed}")
-        elif step >= 1:
-            verified += 1
-    notes.append("degraded coverage: foreign-shaped records verified integrity-only; physics and intent not enforced")
-    return AuditResult(passed=len(failed) == 0, verified_steps=verified, failed_steps=failed,
-                       tampered_steps=tampered, detail="; ".join(notes[:3]) if notes else "")
+        issues.extend(
+            ReplayIssue("physics_violation", problem, step, half)
+            for step, problem in check_physics(flat, terms)
+        )
+        issues.extend(_outcome_issues(flat, terms, half))
 
+    coverage = VerificationCoverage(
+        integrity=True,
+        live_binding=binding_supplied,
+        physics=all_native,
+        outcome=all_native,
+        bundle_digests=False,
+        external_authenticity=False,
+    )
 
-def _verify_half(records: list[dict], terms: dict) -> AuditResult:
-    if not records:
-        return AuditResult(passed=True, verified_steps=0)
-    has_foreign = any(int(from_kit_record(r).get("step", 0)) >= 1
-                      and is_foreign_record(r.get("payload", {})) for r in records)
-    if has_foreign:
-        return _verify_foreign_half(records)
-    return audit_records([from_kit_record(r) for r in records], played={}, terms=terms)
-
-
-def verify_log(path: Path) -> tuple[bool, str]:
-    doc = json.loads(path.read_text(encoding="utf-8"))
-    records = doc.get("records") or []
-    if not records:
-        return False, f"{path.name}: no records — the game left nothing to verify"
-    terms = _terms_beside(path)
-    halves: list[tuple[str, list[dict]]] = [("own", records)]
-    if doc.get("opponent_records"):
-        halves.append(("opponent", doc["opponent_records"]))
-    lines, ok, total, notes = [], True, 0, []
-    for label, recs in halves:
-        result = _verify_half(recs, terms)
-        total += len(recs)
-        if result.detail:
-            notes.append(f"{path.name} ({label} records): {result.detail}")
-        if result.passed:
-            continue
-        ok = False
-        if result.tampered_steps:
-            verdict = f"TAMPERED — steps {result.tampered_steps} do not reproduce their commitments"
-        else:
-            verdict = f"ILLEGAL — every record re-hashes, but steps {result.failed_steps} break the signed physics"
-        lines.append(f"{path.name} ({label} records): {verdict}\n    {result.detail}")
-    if ok:
-        sides = "both sides'" if len(halves) > 1 else "one side's"
-        report = f"{path.name}: Verified OK — {total} records re-hashed against their commitments ({sides} sealed half)"
-        if notes:
-            report += "\n  " + "\n  ".join(notes)
-        return True, report
-    return False, "\n  ".join(lines)
-
-
-def verify_dir(root: Path) -> tuple[int, int, list[str]]:
-    lines, ok, bad = [], 0, 0
-    for p in sorted(root.rglob("log_*.json")):
-        good, rpt = verify_log(p)
-        lines.append(("  " if good else "  ") + rpt)
-        if good:
-            ok += 1
-        else:
-            bad += 1
-    return ok, bad, lines
-
-
-def cross_check_uid(root: Path) -> str | None:
-    uids: set[str] = set()
-    for p in sorted(root.rglob("*.json")):
-        try:
-            uid = json.loads(p.read_text(encoding="utf-8")).get("game_uid")
-        except (ValueError, UnicodeDecodeError):
-            continue
-        if uid is not None:
-            uids.add(uid)
-    if len(uids) > 1:
-        return (f"artifacts carry {len(uids)} different game_uids: {sorted(uids)} — "
-                "they do not all belong to one match, so verifying them together proves nothing")
-    return None
+    if any(i.code in _TAMPER_CODES for i in issues):
+        return _report(ReplayVerdict.TAMPERED, coverage, checked, issues)
+    if issues:
+        return _report(ReplayVerdict.ILLEGAL, coverage, checked, issues)
+    return _report(ReplayVerdict.VERIFIED_OK, coverage, checked, issues)

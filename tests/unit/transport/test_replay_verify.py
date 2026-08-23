@@ -1,190 +1,200 @@
+"""Tests for the pure replay verifier (replay.py).
+
+TC-RP-02..05, 08, 10 adapted to the new pure ``verify_replay(log_doc, config_doc)`` API.
+Eight tests that failed under the old first-record heuristic now pass under strict decoding.
+"""
+
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
-from common.transport.canonical import commit as hash_commit
-from common.transport.integrity import new_nonce
-from common.transport.replay import cross_check_uid, verify_dir, verify_log
-from common.transport.replay_records import flat_steps_to_kit_doc
-
-_TERMS = {"board_size": 7, "max_steps": 35, "barriers_max": 14, "setting": "New York",
-          "hint_max_words": 15, "axis_origin_corner": "top-left", "axis_start_index": 0,
-          "thief_start": [3, 3], "cop_start": [0, 0]}
-_GAME_UID, _GAME_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "A-vs-B"
-
-
-def _seal(p: dict) -> dict:
-    nonce = new_nonce()
-    return {**p, "nonce": nonce, "commit": hash_commit(p, nonce)}
-
-
-def _honest_steps(n: int = 3, sender: str = "thief", intent: str = "evade") -> list[dict]:
-    steps = [_seal({"step": 0, "sender": sender, "intent": "declare"})]
-    r, c = (3, 3) if sender == "thief" else (0, 0)
-    for i in range(1, n + 1):
-        if i % 2 == 0:
-            c += 1
-            move = "MOVE:E"
-        else:
-            r += 1
-            move = "MOVE:S"
-        steps.append(_seal({"step": i, "sender": sender, "intent": intent,
-                            "state": f"grid=7x7;self=[{r}, {c}];barriers=[]",
-                            "move": move, "hint": "hint"}))
-    return steps
+from common.transport.replay import verify_replay
+from common.transport.replay_types import ReplayVerdict
+from tests.unit.transport.replay_fixtures import (
+    GAME_ID,
+    GAME_UID,
+    barrier_quota,
+    honest_steps,
+    jump_step,
+    make_config_doc,
+    make_log_doc,
+    nested,
+    off_board,
+    role_wrong_capture_claim,
+    seal,
+    steps_with_step_values,
+)
 
 
-def _kit_doc(gid: str, uid: str, own: list[dict], opp: list[dict] | None = None) -> dict:
-    return {
-        "schema_version": "1.1", "game_id": gid, "game_uid": uid,
-        "links": {"declaration": f"declaration_{gid}.json", "config": f"config_{gid}_g01.json",
-                  "log": f"log_{gid}_g01.json", "result": f"result_{gid}.json"},
-        "interop": {"label": "INTERNAL/INTEROP", "boundary": "KitInteropAdapter",
-                     "authority": "book App. F table 20"},
-        "summary": {"sub_game_number": 1, "outcome": "survival",
-                     "steps": len(own) - 1, "audit_ok": True},
-        **flat_steps_to_kit_doc(own, opp),
-        "mutual_agreement": {"our_result_claim": "survival",
-                             "opponent_result_claim": "survival", "audits_passed": True},
-    }
+# INCOMPLETE: absent required evidence
+def test_no_records_incomplete() -> None:
+    report = verify_replay(make_log_doc([]), make_config_doc())
+    assert report.verdict == ReplayVerdict.INCOMPLETE
 
 
-def _write_bundle(tmp: Path, doc: dict, own: list[dict], opp: list[dict] | None = None) -> Path:
-    p = tmp / f"log_{_GAME_ID}_g01.json"
-    p.write_text(json.dumps(doc, sort_keys=True), encoding="utf-8")
-    (tmp / f"config_{_GAME_ID}_g01.json").write_text(
-        json.dumps({"schema_version": "1.1", "game_id": _GAME_ID,
-                     "game_uid": _GAME_UID, "terms": _TERMS}, sort_keys=True), encoding="utf-8")
-    return p
+def test_missing_terms_incomplete() -> None:
+    cfg = make_config_doc()
+    del cfg["terms"]
+    report = verify_replay(make_log_doc(honest_steps(1)), cfg)
+    assert report.verdict == ReplayVerdict.INCOMPLETE
 
 
-def _tamper_phys(recs: list[dict], idx: int, key: str, val: object) -> list[dict]:
-    r = recs[idx]
-    r["payload"][key] = val
-    r["commit"] = hash_commit(r["payload"], r["nonce"])
-    return recs
+# INVALID: malformed syntax, type, identity, or mixed shape
+def test_malformed_commitment_invalid() -> None:
+    own = honest_steps(1)
+    own[1]["commit"] = "not-64-hex"
+    report = verify_replay(make_log_doc(own), make_config_doc())
+    assert report.verdict == ReplayVerdict.INVALID
 
 
-def _tamper_move(lp: Path, idx: int = 2) -> Path:
-    d = json.loads(lp.read_text(encoding="utf-8"))
-    d["records"][idx]["payload"]["move"] = "MOVE:W"
-    lp.write_text(json.dumps(d, sort_keys=True), encoding="utf-8")
-    return lp
+def test_mixed_shape_invalid() -> None:
+    own = [seal({"step": 0, "sender": "thief"}), nested({"step": 1, "sender": "thief"})]
+    report = verify_replay(make_log_doc(own), make_config_doc())
+    assert report.verdict == ReplayVerdict.INVALID
 
 
-def _tamper_state(lp: Path, idx: int = 2) -> Path:
-    d = json.loads(lp.read_text(encoding="utf-8"))
-    d["records"][idx]["payload"]["state"] = d["records"][idx]["payload"]["state"].replace("[4, 4]", "[4, 5]")
-    lp.write_text(json.dumps(d, sort_keys=True), encoding="utf-8")
-    return lp
+@pytest.mark.parametrize(
+    ("label", "steps"),
+    [
+        ("duplicate", [0, 1, 1, 2]),
+        ("skipped", [0, 1, 3]),
+        ("negative", [0, -1, 2]),
+        ("out_of_order", [0, 2, 1, 3]),
+    ],
+)
+def test_broken_sequence_invalid(label: str, steps: list[int]) -> None:
+    own = steps_with_step_values(steps)
+    report = verify_replay(make_log_doc(own), make_config_doc())
+    assert report.verdict == ReplayVerdict.INVALID
 
 
-def _foreign_record(step: int, pos: list[int]) -> dict:
-    nonce = new_nonce()
-    payload = {"step": step, "sender": "thief", "position": pos, "move": "MOVE:N"}
-    return {"payload": payload, "nonce": nonce, "commit": hash_commit(payload, nonce)}
+def test_missing_step_zero_invalid() -> None:
+    """Real bundles are built by audit_payload, which always prepends step 0 (T034/T046)."""
+    own = steps_with_step_values([1, 2, 3])
+    report = verify_replay(make_log_doc(own), make_config_doc())
+    assert report.verdict == ReplayVerdict.INVALID
+    skipped = [i for i in report.issues if i.code == "skipped_step"]
+    assert skipped and "0" in skipped[0].message
 
 
-# TC-RP-02: one-byte mutation → TAMPERED
-@pytest.mark.parametrize("mutator", [_tamper_move, _tamper_state])
-def test_one_byte_mutation_tampered(tmp_path: Path, mutator: callable) -> None:
-    own = _honest_steps(3)
-    lp = _write_bundle(tmp_path, _kit_doc(_GAME_ID, _GAME_UID, own), own)
-    ok, rpt = verify_log(mutator(lp))
-    assert not ok
-    assert "TAMPERED" in rpt
-    assert "2" in rpt
+def test_wrong_config_game_id_invalid() -> None:
+    own = honest_steps(1)
+    cfg = make_config_doc(game_id="different-game")
+    assert verify_replay(make_log_doc(own), cfg).verdict == ReplayVerdict.INVALID
 
 
-# TC-RP-03: physics-only → ILLEGAL
-@pytest.mark.parametrize("mod, mut", [
-    ("off_board", lambda d: _tamper_phys(d["records"], 1, "state",
-                     d["records"][1]["payload"]["state"].replace("[4, 3]", "[9, 9]"))),
-    ("jump_step", lambda d: _tamper_phys(d["records"], 1, "state",
-                     "grid=7x7;self=[6, 5];barriers=[]")),
-    ("barrier_quota", lambda d: _tamper_phys(d["records"], 1, "state",
-                     f"grid=7x7;self=[4, 3];barriers={[ [i,i] for i in range(15)]}")),
-    ("step_ceiling", lambda d: _tamper_phys(d["records"], 1, "step", 37)),
-])
-def test_physics_fails_not_tampered(tmp_path: Path, mod: str, mut: callable) -> None:
-    own = _honest_steps(3)
-    lp = _write_bundle(tmp_path, _kit_doc(_GAME_ID, _GAME_UID, own), own)
-    d = json.loads(lp.read_text(encoding="utf-8"))
-    mut(d)
-    lp.write_text(json.dumps(d, sort_keys=True), encoding="utf-8")
-    ok, rpt = verify_log(lp)
-    assert not ok
-    assert "ILLEGAL" in rpt
-    assert "TAMPERED" not in rpt
+def test_wrong_uid_invalid() -> None:
+    own = honest_steps(1)
+    cfg = make_config_doc(game_uid="11111111-2222-3333-4444-555566667777")
+    assert verify_replay(make_log_doc(own), cfg).verdict == ReplayVerdict.INVALID
 
 
-# TC-RP-04: two-sided counting
-def test_both_halves_verified(tmp_path: Path) -> None:
-    own = _honest_steps(3)
-    opp = _honest_steps(2, sender="police", intent="chase")
-    lp = _write_bundle(tmp_path, _kit_doc(_GAME_ID, _GAME_UID, own, opp), own, opp)
-    ok, rpt = verify_log(lp)
-    assert ok
-    assert "Verified OK" in rpt
-    assert "7 records" in rpt
-    assert "both sides'" in rpt
+# TAMPERED: commitment mismatch
+def test_semantic_payload_mutation_tampered() -> None:
+    own = honest_steps(3)
+    own[2]["move"] = "MOVE:W"  # stale commit left untouched
+    report = verify_replay(make_log_doc(own), make_config_doc())
+    assert report.verdict == ReplayVerdict.TAMPERED
+    assert any(i.step == 2 for i in report.issues)
 
 
-# TC-RP-05: mixed-uid rejected
-def test_cross_check_uid_mixed(tmp_path: Path) -> None:
-    own = _honest_steps(2)
-    _write_bundle(tmp_path, _kit_doc(_GAME_ID, _GAME_UID, own), own)
-    other = "11111111-2222-3333-4444-555566667777"
-    (tmp_path / f"log_{_GAME_ID}_g02.json").write_text(
-        json.dumps(_kit_doc(_GAME_ID, other, own), sort_keys=True), encoding="utf-8")
-    result = cross_check_uid(tmp_path)
-    assert result is not None
-    assert other in result
-    assert _GAME_UID in result
+# VERIFIED_OK: both halves, checked_records count, canonical formatting insensitivity
+def test_both_halves_verified_ok() -> None:
+    own = honest_steps(3, sender="thief", intent="evade", start=(3, 3))
+    opp = honest_steps(2, sender="police", intent="chase", start=(0, 0))
+    report = verify_replay(make_log_doc(own, opp), make_config_doc())
+    assert report.verdict == ReplayVerdict.VERIFIED_OK
+    assert report.checked_records == 7
 
 
-# TC-RP-08: foreign degradation
-def test_foreign_no_false_tamper(tmp_path: Path) -> None:
-    for build_steps in [lambda: [_foreign_record(s, [s, s]) for s in range(3)],
-                        lambda: [_foreign_record(1, [1, 1])]]:
-        fs = build_steps()
-        doc = {"schema_version": "1.1", "game_id": _GAME_ID, "game_uid": _GAME_UID,
-               "records": fs, "summary": {"sub_game_number": 1, "outcome": "survival",
-                                          "steps": len(fs), "audit_ok": True}}
-        lp = tmp_path / f"log_{_GAME_ID}_g01.json"
-        lp.write_text(json.dumps(doc, sort_keys=True), encoding="utf-8")
-        (tmp_path / f"config_{_GAME_ID}_g01.json").write_text(
-            json.dumps({"terms": _TERMS}, sort_keys=True), encoding="utf-8")
-        ok, rpt = verify_log(lp)
-        assert ok
-        assert "Verified OK" in rpt
-        assert "degraded coverage" in rpt
-        assert "TAMPERED" not in rpt
+def test_canonical_whitespace_and_key_order_do_not_affect_verification() -> None:
+    own = honest_steps(2)
+    log = make_log_doc(own)
+    cfg = make_config_doc()
+    reordered_log = json.loads(json.dumps(log, indent=4, sort_keys=False))
+    reordered_cfg = json.loads(json.dumps({k: cfg[k] for k in reversed(list(cfg))}, indent=2))
+    assert verify_replay(reordered_log, reordered_cfg).verdict == ReplayVerdict.VERIFIED_OK
 
 
-# TC-RP-10: golden determinism
-def test_deterministic_reports(tmp_path: Path) -> None:
-    own = _honest_steps(3)
-    lp = _write_bundle(tmp_path, _kit_doc(_GAME_ID, _GAME_UID, own), own)
-    r1 = verify_log(lp)[1]
-    r2 = verify_log(lp)[1]
+# ILLEGAL: four physics/outcome failures, commitments intact
+@pytest.mark.parametrize(
+    "mutate", [off_board, jump_step, barrier_quota, role_wrong_capture_claim]
+)
+def test_physics_and_outcome_failures_illegal(mutate) -> None:
+    own = mutate(honest_steps(3))
+    report = verify_replay(make_log_doc(own), make_config_doc())
+    assert report.verdict == ReplayVerdict.ILLEGAL
+    assert all(i.code != "commitment_mismatch" for i in report.issues)
+
+
+# Foreign degradation: integrity-only, physics/outcome honestly skipped
+def test_foreign_degradation_verified_ok() -> None:
+    own = [
+        seal({"step": s, "sender": "thief", "position": [s, s], "move": "MOVE:N"})
+        for s in range(3)
+    ]
+    report = verify_replay(make_log_doc(own), make_config_doc())
+    assert report.verdict == ReplayVerdict.VERIFIED_OK
+    assert report.coverage.integrity is True
+    assert report.coverage.physics is False
+    assert report.coverage.outcome is False
+
+
+# external_authenticity is never true from local recomputation alone
+def test_unanchored_authenticity_always_false() -> None:
+    report = verify_replay(make_log_doc(honest_steps(2)), make_config_doc())
+    assert report.verdict == ReplayVerdict.VERIFIED_OK
+    assert report.coverage.external_authenticity is False
+    assert report.coverage.bundle_digests is False
+    assert report.coverage.live_binding is False
+
+
+# Deterministic report equality
+def test_deterministic_report_equality() -> None:
+    log = make_log_doc(honest_steps(3))
+    cfg = make_config_doc()
+    r1 = verify_replay(json.loads(json.dumps(log)), json.loads(json.dumps(cfg)))
+    r2 = verify_replay(json.loads(json.dumps(log)), json.loads(json.dumps(cfg)))
     assert r1 == r2
 
-    d = json.loads(lp.read_text(encoding="utf-8"))
-    d["records"][2]["payload"]["move"] = "MOVE:W"
-    lp.write_text(json.dumps(d, sort_keys=True), encoding="utf-8")
-    r1 = verify_log(lp)[1]
-    r2 = verify_log(lp)[1]
-    assert r1 == r2
-    assert "TAMPERED" in r1
+    own = honest_steps(2)
+    own[1]["move"] = "MOVE:W"
+    tampered_log = make_log_doc(own, game_id=GAME_ID, game_uid=GAME_UID)
+    t1 = verify_replay(tampered_log, cfg)
+    t2 = verify_replay(tampered_log, cfg)
+    assert t1 == t2
+    assert t1.verdict == ReplayVerdict.TAMPERED
 
-    own2 = _honest_steps(2)
-    d1, d2 = tmp_path / "run1", tmp_path / "run2"
-    d1.mkdir()
-    d2.mkdir()
-    _write_bundle(d1, _kit_doc(_GAME_ID, _GAME_UID, own2), own2)
-    _write_bundle(d2, _kit_doc(_GAME_ID, _GAME_UID, own2), own2)
-    assert verify_dir(d1)[:3] == verify_dir(d2)[:3]
+
+# live_binding: honest, per-half withheld-reveal detection (mirrors audit.py, T034/T046 feed)
+def test_withheld_reveal_tampered() -> None:
+    log = make_log_doc(honest_steps(2), own_committed_steps=[0, 1, 2, 3])
+    report = verify_replay(log, make_config_doc())
+    assert report.verdict == ReplayVerdict.TAMPERED
+    withheld = [i for i in report.issues if i.code == "withheld_reveal"]
+    assert withheld and withheld[0].step == 3
+
+
+def test_live_binding_true_when_fully_supplied() -> None:
+    log = make_log_doc(honest_steps(2), own_committed_steps=[0, 1, 2])
+    report = verify_replay(log, make_config_doc())
+    assert report.verdict == ReplayVerdict.VERIFIED_OK
+    assert report.coverage.live_binding is True
+
+
+def test_live_binding_false_when_only_one_half_supplied() -> None:
+    own = honest_steps(2, start=(3, 3))
+    opp = honest_steps(1, sender="police", intent="chase", start=(0, 0))
+    log = make_log_doc(own, opp, own_committed_steps=[0, 1, 2])
+    report = verify_replay(log, make_config_doc())
+    assert report.verdict == ReplayVerdict.VERIFIED_OK
+    assert report.coverage.live_binding is False
+
+
+def test_withheld_reveal_precedence_over_physics() -> None:
+    own = off_board(honest_steps(3))
+    log = make_log_doc(own, own_committed_steps=[0, 1, 2, 3, 4])
+    report = verify_replay(log, make_config_doc())
+    assert report.verdict == ReplayVerdict.TAMPERED

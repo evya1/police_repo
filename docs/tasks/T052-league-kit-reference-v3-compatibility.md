@@ -1,6 +1,6 @@
 ---
 id: T052
-status: in_review
+status: done
 priority: P2
 task_type: component
 component: C04

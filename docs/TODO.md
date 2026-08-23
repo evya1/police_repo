@@ -70,3 +70,5 @@ A task is never marked `done` because code exists. `implementation_present` and 
 | T051 | C06 | integration | not_started | not_started | P2 | STRAT-008, SEC-009, QR-006, QR-018 | T013, T027, T046, T047, T048, T049, T052 | no | — | [task](tasks/T051-llm-composition-and-integration.md) |
 | T052 | C04 | component | done | complete | P2 | NET-001, NET-002, SEC-005, SEC-006, ARCH-004 | T009, T010, T033, T038, T047 | no | — | [task](tasks/T052-league-kit-reference-v3-compatibility.md) |
 | T053 | C06 | component | not_started | not_started | P2 | REPORT-005, REPORT-006, OBS-006 | T046, T052 | yes | — | [task](tasks/T053-league-kit-artifact-projection.md) |
+| T054 | C04 | component | done | complete | P2 | NET-001, NET-002, SEC-005, SEC-006, ARCH-004 | T027, T030, T035, T039, T040, T044, T052 | no | — | [task](tasks/T054-kit-runtime-closure.md) |
+| T055 | C06 | component | not_started | not_started | P2 | REPORT-005, REPORT-006, REPORT-007, REPORT-008, OBS-006 | T046, T052, T053, T054 | yes | — | [task](tasks/T055-project-schema-profile.md) |

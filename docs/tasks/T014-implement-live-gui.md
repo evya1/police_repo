@@ -19,11 +19,7 @@ read_set: []
 depends_on:
   - T006
   - T010
-gates:
-  - id: PLANQ-007
-    kind: decision
-    scope: gui_toolkit
-    blocks: start
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -55,7 +51,7 @@ The GUI is a thin observer/controller. It must never render objective opponent p
 
 ## Gates
 
-- `PLANQ-007` (`decision`, `blocks: start`) — this task cannot be claimed until the gate resolves.
+- `PLANQ-007` (`decision`) — **RESOLVED (2026-08-23):** standard-library `tkinter`/`ttk`/`Canvas`, no added GUI dependency. See `docs/spec/OPEN_QUESTIONS.md`. No longer blocks start.
 
 ## Constraints
 

@@ -1,6 +1,6 @@
 ---
 id: T027
-status: blocked
+status: not_started
 priority: P2
 task_type: component
 component: C02
@@ -8,23 +8,18 @@ optional: true
 implements:
   - STRAT-008
   - SEC-009
-  - QR-008
-  - QR-018
 context_files:
   - docs/components/C02-perception-strategy/PRD.md
   - docs/components/C02-perception-strategy/PLAN.md
   - docs/mechanisms/M-03-police-strategy.md
+  - docs/PRD_llm_provider.md
+  - docs/PLAN_llm_provider.md
 read_set: []
 depends_on:
   - T002
   - T007
-  - T013
-  - T017
+  - T045
 gates:
-  - id: PLANQ-003
-    kind: decision
-    scope: provider_choice
-    blocks: start
   - id: PLANQ-004
     kind: decision
     scope: provider_scope
@@ -33,63 +28,100 @@ parallel_safe: true
 claimed_by:
 claim_expires_at:
 write_set:
-  - src/police_peer/strategy/providers/language_model.py
-  - tests/unit/strategy/providers/test_language_model.py
+  - src/police_peer/strategy/hint_types.py
+  - src/police_peer/strategy/hints.py
+  - src/police_peer/strategy/inject.py
+  - src/police_peer/strategy/decision.py
+  - src/police_peer/wire/session.py
+  - tests/unit/strategy/test_hint_types.py
+  - tests/unit/strategy/test_hints.py
+  - tests/unit/strategy/test_inject.py
+  - tests/property/strategy/test_provider_invariance.py
 risk: medium
 ---
 
-# T027 — Implement Optional Language-Model Provider Adapter
+# T027 — Deterministic hint plan and typed TextProvider port
 
 ## Expected outcome
 
-An explicitly selected provider adapter may generate free-form verbal hints or behavior analysis without selecting, vetoing, delaying, or mutating Police movement. The boundary remains provider-neutral and deterministic template mode remains the default/fallback.
+Local deterministic code selects the action, the truth/lie claim, the target landmark, and the
+verdict. A provider, if present, supplies wording only. Any provider failure falls back to the
+deterministic template already associated with the selected plan, and the action, barrier, and
+verdict are bit-for-bit unchanged.
 
 ## Requirements implemented
 
 - `STRAT-008`
-- `SEC-009`
-- `QR-008`
-- `QR-018`
+- `SEC-009` (sealed text/usage metadata only; aggregation belongs to T013)
 
 ## Relevant context
 
-The official specification permits template, local-model, or configured provider modes without selecting a vendor. This P2 task is optional and never blocks release. PLANQ-003 and PLANQ-004 must approve whether a provider is needed and, if so, its model, budget, cadence, rate limits, and text-only scope before any live external call. A provider failure must not block a legal game action.
+This task no longer chooses a vendor. Vendor selection is T050, gated by `PLANQ-003`.
+
+T027 depends on **T045**, which owns `strategy/hints.py`, `strategy/inject.py`, and their unit
+tests. The dependency is what serializes those shared paths; the two tasks must never run in the
+same wave.
+
+REVIEW_FINDINGS this task must close:
+
+- **F-12** — the current seam sends the exact private position to the provider and accepts a
+  provider-owned `verdict`.
+- **F-13** — `HintWriter._cap(result.get("message", ""))` uses the default 15 rather than the
+  configured `self.max_words`; exceptions are swallowed by a bare `except`; empty text can pass; and
+  landmark/coordinate constraints are not validated.
+- **F-14** — `resolve_brain(..., llm=...)` ignores `llm`, so the declared injection seam injects
+  nothing.
 
 ## Gates
 
-- `PLANQ-003` (`decision`, `blocks: start`) — this task cannot be claimed until the gate resolves.
-- `PLANQ-004` (`decision`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `provider_scope` waits.
+- `PLANQ-004` (`decision`, `blocks: criterion`) — the task may be claimed and implemented now; only
+  the acceptance criterion scoped `provider_scope` waits.
 
 ## Constraints
 
-- Do not edit the canonical PRD.
-- Do not silently redefine the repository PLAN or task dependencies.
-- Do not widen scope or treat a derived design decision as a source requirement.
-- Edit only the declared write set; request an orchestrator-approved change before crossing it.
-- Escalate requirement conflicts, missing official inputs, and newly discovered work.
+- Edit only the declared write set.
+- The public turn message and the `Decision` constructor stay source-compatible via defaults.
+- Strategy imports no infrastructure and no vendor SDK.
+- No DI framework, Repository/Unit of Work, event bus, runtime sibling import, live external call in
+  tests, or guessed official/vendor contract.
+- Every code and test file stays below 150 logical lines.
 
 ## Acceptance criteria
 
-- [ ] The adapter is enabled only by explicit private configuration after provider/model approval; template mode remains valid without network/model dependencies.
-- [ ] A legal Police action is selected and locked before a provider call; provider output cannot select, veto, delay, or mutate that action, per the approved PLANQ-004 provider scope. `{#provider_scope}`
-- [ ] Timeout, malformed response, 429, provider outage, and token/cost-budget exhaustion produce bounded deterministic template fallback.
-- [ ] Every external call passes through the central Gatekeeper; provider-specific credentials or environment variable names are introduced only after provider selection and never appear in logs, fixtures, exceptions, or artifacts.
-- [ ] Actual token/cost metadata is added to the existing token ledger/report path when available; tests do not fabricate usage as execution evidence.
-- [ ] Post-processing enforces the approved free-form arena and word cap before text can be sent.
-- [ ] Unit tests use mocks for success and all failure paths; CI performs no live provider calls and requires no provider key.
+- [ ] `hint_types.py` defines frozen `HintPlan`, `HintRenderRequest`, `TokenUsage`, `ProviderReply`,
+      `HintResult`, and `FallbackReason`.
+- [ ] After the action is immutable, local code creates `HintPlan(claim, target_landmark,
+      fallback_text)`; truth/lie/non-claim and landmark are local deterministic facts.
+- [ ] `claim=NON_CLAIM` has `target_landmark=None`, is rendered by a local deterministic line, and
+      **never calls the provider**. No landmark is fabricated when the position belongs to no
+      truth-compatible region.
+- [ ] `TextProvider.render(request, *, deadline)` receives only role, arena name, planned landmark,
+      truth/lie label, style, and word cap. Exact cells, belief grid, scent field, opponent state,
+      legal-move set, and movement reasoning are absent from the captured request.
+      `{#provider_scope}`
+- [ ] The reply carries text plus usage/provider/model only; it can return no verdict, action,
+      barrier, target, score, or legality.
+- [ ] Provider text is normalized once to Unicode **NFC** before validation and sealing.
+- [ ] Validation accepts only non-empty single-line text within the **configured** `self.max_words`
+      (including values below 15), containing exactly the planned landmark, no other known landmark,
+      no coordinate-like pattern, no control characters, and no JSON or code fencing.
+- [ ] Every typed and unexpected provider failure produces the plan's deterministic template and a
+      recorded typed `FallbackReason`; no blanket silent `except`.
+- [ ] `resolve_brain` builds and passes a typed provider into `HintWriter`; the parameter is used or
+      removed, never ignored.
+- [ ] Property tests prove action, barrier, verdict, **and target landmark** equality across
+      template, provider success, timeout, malformed, and exception paths for an identical seed and
+      state.
+- [ ] A post-move test proves the action and barrier are locked before the request is built and that
+      the planned landmark describes the **destination** cell rather than the pre-move cell.
+- [ ] Text metadata is sealed for audit without being exposed on the public turn message.
 
 ## Verification
 
-- `uv run pytest tests/unit/strategy/providers/test_language_model.py`
-- `uv run ruff check src/police_peer/strategy/providers/language_model.py tests/unit/strategy/providers/test_language_model.py`
-- `uv run python scripts/check_no_secrets.py`
-
-## Implementation plan
-
-To be completed immediately before execution.
-
-## Handoff contract
-
-Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
+- `uv run pytest tests/unit/strategy/test_hint_types.py tests/unit/strategy/test_hints.py tests/unit/strategy/test_inject.py tests/property/strategy/test_provider_invariance.py`
+- `uv run ruff check src tests`
+- `uv run python scripts/check_line_cap.py`
 
 ## Result and evidence
+
+(to be filled)

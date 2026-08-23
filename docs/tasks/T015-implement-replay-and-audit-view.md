@@ -18,7 +18,7 @@ depends_on:
   - T008
   - T010
   - T014
-  - T033
+  - T047
 gates: []
 parallel_safe: true
 claimed_by:
@@ -74,5 +74,12 @@ To be completed immediately before execution.
 ## Handoff contract
 
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
+
+## Orchestrator note (ORC-R0)
+
+T015 now depends on **T047**, not T033: the replay application service and SDK are the only
+supported entry point. The GUI adapter consumes `BundleReplayReport` / `ReplayReport` and contains
+**no hashing, no config/log pairing, and no schema logic** of its own. It renders every verdict,
+every coverage layer, and the external-authenticity status as supplied by the service.
 
 ## Result and evidence

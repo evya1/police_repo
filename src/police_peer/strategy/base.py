@@ -15,6 +15,7 @@ from common.domain.board import Cell
 from common.domain.scoring import Role
 
 from .decision import Decision
+from .hint_types import TokenUsage
 from .hints import HintWriter
 
 
@@ -84,7 +85,8 @@ class BrainBase(ABC):
         """
         legal = state.legal_moves()
         if legal == ["STAY"]:
-            return Decision("STAY", fallback=True)
+            # No hint writer call happened: usage is KNOWN zero, not unknown.
+            return Decision("STAY", fallback=True, usage=TokenUsage(0, 0))
 
         action, barrier = self._decide_move(state, belief)
 
@@ -97,12 +99,19 @@ class BrainBase(ABC):
             self.visited.add(dest)
 
         hint, verdict = self.hint_writer.say(dest, deadline=deadline)
+        # Read immediately: last_result is per-turn state, valid only until
+        # the next say() call. Seals fallback_reason + usage (SEC-009); never
+        # exposed on the public turn message (T027). getattr guards a
+        # minimal duck-typed HintWriter stand-in lacking last_result.
+        sealed = getattr(self.hint_writer, "last_result", None)
         return Decision(
             action=action,
             barrier_cell=barrier,
             hint=hint,
             verdict=verdict,
             fallback=False,
+            fallback_reason=sealed.fallback_reason if sealed else None,
+            usage=sealed.usage if sealed else None,
         )
 
     @abstractmethod

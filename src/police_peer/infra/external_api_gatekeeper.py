@@ -1,142 +1,164 @@
+"""Thread-safe, deadline-aware central Gatekeeper for all external service calls.
+
+One Lock/Condition-protected state machine enforces the active-call count, the
+concurrency cap, a bounded waiting queue, the token bucket, the daily quota,
+and per-lane reservations so optional LLM traffic never starves reporting.
+"""
+
 from __future__ import annotations
 
+import threading
 import time
 from collections import deque
 from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any
 
+from police_peer.infra.gatekeeper_types import (
+    DailyQuotaExceededError,
+    DeadlineExceededError,
+    DosLockoutError,
+    ExternalCallError,
+    GatekeeperConfig,
+    GatekeeperError,
+    Lane,
+    QueueFullError,
+    RateGuard,
+    RateLimitExceededError,
+    can_admit,
+    is_lane_head,
+    remaining_budget,
+)
+from police_peer.infra.retry_policy import (
+    has_budget_for,
+    is_hard_failure,
+    is_transient,
+    next_backoff,
+)
 
-class GatekeeperError(Exception):
-    """Base error for Gatekeeper violations."""
-
-
-class RateLimitExceededError(GatekeeperError):
-    """Raised when the rate limit token bucket is exhausted."""
-
-
-class DosLockoutError(GatekeeperError):
-    """Raised when rapid requests trigger a DoS lockout."""
-
-
-class DailyQuotaExceededError(GatekeeperError):
-    """Raised when daily quota is exceeded."""
-
-
-class QueueFullError(GatekeeperError):
-    """Raised when pending request queue depth exceeds capacity."""
-
-
-class ExternalCallError(GatekeeperError):
-    """Raised when external call fails after max retries."""
-
-
-@dataclass
-class GatekeeperConfig:
-    requests_per_minute: int = 30
-    bucket_capacity: int = 30
-    concurrent_requests: int = 2
-    queue_depth: int = 100
-    max_retries: int = 3
-    retry_backoff_sec: float = 0.5
-    dos_threshold: int = 15
-    dos_window_sec: float = 2.0
-    dos_lockout_sec: float = 10.0
-    daily_quota: int = 1000
+__all__ = [
+    "DailyQuotaExceededError",
+    "DeadlineExceededError",
+    "DosLockoutError",
+    "ExternalApiGatekeeper",
+    "ExternalCallError",
+    "GatekeeperConfig",
+    "GatekeeperError",
+    "QueueFullError",
+    "RateLimitExceededError",
+]
 
 
 class ExternalApiGatekeeper:
-    """Central configuration-driven gatekeeper enforcing rate limits, DoS locks, and 429 backoffs."""
+    """Central configuration-driven gatekeeper enforcing rate/DoS/quota/lane rules."""
 
-    def __init__(self, config: GatekeeperConfig | None = None, time_provider: Callable[[], float] = time.time) -> None:
+    def __init__(
+        self, config: GatekeeperConfig | None = None,
+        time_provider: Callable[[], float] = time.time, sleeper: Callable[[float], None] = time.sleep,
+    ) -> None:
         self.cfg = config or GatekeeperConfig()
         self._time = time_provider
-        self._tokens = float(self.cfg.bucket_capacity)
-        self._last_refill = self._time()
-        self._lockout_until = 0.0
-        self._request_history: deque[float] = deque()
-        self._daily_count = 0
-        self._daily_reset_time = self._time() + 86400.0
-        self._active_calls = 0
+        self._sleep = sleeper
+        self._cv = threading.Condition(threading.Lock())
+        self._rate = RateGuard(self.cfg, self._time())
+        self._active_total = 0
+        self._active_lane: dict[Lane, int] = {"reporting": 0, "llm": 0}
+        self._wait_queue: deque[tuple[int, Lane]] = deque()
+        self._next_ticket_id = 0
 
-    def _refill_tokens(self, now: float) -> None:
-        elapsed = now - self._last_refill
-        if elapsed > 0:
-            refill = elapsed * (self.cfg.requests_per_minute / 60.0)
-            self._tokens = min(float(self.cfg.bucket_capacity), self._tokens + refill)
-            self._last_refill = now
+    def _ready(self, ticket: int, lane: Lane) -> bool:
+        admit = can_admit(self.cfg, lane, self._active_total, self._active_lane)
+        return admit and is_lane_head(self._wait_queue, ticket, lane)
 
-    def _check_dos(self, now: float) -> None:
-        if now < self._lockout_until:
-            remaining = self._lockout_until - now
-            raise DosLockoutError(f"Gatekeeper in DoS lockout. Remaining: {remaining:.1f}s")
-        # Prune older than dos_window
-        while self._request_history and (now - self._request_history[0]) > self.cfg.dos_window_sec:
-            self._request_history.popleft()
-        if len(self._request_history) >= self.cfg.dos_threshold:
-            self._lockout_until = now + self.cfg.dos_lockout_sec
-            raise DosLockoutError(f"DoS threshold hit ({len(self._request_history)} reqs in {self.cfg.dos_window_sec}s). Lockout activated.")
-        self._request_history.append(now)
+    def _wait_for_slot(self, lane: Lane, deadline: float | None) -> None:
+        """Block for a permit. A lane rival queued ahead never blocks another lane's admission."""
+        if self._ready(-1, lane):
+            return
+        remaining = remaining_budget(self._time(), deadline)
+        if remaining is not None and remaining <= 0:
+            raise DeadlineExceededError("Deadline expired before a permit was available.")
+        if len(self._wait_queue) >= self.cfg.queue_depth:
+            raise QueueFullError("Gatekeeper waiting queue is full.")
+        ticket = self._next_ticket_id
+        self._next_ticket_id += 1
+        entry = (ticket, lane)
+        self._wait_queue.append(entry)
+        try:
+            while not self._ready(ticket, lane):
+                remaining = remaining_budget(self._time(), deadline)
+                if remaining is not None and remaining <= 0:
+                    raise DeadlineExceededError("Deadline expired while waiting for a permit.")
+                self._cv.wait(timeout=remaining)
+            self._wait_queue.remove(entry)
+        except Exception:
+            if entry in self._wait_queue:
+                self._wait_queue.remove(entry)
+                self._cv.notify_all()
+            raise
 
-    def _check_daily_quota(self, now: float) -> None:
-        if now >= self._daily_reset_time:
-            self._daily_count = 0
-            self._daily_reset_time = now + 86400.0
-        if self._daily_count >= self.cfg.daily_quota:
-            raise DailyQuotaExceededError(f"Daily quota of {self.cfg.daily_quota} operations exceeded.")
+    def acquire_permission(self, lane: Lane = "reporting", deadline: float | None = None) -> None:
+        """Reserve one permit in `lane`, queueing until available or `deadline` expires."""
+        with self._cv:
+            now = self._time()
+            self._rate.check_dos(now)
+            self._rate.check_daily_quota(now)
+            self._rate.refill(now)
+            if self._rate.tokens < 1.0:
+                raise RateLimitExceededError("Rate limit exceeded; token bucket is empty.")
+            self._wait_for_slot(lane, deadline)
+            self._rate.consume()
+            self._active_total += 1
+            self._active_lane[lane] += 1
 
-    def acquire_permission(self) -> None:
-        now = self._time()
-        self._check_dos(now)
-        self._check_daily_quota(now)
-        self._refill_tokens(now)
+    def _release(self, lane: Lane) -> None:
+        with self._cv:
+            self._active_total -= 1
+            self._active_lane[lane] -= 1
+            self._cv.notify_all()
 
-        if self._tokens < 1.0:
-            raise RateLimitExceededError("Rate limit exceeded; token bucket is empty.")
-        if self._active_calls >= self.cfg.queue_depth:
-            raise QueueFullError("Gatekeeper queue is full.")
+    def execute(
+        self, call: Callable[..., Any], *args: Any,
+        lane: Lane = "reporting", deadline: float | None = None, **kwargs: Any,
+    ) -> Any:
+        """Execute an external call behind the Gatekeeper's rate/DoS/lane guards and 429 retry."""
+        self.acquire_permission(lane, deadline)
+        try:
+            return self._call_with_retry(call, args, kwargs, deadline)
+        finally:
+            self._release(lane)
 
-        self._tokens -= 1.0
-        self._daily_count += 1
-
-    def execute(self, call: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
-        """Execute external service call behind Token Bucket, DoS guard, and 429 retry backoff."""
-        self.acquire_permission()
-        self._active_calls += 1
+    def _call_with_retry(
+        self, call: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[str, Any], deadline: float | None,
+    ) -> Any:
         retries = 0
         backoff = self.cfg.retry_backoff_sec
-
-        try:
-            while True:
-                try:
-                    return call(*args, **kwargs)
-                except GatekeeperError:
+        while True:
+            try:
+                return call(*args, **kwargs)
+            except GatekeeperError:
+                raise
+            except Exception as exc:
+                if is_hard_failure(exc):
                     raise
-                except Exception as exc:
-                    if exc.__class__.__name__ in (
-                        "DraftSubstitutionError",
-                        "AttachmentMissingError",
-                        "DuplicateSendError",
-                        "InvalidScopeError",
-                    ):
-                        raise
-                    status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
-                    is_429 = status_code == 429 or "429" in str(exc) or "rate" in str(exc).lower()
-                    if is_429 and retries < self.cfg.max_retries:
-                        retries += 1
-                        time.sleep(backoff)
-                        backoff *= 2.0
-                        continue
+                if not is_transient(exc) or retries >= self.cfg.max_retries:
                     raise ExternalCallError(f"External call failed: {exc}") from exc
-        finally:
-            self._active_calls -= 1
+                remaining = remaining_budget(self._time(), deadline)
+                if not has_budget_for(remaining, backoff):
+                    raise DeadlineExceededError(
+                        "Deadline would be exceeded by the next retry backoff."
+                    ) from exc
+                retries += 1
+                self._sleep(backoff)
+                backoff = next_backoff(backoff)
 
     def get_stats(self) -> dict[str, Any]:
-        now = self._time()
-        self._refill_tokens(now)
-        return {
-            "available_tokens": self._tokens,
-            "daily_requests_used": self._daily_count,
-            "is_locked_out": now < self._lockout_until,
-            "active_calls": self._active_calls,
-        }
+        with self._cv:
+            now = self._time()
+            self._rate.refill(now)
+            return {
+                "available_tokens": self._rate.tokens,
+                "daily_requests_used": self._rate.daily_count,
+                "is_locked_out": self._rate.is_locked_out(now),
+                "active_calls": self._active_total,
+                "active_by_lane": dict(self._active_lane),
+                "waiting_count": len(self._wait_queue),
+            }

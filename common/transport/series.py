@@ -13,11 +13,12 @@ from __future__ import annotations
 
 import threading
 import time
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Protocol
 
 from common.domain.scoring import Outcome, Role, settled_outcome
+from common.transport import replay_evidence as _replay_evidence
+from common.transport.replay_evidence import SubgameDriver, SubgameReplayEvidence
 
 DEFAULT_MAX_STEPS = 35
 
@@ -72,6 +73,7 @@ class SeriesResult:
     ledger: list[SeriesRow] = field(default_factory=list)
     settled: bool = False
     settled_outcome: Outcome = Outcome.TAMPER_FORFEIT
+    replay_evidence: tuple[SubgameReplayEvidence, ...] = ()
 
 
 class TurnEngine(Protocol):
@@ -89,9 +91,6 @@ class TurnEngine(Protocol):
         A police settling from the thief's final owes a plain sealed STAY. Without the
         concession the cop waits out its budget and two honest reports fork (rule 35).
         """
-
-
-SubgameDriver = Callable[[object, TurnEngine, PeerConfig, int], SeriesRow]
 
 
 class PeerFacade:
@@ -114,13 +113,17 @@ class PeerFacade:
         self._game_id = ""
         self._game_uid = ""
         self._ledgers: list[SeriesRow] = []
-        self._subgame_driver = subgame_driver
+        self._subgame_driver = subgame_driver or _replay_evidence.default_subgame_driver()
 
     def run(self) -> SeriesResult:
         """Run a full six-sub-game series. Return the result."""
         self._exchange_greeting()
+        evidence = _replay_evidence.EvidenceCollector(self._game_id, self._game_uid)
         for sub_game in range(1, 7):
-            self._ledgers.append(self._play_sub_game(sub_game))
+            row = self._subgame_driver(
+                self.channel, self.engine, self.config, sub_game, evidence_sink=evidence.capture
+            )
+            self._ledgers.append(row)
         all_passed = all(row.audit_ok for row in self._ledgers)
         last = self._ledgers[-1].outcome if self._ledgers else Outcome.TAMPER_FORFEIT
         final_outcome, settled = settled_outcome(last, audits_present=True, audits_passed=all_passed)
@@ -130,6 +133,7 @@ class PeerFacade:
             ledger=self._ledgers,
             settled=settled,
             settled_outcome=final_outcome,
+            replay_evidence=evidence.finish(),
         )
 
     def _exchange_greeting(self) -> None:
@@ -165,13 +169,6 @@ class PeerFacade:
         self._game_id = agreed.game_id
         self._game_uid = agreed.game_uid
 
-    def _play_sub_game(self, sub_game: int) -> SeriesRow:
-        """Play one sub-game via the selected driver."""
-        from common.transport.subgame import play_subgame
-
-        driver = self._subgame_driver or play_subgame
-        return driver(self.channel, self.engine, self.config, sub_game)
-
 
 def run_series(
     channel_a,
@@ -185,21 +182,18 @@ def run_series(
     """Run a series with two peers on opposite ends of a channel. Returns (a, b)."""
     facade_a = PeerFacade(channel_a, engine_a, config_a, "A", subgame_driver=subgame_driver)
     facade_b = PeerFacade(channel_b, engine_b, config_b, "B", subgame_driver=subgame_driver)
-    result_a: SeriesResult | None = None
-    result_b: SeriesResult | None = None
+    results: list[SeriesResult | None] = [None, None]
     errors: list[Exception] = []
 
     def run_a() -> None:
-        nonlocal result_a
         try:
-            result_a = facade_a.run()
+            results[0] = facade_a.run()
         except Exception as exc:  # noqa: BLE001
             errors.append(exc)
 
     def run_b() -> None:
-        nonlocal result_b
         try:
-            result_b = facade_b.run()
+            results[1] = facade_b.run()
         except Exception as exc:  # noqa: BLE001
             errors.append(exc)
 
@@ -213,6 +207,7 @@ def run_series(
         raise TimeoutError("series worker timed out / stuck")
     if errors:
         raise RuntimeError(f"series errors: {errors}")
+    result_a, result_b = results
     if result_a is None or result_b is None:
         raise RuntimeError("series worker returned no result")
     return result_a, result_b

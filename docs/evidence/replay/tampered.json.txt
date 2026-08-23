@@ -1,0 +1,56 @@
+$ uv run python scripts/replay.py <tampered-bundle-dir> --json
+{
+  "checked_records": 24,
+  "coverage": {
+    "bundle_digests": true,
+    "external_authenticity": false,
+    "integrity": true,
+    "live_binding": false,
+    "outcome": true,
+    "physics": true
+  },
+  "game_id": "A-vs-B",
+  "game_uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "issues": [],
+  "sub_games": [
+    {
+      "issues": [
+        {
+          "code": "commitment_mismatch",
+          "half": "own",
+          "message": "step 1: revealed payload does not reproduce its commitment",
+          "step": 1
+        }
+      ],
+      "sub_game_index": 1,
+      "verdict": "tampered"
+    },
+    {
+      "issues": [],
+      "sub_game_index": 2,
+      "verdict": "verified_ok"
+    },
+    {
+      "issues": [],
+      "sub_game_index": 3,
+      "verdict": "verified_ok"
+    },
+    {
+      "issues": [],
+      "sub_game_index": 4,
+      "verdict": "verified_ok"
+    },
+    {
+      "issues": [],
+      "sub_game_index": 5,
+      "verdict": "verified_ok"
+    },
+    {
+      "issues": [],
+      "sub_game_index": 6,
+      "verdict": "verified_ok"
+    }
+  ],
+  "verdict": "tampered"
+}
+exit code: 6

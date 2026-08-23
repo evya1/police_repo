@@ -1,72 +1,58 @@
-"""HintWriter — template-default verbal layer + TextProvider seam.
+"""HintWriter -- local deterministic hint plan + optional TextProvider wording.
 
-Shared core (mirrors thief_repo identically modulo import path and role constant).
-Landmark names imported from belief.hints.LANDMARK_CELLS (SD-B3).
+Local code selects the claim (truth/lie/non-claim), the destination-based
+landmark, and the verdict (STRAT-008); a TextProvider, if present, supplies
+wording only, through the allowlisted ``HintRenderRequest`` (ADR-010). Every
+typed or unexpected provider failure falls back to the plan's own
+deterministic template with a recorded ``FallbackReason``; the verdict is
+never taken from the provider (closes F-12/F-13).
 """
 
 from __future__ import annotations
 
 import random
-from typing import Protocol
+import re
+import unicodedata
 
 from common.domain.board import Cell, chebyshev
 from common.domain.scoring import Role
 from police_peer.belief.hints import GENERIC_FALLBACK, LANDMARK_CELLS
 
+from .hint_types import (
+    NON_CLAIM,
+    FallbackReason,
+    HintPlan,
+    HintRenderRequest,
+    HintResult,
+    ProviderReply,
+    TextProvider,
+    TokenUsage,
+)
 
-class TextProvider(Protocol):
-    """Provider-neutral seam for the optional LLM adapter (T027, P2, gated by
-    PLANQ-003/004). NEVER on the movement path (STRAT-008, NG-003)."""
+__all__ = ["HintWriter", "TextProvider"]
 
-    def generate(
-        self,
-        role: Role,
-        position: Cell,
-        arena: str,
-        max_words: int,
-        deadline: float | None,
-    ) -> dict[str, str] | None:
-        """Strict JSON {"message", "verdict", "reasoning"}, or None on any
-        failure/timeout/unparseable reply (template fallback then applies).
-        """
+_COORD_RE = re.compile(
+    r"[\(\[]\s*-?\d+\s*,\s*-?\d+\s*[\)\]]|\brow\s*\d+\b|\bcol(?:umn)?\s*\d+\b", re.IGNORECASE,
+)
+_FENCE_CHARS = "`{}"
+_LIE_TEMPLATES = [
+    "I'm somewhere near {landmark}.", "Look for me in the {landmark} zone.",
+    "I've been around {landmark} today.", "My location is close to {landmark}.",
+]
+_TRUTH_TEMPLATES: dict[Role, list[str]] = {
+    Role.POLICE: [
+        "I'm patrolling the {landmark} area.", "You'll find me near {landmark}.",
+        "I'm guarding the {landmark} district.", "The {landmark} sector is my post.",
+    ],
+    Role.THIEF: [
+        "I'm in the {landmark} area.", "You'll find me near {landmark}.",
+        "I'm hiding around {landmark}.", "The {landmark} district is where I am.",
+    ],
+}
 
 
 class HintWriter:
-    """Template-default verbal layer (STRAT-008). Landmark names from
-    belief.hints.LANDMARK_CELLS (SD-B3 — one table, both directions).
-    """
-
-    # Template banks per role: 3–4 truth/lie variants each.
-    _TEMPLATES: dict[Role, dict[str, list[str]]] = {
-        Role.POLICE: {
-            "truth": [
-                "I'm patrolling the {landmark} area.",
-                "You'll find me near {landmark}.",
-                "I'm guarding the {landmark} district.",
-                "The {landmark} sector is my post.",
-            ],
-            "lie": [
-                "I'm somewhere near {landmark}.",
-                "Look for me in the {landmark} zone.",
-                "I've been around {landmark} today.",
-                "My location is close to {landmark}.",
-            ],
-        },
-        Role.THIEF: {
-            "truth": [
-                "I'm in the {landmark} area.",
-                "You'll find me near {landmark}.",
-                "I'm hiding around {landmark}.",
-                "The {landmark} district is where I am.",
-            ],
-            "lie": [
-                "I'm somewhere near {landmark}.",
-                "Look for me in the {landmark} zone.",
-                "I've been around {landmark} today.",
-                "My location is close to {landmark}.",
-            ],
-        },
-    }
+    """Template-default verbal layer (STRAT-008); provider supplies wording only."""
 
     def __init__(
         self,
@@ -81,87 +67,101 @@ class HintWriter:
         self.arena = arena
         self.max_words = max_words
         self.provider = provider
+        # Sealed audit state (SEC-009), never part of the public (hint,
+        # verdict) return. Per-turn: valid only until the next say() call --
+        # callers (e.g. BrainBase.decide) must read it immediately after.
+        self.last_result: HintResult | None = None
 
     def say(self, position: Cell, *, deadline: float | None = None) -> tuple[str, str]:
-        """(hint, verdict). Template mode (default, zero tokens).
+        """(hint, verdict). Plan first (pure), then render (provider optional)."""
+        result = self._render(self._plan(position), deadline=deadline)
+        self.last_result = result
+        return result.text, result.verdict
 
-        - lie roll: rng.random() < 0.4 (reference behaviour, seeded);
-        - truth: assert a landmark region containing (or Chebyshev-adjacent to)
-          `position`; none applicable ⇒ generic non-landmark line (no claim);
-        - lie: assert a landmark region NOT containing (or adjacent to) it;
-        - verdict RULE-COMPUTED: "truth" iff the asserted region contains or is
-          Chebyshev-adjacent to `position` — the role knows its own position,
-          so the verdict is always well-defined and audit-consistent;
-        - _cap truncates to max_words (for LLM providers the arena + cap also
-          enter the system prompt, reference behaviour).
-        Provider mode (T027): call with deadline; any failure ⇒ template.
-        """
-        # Provider mode (T027 seam — implementation deferred, SD-P6).
-        if self.provider is not None:
-            try:
-                result = self.provider.generate(
-                    self.role, position, self.arena, self.max_words, deadline,
-                )
-                if result is not None:
-                    return self._cap(result.get("message", "")), result.get("verdict", "truth")
-            except Exception:  # noqa: BLE001 — CT-02 failure behaviour
-                pass
-
-        # Template mode.
+    def _plan(self, position: Cell) -> HintPlan:
+        """Pick claim + destination landmark; never fabricate one (ADR-010)."""
         want_lie = self.rng.random() < 0.4
         landmark = self._pick_landmark(position, want_lie)
         if landmark is None:
-            return self._generic_line(), "truth"
-        templates = self._TEMPLATES[self.role]["lie" if want_lie else "truth"]
-        template = self.rng.choice(templates)
-        hint = template.format(landmark=landmark)
-        verdict = self._verdict(position, landmark)
-        return self._cap(hint), verdict
+            return HintPlan(NON_CLAIM, None, "I'm somewhere in the city.")
+        claim = self._verdict(position, landmark)
+        templates = _LIE_TEMPLATES if claim == "lie" else _TRUTH_TEMPLATES[self.role]
+        text = self._cap(self.rng.choice(templates).format(landmark=landmark))
+        return HintPlan(claim, landmark, text)
+
+    def _render(self, plan: HintPlan, *, deadline: float | None) -> HintResult:
+        if plan.claim == NON_CLAIM or plan.target_landmark is None:
+            return HintResult(plan.fallback_text, "truth", FallbackReason.NON_CLAIM, TokenUsage(0, 0))
+        if self.provider is None:
+            return self._fallback(plan, FallbackReason.NO_PROVIDER, TokenUsage(0, 0))
+        request = HintRenderRequest(
+            role=self.role, arena=self.arena, target_landmark=plan.target_landmark,
+            claim=plan.claim, max_words=self.max_words,
+        )
+        try:
+            reply = self.provider.render(request, deadline=deadline)
+            if not isinstance(reply, ProviderReply):
+                # A call happened; its usage is unavailable, never assumed zero.
+                return self._fallback(plan, FallbackReason.MALFORMED, TokenUsage(None, None))
+            text = unicodedata.normalize("NFC", reply.text)
+        except TimeoutError:
+            # A call may have been billed; unknown, never assumed zero (ADR-010/LLM-09).
+            return self._fallback(plan, FallbackReason.TIMEOUT, TokenUsage(None, None))
+        except Exception:  # noqa: BLE001 -- typed fallback boundary (ADR-010)
+            return self._fallback(plan, FallbackReason.EXCEPTION, TokenUsage(None, None))
+        if not self._valid_text(text, plan.target_landmark):
+            # The call succeeded and was billed; its reported usage stands.
+            return self._fallback(plan, FallbackReason.INVALID_TEXT, reply.usage)
+        return HintResult(text, plan.claim, None, reply.usage)
+
+    def _fallback(self, plan: HintPlan, reason: FallbackReason, usage: TokenUsage) -> HintResult:
+        return HintResult(plan.fallback_text, plan.claim, reason, usage)
+
+    def _valid_text(self, text: str, landmark: str) -> bool:
+        """NFC-normalized already. Strict allowlist validation (ADR-010)."""
+        if not text.strip() or "\n" in text or "\r" in text:
+            return False
+        if len(text.split()) > self.max_words:
+            return False
+        lowered = text.lower()
+        if landmark.lower() not in lowered:
+            return False
+        others = [*LANDMARK_CELLS.get(self.arena, {}), *GENERIC_FALLBACK]
+        if any(o.lower() in lowered for o in others if o != landmark):
+            return False
+        if _COORD_RE.search(text) or any(ord(ch) < 32 for ch in text):
+            return False
+        return not any(ch in _FENCE_CHARS for ch in text)
 
     def _pick_landmark(self, position: Cell, want_lie: bool) -> str | None:
-        """Pick a landmark region name. Returns None if no suitable region."""
-        arena_landmarks = LANDMARK_CELLS.get(self.arena, {})
-        truth_regions = [
-            name
-            for name, cells in arena_landmarks.items()
-            if self._region_contains_or_adjacent(position, cells)
+        """Truth-compatible (or, for a lie, incompatible) landmark for
+        `position` -- named or generic, only when actually (in)compatible.
+        """
+        regions = self._all_regions()
+        candidates = [
+            name for name, cells in regions.items()
+            if self._region_contains_or_adjacent(position, cells) != want_lie
         ]
-        lie_regions = [
-            name
-            for name, cells in arena_landmarks.items()
-            if not self._region_contains_or_adjacent(position, cells)
-        ]
-        candidates = truth_regions if not want_lie else lie_regions
-        if not candidates:
-            # Try generic fallback.
-            if not want_lie:
-                return self.rng.choice(list(GENERIC_FALLBACK.keys()))
-            return None
-        return self.rng.choice(candidates)
+        return self.rng.choice(candidates) if candidates else None
+
+    def _all_regions(self) -> dict[str, list[Cell]]:
+        regions: dict[str, list[Cell]] = dict(LANDMARK_CELLS.get(self.arena, {}))
+        for name, cells in GENERIC_FALLBACK.items():
+            regions.setdefault(name, list(cells))
+        return regions
 
     def _region_contains_or_adjacent(self, position: Cell, cells: list[Cell]) -> bool:
-        """True if position is in the region or Chebyshev-adjacent to it."""
         return any(position == cell or chebyshev(position, cell) == 1 for cell in cells)
 
     def _verdict(self, position: Cell, landmark: str) -> str:
-        """Compute verdict: 'truth' iff the asserted region contains or is
-        Chebyshev-adjacent to the position.
-        """
-        arena_landmarks = LANDMARK_CELLS.get(self.arena, {})
-        cells = arena_landmarks.get(landmark) or GENERIC_FALLBACK.get(landmark.lower())
+        cells = self._all_regions().get(landmark)
         if cells is not None and self._region_contains_or_adjacent(position, cells):
             return "truth"
         return "lie"
 
-    def _generic_line(self) -> str:
-        """Generic non-landmark hint line when no landmark applies."""
-        return "I'm somewhere in the city."
-
-    @staticmethod
-    def _cap(text: str, max_words: int | None = None) -> str:
-        """Truncate to max_words words (default 15 from shared config)."""
-        limit = max_words or 15
+    def _cap(self, text: str) -> str:
+        """Truncate to the CONFIGURED max_words (never a hard-coded default)."""
         words = text.split()
-        if len(words) <= limit:
+        if len(words) <= self.max_words:
             return text
-        return " ".join(words[:limit])
+        return " ".join(words[: self.max_words])

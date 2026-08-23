@@ -17,6 +17,7 @@ read_set: []
 depends_on:
   - T008
   - T010
+  - T027
 gates:
   - id: INPUT-003
     kind: input
@@ -48,6 +49,20 @@ Signed Step 0 captures the required reproducibility declaration, and token meter
 
 Hardware, model, code, team, sub-game, and Git commit fields are required. Cost tracking applies only when a paid API is used.
 
+**Token-ownership reconciliation (orchestrator, ORC-L0).** T013 remains the single authoritative
+owner of generic token aggregation; its requirements identity is unchanged. Only its implementation
+plan is revised. The typed usage now originates from the provider boundary defined in T027, so T013
+consumes the `TokenUsage` already sealed on decision evidence rather than defining its own provider
+types. T049 supplies real provider replies for the adapter tests; until then fake usage is used.
+
+REVIEW_FINDINGS **F-16**: provider usage has no typed boundary today and the hint result is a
+mutable `dict[str, str]`, so totals cannot be traced reliably into sealed per-subgame and per-series
+evidence.
+
+Aggregation distinguishes three explicit states: `known_zero`, `known_nonzero`, and `unknown`.
+Template mode contributes exactly 0/0. A provider response with unknown usage propagates `unknown`;
+tokens are never inferred from text. Booleans and negative counts are rejected.
+
 ## Gates
 
 - `INPUT-003` (`input`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `step_zero_key` waits.
@@ -64,7 +79,15 @@ Hardware, model, code, team, sub-game, and Git commit fields are required. Cost 
 
 - [ ] All required Step 0 fields are collected before the first move and signed through the integrity boundary using the authorized Step 0 signing procedure once provisioned. `{#step_zero_key}`
 - [ ] Missing or unverifiable Git commit/config version blocks counted play.
-- [ ] Token input/output usage is aggregated per sub-game and series and included in artifacts.
+- [ ] Token input/output usage is aggregated separately per sub-game and per series and projected
+      into the existing artifact evidence keys, with an explicit `known_zero` / `known_nonzero` /
+      `unknown` status. Booleans and negative counts are rejected.
+- [ ] Template and non-claim events contribute exactly 0/0; unknown provider usage stays unknown and
+      is never inferred from text; no cost or fairness normalization is invented.
+- [ ] Unknown usage makes **counted play ineligible** — a deterministic fallback cannot erase tokens
+      already consumed by the attempted call — while **warmup** retains an explicit unknown status.
+- [ ] Tests cover mixed known/unknown usage, the counted-versus-warmup policy, six sub-games,
+      duplicates, replay, and stable serialization.
 - [ ] No lecturer-side normalization formula is recreated locally.
 - [ ] Tests use deterministic system-info and usage adapters without exposing host secrets.
 

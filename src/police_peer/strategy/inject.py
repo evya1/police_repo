@@ -12,6 +12,7 @@ from importlib import import_module
 from common.domain.scoring import Role
 
 from .base import BrainBase
+from .hint_types import TextProvider
 
 _SELECTORS: dict[Role, str] = {
     Role.THIEF: "thief_class",
@@ -56,13 +57,14 @@ def resolve_brain_cls(
 def resolve_brain(
     config: Mapping[str, object] | None,
     role: Role,
-    llm: object | None = None,
+    llm: TextProvider | None = None,
     rng: random.Random | None = None,
 ) -> BrainBase:
     """Instantiate the resolved class with: rng (default: seeded from the
     resolved config's seed), arena + hint_max_words from the resolved config,
-    and the template HintWriter (provider only via T027). The C04 runtime never
-    hard-codes a brain (book section 6.2, reference runtime.py L73 pattern).
+    and a HintWriter carrying `llm` as its optional TextProvider (T027; closes
+    F-14 -- `llm` is used, or rejected fail-fast, never silently ignored). The
+    C04 runtime never hard-codes a brain (book section 6.2, runtime.py L73).
     """
     cls = resolve_brain_cls(config, role)
     if rng is None:
@@ -81,7 +83,9 @@ def resolve_brain(
 
     from .hints import HintWriter
 
-    hint_writer = HintWriter(role, rng, arena, max_words)
+    if llm is not None and not isinstance(llm, TextProvider):
+        raise TypeError(f"llm={llm!r} does not implement TextProvider.render")
+    hint_writer = HintWriter(role, rng, arena, max_words, provider=llm)
     kwargs: dict[str, object] = {"rng": rng, "arena": arena, "max_words": max_words,
                                   "hint_writer": hint_writer}
     # Apply role-specific config weights (PRD §9).

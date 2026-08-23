@@ -15,7 +15,15 @@ import pytest
 from common.domain.scoring import Role
 from police_peer.strategy import resolve_brain, resolve_brain_cls
 from police_peer.strategy.base import BrainBase
+from police_peer.strategy.hint_types import ProviderReply, TokenUsage
 from police_peer.strategy.police import PoliceBrain
+
+
+class _FakeProvider:
+    """Minimal TextProvider stand-in (structural, no live call)."""
+
+    def render(self, request, *, deadline=None):
+        return ProviderReply(text="ok", usage=TokenUsage(0, 0), provider="fake", model="fake")
 
 
 class _FakeModule:
@@ -138,3 +146,24 @@ class TestResolveBrain:
         """police_repo has no default THIEF brain (SD-P7)."""
         with pytest.raises(ValueError, match="no default brain class"):
             resolve_brain(None, Role.THIEF)
+
+
+class TestResolveBrainLLM:
+    """F-14: the declared `llm` seam must be used, or rejected fail-fast --
+    never silently ignored.
+    """
+
+    _config = {"seed": 42, "world": {"map_area": "New York", "hint_max_words": 15}}
+
+    def test_llm_is_passed_into_hint_writer(self) -> None:
+        provider = _FakeProvider()
+        brain = resolve_brain(self._config, Role.POLICE, llm=provider)
+        assert brain.hint_writer.provider is provider
+
+    def test_no_llm_defaults_to_none(self) -> None:
+        brain = resolve_brain(self._config, Role.POLICE)
+        assert brain.hint_writer.provider is None
+
+    def test_non_provider_llm_rejected_fail_fast(self) -> None:
+        with pytest.raises(TypeError, match="TextProvider"):
+            resolve_brain(self._config, Role.POLICE, llm=object())

@@ -1,0 +1,109 @@
+{
+  "artifact_kind": "manifest",
+  "game_id": "A-vs-B",
+  "game_uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "members": [
+    {
+      "name": "declaration_A-vs-B.json",
+      "sha256": "a3696b3233f0504ac19abc1015f193551920ca21ccd3c280a5e2b1020497b879"
+    },
+    {
+      "name": "config_A-vs-B_g01.json",
+      "sha256": "b1214ad804fb607d6515cdd46cfc5f99903204e3174a96f957a0a12736e73a2e"
+    },
+    {
+      "name": "config_A-vs-B_g02.json",
+      "sha256": "8f12e505213688284c9079dc6c47b4a149df20c32954d03af1650c7b62e96137"
+    },
+    {
+      "name": "config_A-vs-B_g03.json",
+      "sha256": "d159a5178e0716c63e18018298f01825c3121e2c5613eb9bd3b8732a5aec7b26"
+    },
+    {
+      "name": "config_A-vs-B_g04.json",
+      "sha256": "6896172de2b4df641a6ab00d751114826cb0804a3444b0ec940fe1054678ba22"
+    },
+    {
+      "name": "config_A-vs-B_g05.json",
+      "sha256": "ead94b8304a90e40a78d8e51a3b35eb6f198a5d1fbe20c6184adf71acb2b93a6"
+    },
+    {
+      "name": "config_A-vs-B_g06.json",
+      "sha256": "9dbab7550e6241db6eceaa22c20de8ab8f9d68e549a894afd65586e125363cd3"
+    },
+    {
+      "name": "log_A-vs-B_g01.json",
+      "sha256": "b4c91c10e2606a41a1548a7e21141ba8c30466ca7a74570e0cd4590cff7f01f9"
+    },
+    {
+      "name": "log_A-vs-B_g02.json",
+      "sha256": "ce53a7542cf510edb93cc98827a1770ad70c2371a4c39ccafec0c65b1373b666"
+    },
+    {
+      "name": "log_A-vs-B_g03.json",
+      "sha256": "b5405b671edfdd81b698174117c4f7a469ed02433f5808475a299a7b04c83561"
+    },
+    {
+      "name": "log_A-vs-B_g04.json",
+      "sha256": "a8b185c17e15a93662a32a3137a065a5ea93e07628595f7ad18438bd5aa191e1"
+    },
+    {
+      "name": "log_A-vs-B_g05.json",
+      "sha256": "2e271c9d0afc90a575e63c7bbac5f43795d2138e0b5c79b87984bf8da492e93f"
+    },
+    {
+      "name": "log_A-vs-B_g06.json",
+      "sha256": "7d7867f162e24c396c38dd094a46f963b28926466a4aafecf85b4b8190fb9cae"
+    },
+    {
+      "name": "result_A-vs-B.json",
+      "sha256": "4384c0ec46744d19f773878588bda3e2373600efd8665abe1231d9a10b7bd546"
+    }
+  ],
+  "schema_status": "internal_interop",
+  "schema_version": "internal-interop-1",
+  "sub_games": [
+    {
+      "opponent_final_step": null,
+      "opponent_record_count": null,
+      "own_final_step": 3,
+      "own_record_count": 4,
+      "sub_game_index": 1
+    },
+    {
+      "opponent_final_step": null,
+      "opponent_record_count": null,
+      "own_final_step": 3,
+      "own_record_count": 4,
+      "sub_game_index": 2
+    },
+    {
+      "opponent_final_step": null,
+      "opponent_record_count": null,
+      "own_final_step": 3,
+      "own_record_count": 4,
+      "sub_game_index": 3
+    },
+    {
+      "opponent_final_step": null,
+      "opponent_record_count": null,
+      "own_final_step": 3,
+      "own_record_count": 4,
+      "sub_game_index": 4
+    },
+    {
+      "opponent_final_step": null,
+      "opponent_record_count": null,
+      "own_final_step": 3,
+      "own_record_count": 4,
+      "sub_game_index": 5
+    },
+    {
+      "opponent_final_step": null,
+      "opponent_record_count": null,
+      "own_final_step": 3,
+      "own_record_count": 4,
+      "sub_game_index": 6
+    }
+  ]
+}

@@ -12,9 +12,12 @@ instead of forking (rule 35).
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from common.domain.scoring import Outcome, Role, role_for, score_for, settled_outcome
 from common.transport.audit import audit_records
 from common.transport.inbox import Inbox
+from common.transport.replay_evidence import SubgameReplayEvidence, capture_subgame_evidence
 from common.transport.series import PeerConfig, SeriesRow, TurnEngine
 from common.transport.state import PeerState, PeerStateMachine
 from common.transport.turnfeed import (
@@ -25,7 +28,14 @@ from common.transport.turnfeed import (
 from common.transport.turnseal import audit_payload, seal_turn, settle_final
 
 
-def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int) -> SeriesRow:
+def play_subgame(
+    channel,
+    engine: TurnEngine,
+    config: PeerConfig,
+    sub_game: int,
+    *,
+    evidence_sink: Callable[[SubgameReplayEvidence], None] | None = None,
+) -> SeriesRow:
     """Play one sub-game: strict thief-first alternation, mutual audit."""
     terms = config.terms or {}
     max_steps = int(terms.get("max_steps", 35))
@@ -109,22 +119,29 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
     if terminal is None:
         terminal = Outcome.TECHNICAL_LOSS
 
-    channel.send_audit(audit_payload(role, our_records, terminal))
+    audit = audit_payload(role, our_records, terminal)
+    channel.send_audit(audit)
     opponent_audit = wait_audit(channel, config.budgets)
+    opponent_records_raw: object = []
+    opponent_result_claim: str | None = None
     if opponent_audit is None:
         audit_ok, audits_present = False, False
     else:
+        opponent_records_raw = opponent_audit.get("records", [])
+        opponent_result_claim = opponent_audit.get("result_claim")
         result = audit_records(
-            opponent_audit.get("records", []),
+            opponent_records_raw,
             inbox.played,
             terms,
             our_records=our_records,
             our_result_claim=terminal.value,
-            opponent_result_claim=opponent_audit.get("result_claim"),
+            opponent_result_claim=opponent_result_claim,
         )
         audit_ok, audits_present = result.passed, True
+    # Snapshot only AFTER the live audit above has read `inbox.played` — never before.
+    observed_commitments = dict(inbox.played)
     final_outcome, _ = settled_outcome(terminal, audits_present=audits_present, audits_passed=audit_ok)
-    return SeriesRow(
+    row = SeriesRow(
         sub_game_number=sub_game,
         role=role,
         outcome=final_outcome,
@@ -133,6 +150,20 @@ def play_subgame(channel, engine: TurnEngine, config: PeerConfig, sub_game: int)
         score_thief=score_for(final_outcome, Role.THIEF),
         audit_ok=audit_ok,
     )
+    if evidence_sink is not None:
+        evidence_sink(
+            capture_subgame_evidence(
+                sub_game_index=sub_game,
+                terms=terms,
+                own_records_raw=audit["records"],
+                opponent_records_raw=opponent_records_raw,
+                observed_opponent_commitments=observed_commitments,
+                our_result_claim=terminal.value,
+                opponent_result_claim=opponent_result_claim,
+                row=row,
+            )
+        )
+    return row
 
 
 def _observe_once(applied: dict[int, dict], seen: set[int], engine: TurnEngine, step: int) -> None:

@@ -1,8 +1,19 @@
 """Contract test: canonical JSON / signature / UID construction against the pinned
-`copthief-league-protocol` kit's OWN vectors, read directly from the pinned external
-checkout (not a vendored copy) -- the live oracle for `kit_interop` conformance (T052,
-ADR-011). Pinned commit ad6557626587e09146af4283a5e808e7001343c5, MIT licensed,
-https://github.com/Imreec/copthief-league-protocol.
+`copthief-league-protocol` kit's OWN vectors -- the byte-level oracle for `kit_interop`
+conformance (T052/T054, ADR-011). Pinned commit ad6557626587e09146af4283a5e808e7001343c5,
+MIT licensed, https://github.com/Imreec/copthief-league-protocol.
+
+The vectors are read from the committed fixtures under
+`tests/fixtures/league_kit/ad65576/`, whose upstream URL, commit and per-file SHA-256 are
+recorded in that directory's `PROVENANCE.md` beside a verbatim copy of the kit's MIT
+LICENSE. They used to be read from a hard-coded developer checkout under an absolute home
+directory, with a module-level `skipif` when it was absent -- so this whole conformance
+suite skipped silently in CI, and its skip count moved (6 -> 0) purely because a checkout
+appeared on one machine. A conformance suite that can skip for an environment reason is not
+a gate, so this module must never skip.
+
+Live checks against a full kit checkout (K0/K2) take an explicit `--kit-root` instead; no
+test in this repository resolves the kit by a fixed path.
 
 Also proves the required non-ASCII (Hebrew + emoji) case: `ensure_ascii=False` is
 exercised, not merely asserted, by round-tripping raw non-ASCII bytes through the exact
@@ -14,18 +25,22 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from common.transport.canonical import canonical_bytes, commit, verify_commit
 from common.transport.ids import game_id, game_uid, terms_signature
 
-KIT_ROOT = Path("/home/user/imreec/copthief-league-protocol")
-KIT_VECTORS = KIT_ROOT / "vectors"
+#: Committed pinned fixtures -- never a developer path, never conditional.
+KIT_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "league_kit" / "ad65576"
+KIT_VECTORS = KIT_FIXTURES / "vectors"
 
-pytestmark = pytest.mark.skipif(
-    not KIT_VECTORS.is_dir(),
-    reason="pinned external kit checkout not available in this environment",
-)
+
+def test_pinned_vector_fixtures_are_present_so_this_module_never_skips() -> None:
+    """The gate on the gate: if the fixtures ever go missing this fails loudly rather than
+    letting the conformance suite evaporate into a skip."""
+    assert KIT_VECTORS.is_dir(), f"pinned kit vector fixtures missing at {KIT_VECTORS}"
+    for name in ("canonical_json", "commit_reveal", "game_uid", "terms_signature"):
+        assert (KIT_VECTORS / f"{name}.json").is_file(), name
+    assert (KIT_FIXTURES / "LICENSE").is_file(), "kit MIT LICENSE must ship beside the vectors"
+    assert (KIT_FIXTURES / "PROVENANCE.md").is_file(), "fixture provenance record is required"
 
 
 def _load(name: str) -> dict:

@@ -16,6 +16,7 @@ from collections.abc import Callable
 
 from common.domain.scoring import Outcome, Role, role_for, score_for, settled_outcome
 from common.transport.audit import audit_records
+from common.transport.audit_wire import AuditWireAdapter, IdentityAuditWire
 from common.transport.inbox import Inbox
 from common.transport.replay_evidence import SubgameReplayEvidence, capture_subgame_evidence
 from common.transport.series import PeerConfig, SeriesRow, TurnEngine
@@ -35,9 +36,11 @@ def play_subgame(
     sub_game: int,
     *,
     evidence_sink: Callable[[SubgameReplayEvidence], None] | None = None,
+    audit_wire: AuditWireAdapter | None = None,
 ) -> SeriesRow:
     """Play one sub-game: strict thief-first alternation, mutual audit."""
     terms = config.terms or {}
+    wire = audit_wire if audit_wire is not None else IdentityAuditWire()
     max_steps = int(terms.get("max_steps", 35))
     survival_threshold = int(terms.get("survival_threshold", max_steps))
     max_moves = int(terms.get("max_moves", max_steps))
@@ -120,8 +123,10 @@ def play_subgame(
         terminal = Outcome.TECHNICAL_LOSS
 
     audit = audit_payload(role, our_records, terminal)
-    channel.send_audit(audit)
-    opponent_audit = wait_audit(channel, config.budgets)
+    channel.send_audit(wire.outbound(sender=role.value, audit=audit))
+    # Normalize BEFORE the verifier: `audit_records` decodes strictly and is left
+    # untouched, so a nested kit record must arrive flat or it reads as malformed.
+    opponent_audit = wire.inbound(wait_audit(channel, config.budgets))
     opponent_records_raw: object = []
     opponent_result_claim: str | None = None
     if opponent_audit is None:

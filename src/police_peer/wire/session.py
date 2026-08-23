@@ -118,65 +118,16 @@ class SubgameSession:
         cell: Any = tuple(claim) if isinstance(claim, list) else claim
         return tuple(cell) == self.engine.position
 
-    def build_result(
-        self,
-        *,
-        move: str,
-        hint: str,
-        verdict: str = "truth",
-        fallback: bool = False,
-        reasoning: str = "",
-        prompt_text: str = "",
-        response_seconds: float = 0.0,
-        barrier_cell: Cell | None = None,
-    ) -> dict[str, Any]:
-        """Build the ONE sealed result for this turn (Decision metadata + own
-        smell_grid + claim handling); the wire adapter derives the public
-        projection from it -- never build a second outgoing dict.
+    def build_result(self, **kwargs: Any) -> dict[str, Any]:
+        """Build this turn's ONE sealed payload (see ``wire.sealed_payload``).
 
-        The truthful capture exchange (GAME-009/SEC-007) is runtime-owned, not a
-        strategy concern: every POLICE non-barrier action turn attaches
-        ``capture_claim`` naming the Police's own post-action cell (the Police
-        cannot *know* it captured — the Thief's honest answer resolves it). A
-        barrier turn (``barrier_cell is not None``) forfeits the move (GAME-006)
-        and declares ``barrier_placed`` instead — it never also invents a move
-        capture claim.
+        Kept as a method so every existing caller and test keeps its call shape; the
+        construction itself lives next to the terminal-final derivation, which must bind
+        the same post-move `position` from the same engine state.
         """
-        assert self.engine is not None and self.trail is not None
-        smell_grid = self.trail.full_turn(self.engine.position)
-        res: dict[str, Any] = {
-            "move": move,
-            "barrier_cell": list(barrier_cell) if barrier_cell is not None else None,
-            "hint": hint,
-            "verdict": verdict,
-            "fallback": fallback,
-            "reasoning": reasoning,
-            "prompt_text": prompt_text,
-            "response_seconds": response_seconds,
-            "state": self.engine.state_string(),
-            "smell_grid": smell_grid,
-        }
-        if barrier_cell is not None:
-            # Public, exact declaration (GAME-012): the cop must be truthful about
-            # every placement, in the same turn as the STAY that forfeits the move.
-            res["barrier_placed"] = list(barrier_cell)
-        if self.engine.role is Role.POLICE and barrier_cell is None:
-            res["capture_claim"] = list(self.engine.position)
-        if self.pending_claim is not None:
-            ans = self.engine.answer_capture_claim(self.pending_claim, at=self.pending_claim_position)
-            res["claim_response"] = ans
-            self.pending_claim = None
-            self.pending_claim_position = None
-            if ans and ans.get("caught") is True:
-                self.thief_caught = True
-                res["win_claim"] = {"type": "capture"}
-                return res
-        if self.engine.role is Role.THIEF:
-            if self.engine.self_captured():
-                res["win_claim"] = {"type": "capture"}
-            elif self.engine.survived():
-                res["win_claim"] = {"type": "survival"}
-        return res
+        from police_peer.wire.sealed_payload import build_result
+
+        return build_result(self, **kwargs)
 
     def terminal(self) -> Outcome | None:
         if self.opponent_terminal is not None:

@@ -88,15 +88,27 @@ class EvidenceCollector:
         return tuple(self._entries)
 
 
-def default_subgame_driver() -> SubgameDriver:
+def default_subgame_driver(audit_wire: object | None = None) -> SubgameDriver:
     """Return the production ``play_subgame`` driver, imported lazily to avoid a cycle.
 
     ``subgame.py`` imports ``series.py`` at module level, so ``series.py`` cannot import
     ``play_subgame`` back at its own module level without a circular import.
+
+    ``audit_wire`` is the injected audit-wire adapter (T054). Omitting it keeps the
+    internal lane, which is what every existing caller means.
     """
     from common.transport.subgame import play_subgame
 
-    return play_subgame
+    if audit_wire is None:
+        return play_subgame
+
+    def _driver(channel, engine, config, sub_game, *, evidence_sink=None):
+        return play_subgame(
+            channel, engine, config, sub_game,
+            evidence_sink=evidence_sink, audit_wire=audit_wire,
+        )
+
+    return _driver
 
 
 def _issue_text(issue: ReplayIssue) -> str:

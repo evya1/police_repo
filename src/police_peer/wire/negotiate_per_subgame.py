@@ -21,27 +21,33 @@ mismatch refuses.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
 
 from common.domain.scoring import role_for
 from common.transport.integrity import new_nonce
 from common.transport.negotiate import our_greeting, verify_greeting
+from common.transport.opponent_pin import OpponentPin
 from common.transport.refusals import Refused
 from common.transport.replay_evidence import SubgameDriver, default_subgame_driver
 from common.transport.series import PeerConfig, SeriesRow
 
 
-@dataclass
-class _OpponentPin:
-    """The opponent group this driver has itself verified, or None until pinned."""
+def negotiated_subgame_driver(
+    group_id: str,
+    inner: SubgameDriver | None = None,
+    *,
+    opponent_pin: OpponentPin | None = None,
+    audit_wire: object | None = None,
+) -> SubgameDriver:
+    """Build a `SubgameDriver` that negotiates before every sub-game after the first.
 
-    group: str | None = None
-
-
-def negotiated_subgame_driver(group_id: str, inner: SubgameDriver | None = None) -> SubgameDriver:
-    """Build a `SubgameDriver` that negotiates before every sub-game after the first."""
-    inner_driver = inner or default_subgame_driver()
-    pin = _OpponentPin()
+    ``opponent_pin`` is the series-owned pin (T054). The composition root passes the SAME
+    object it gave ``PeerFacade``, so the opponent verified during sub-game 1's greeting is
+    already bound when sub-game 2 negotiates. Constructing a private pin here -- as this
+    driver used to -- meant the first group *it* saw was sub-game 2's, so a swapped
+    opponent was adopted as the pin rather than refused against sub-game 1's.
+    """
+    inner_driver = inner or default_subgame_driver(audit_wire)
+    pin = opponent_pin if opponent_pin is not None else OpponentPin()
 
     def _driver(channel, engine, config: PeerConfig, sub_game: int, *, evidence_sink=None) -> SeriesRow:
         if sub_game > 1:
@@ -51,7 +57,7 @@ def negotiated_subgame_driver(group_id: str, inner: SubgameDriver | None = None)
     return _driver
 
 
-def _negotiate_subgame(channel, config: PeerConfig, group_id: str, sub_game: int, pin: _OpponentPin) -> None:
+def _negotiate_subgame(channel, config: PeerConfig, group_id: str, sub_game: int, pin: OpponentPin) -> None:
     """Send our per-sub-game greeting, wait for the opponent's, and verify it (FR-13 order),
     then enforce the two checks the common `verify_greeting` deliberately leaves silent:
     complementary role, and opponent-pin stability across the series."""
@@ -76,14 +82,8 @@ def _negotiate_subgame(channel, config: PeerConfig, group_id: str, sub_game: int
             f"sub-game {sub_game}: role collision -- both peers declared {role.value!r}",
         )
 
-    if pin.group is None:
-        pin.group = agreed.opponent_group
-    elif pin.group != agreed.opponent_group:
-        raise Refused(
-            "SPAR-N10",
-            f"opponent changed mid-series: pinned {pin.group!r}, sub-game {sub_game} "
-            f"greeting names {agreed.opponent_group!r} -- refused, not silently re-pinned",
-        )
+    # Refuses before any state mutates: a swapped opponent never gets a half-played game.
+    pin.bind(agreed.opponent_group, sub_game=sub_game)
 
 
 def _await_greeting(channel, config: PeerConfig) -> dict:

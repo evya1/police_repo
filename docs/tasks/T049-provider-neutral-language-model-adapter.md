@@ -1,6 +1,6 @@
 ---
 id: T049
-status: not_started
+status: done
 priority: P2
 task_type: component
 component: C06
@@ -61,16 +61,16 @@ The selected vendor's transport is T050 and is separately gated by `PLANQ-003`.
 
 ## Acceptance criteria
 
-- [ ] The prompt is versioned and deterministic, built only from allowlisted `HintRenderRequest`
+- [x] The prompt is versioned and deterministic, built only from allowlisted `HintRenderRequest`
       fields, and requests plain text rather than model-owned JSON semantics.
-- [ ] The injected client is called only via `ExternalApiGatekeeper.execute(lane="llm", ...)` with the
+- [x] The injected client is called only via `ExternalApiGatekeeper.execute(lane="llm", ...)` with the
       passed deadline.
-- [ ] One client response normalizes into `ProviderReply` with provider and model identifiers and
+- [x] One client response normalizes into `ProviderReply` with provider and model identifiers and
       optional nonnegative token counts.
-- [ ] Booleans and negative usage values, and oversized or empty raw text, are rejected with typed
+- [x] Booleans and negative usage values, and oversized or empty raw text, are rejected with typed
       adapter errors that `HintWriter` maps to a deterministic fallback.
-- [ ] Unknown usage stays `None`; token counts are never inferred from the text.
-- [ ] Contract tests run fake clients for success, timeout, 429 retry, missing usage, malformed types,
+- [x] Unknown usage stays `None`; token counts are never inferred from the text.
+- [x] Contract tests run fake clients for success, timeout, 429 retry, missing usage, malformed types,
       and the privacy allowlist, and assert zero live network access.
 
 ## Verification
@@ -81,4 +81,50 @@ The selected vendor's transport is T050 and is separately gated by `PLANQ-003`.
 
 ## Result and evidence
 
-(to be filled)
+Implemented by a Sonnet 5 worker, reviewed and committed by the orchestrator on
+`claude/replay-llm-completion-20260823` (2026-08-23).
+
+`src/police_peer/infra/llm_client.py` (32 logical lines): the one-method `CompletionClient`
+`Protocol` and `RawCompletion` — no vendor import, no environment lookup, no vendor name anywhere.
+`src/police_peer/infra/llm_provider.py` (108 lines): `build_prompt` (versioned, deterministic,
+allowlisted-fields-only, plain-text request), response normalization into T027's existing frozen
+`ProviderReply`, and `LanguageModelAdapter`, which reuses T027's `HintRenderRequest`/`TokenUsage`/
+`TextProvider` from `strategy/hint_types.py` unchanged and implements `TextProvider` structurally.
+
+**Evidence:**
+- Prompt determinism/allowlist/plain-text: `test_prompt_is_versioned`,
+  `test_prompt_is_deterministic_for_identical_request`,
+  `test_prompt_contains_only_allowlisted_fields`, `test_prompt_requests_plain_text_not_json`.
+- Gatekeeper `llm`-lane-only, deadline preserved:
+  `test_client_reached_only_through_llm_lane_execute` (spies on `Gatekeeper.execute`, asserts
+  `lane == "llm"` and the exact passed deadline), `test_deadline_is_preserved_not_reset`.
+- `ProviderReply` normalization: `test_success_normalizes_to_provider_reply`.
+- Typed rejection of bool/negative usage and oversized/empty text:
+  `test_malformed_usage_bool_is_rejected`, `test_malformed_usage_negative_is_rejected`,
+  `test_empty_output_text_is_rejected`, `test_oversized_output_text_is_rejected` — all raise
+  `LlmAdapterError` subclasses that the existing `HintWriter` `except Exception` boundary already
+  maps to `FallbackReason.EXCEPTION`.
+- Unknown usage never inferred: `test_missing_usage_stays_none_not_inferred`,
+  `test_normalize_usage_none_stays_none`.
+- Privacy allowlist: `test_privacy_allowlist_disallowed_field_never_reaches_prompt` — asserts no
+  cell/verdict/grid/belief/legal-move datum reaches the prompt, and that `HintRenderRequest` has
+  no slot for `verdict`/`position`/`destination` at all.
+- Zero live network: `test_zero_live_network_uses_fakes_only` — every client is a
+  `RecordingClient` fake; no vendor/network import exists in either module.
+
+**Commands run (targeted, before the concurrent T052 worker's files existed in the tree):**
+```
+uv run pytest tests/unit/infra/test_llm_provider.py tests/contract/test_llm_provider_contract.py -v --no-cov
+uv run ruff check src/police_peer/infra/llm_client.py src/police_peer/infra/llm_provider.py tests/unit/infra/test_llm_provider.py tests/contract/test_llm_provider_contract.py
+```
+Result: 26/26 passed (14 unit + 12 contract). Ruff: all checks passed. Line counts (measured
+directly): `llm_client.py` 32, `llm_provider.py` 108, `test_llm_provider.py` 81,
+`test_llm_provider_contract.py` 123 — all under the 150-line cap. The full-suite/quality-gate run
+is deferred to the Replay-completion-equivalent gate for T049+T052 together, once both land.
+
+**Deviations:** none. `sdk.py`'s concurrent modification in the working tree at review time
+belongs to the sibling T052 worker (kit protocol adapter), not this task — confirmed by diff
+before staging; this commit touches only the four declared T049 files.
+
+**Remaining:** T013 (token evidence) and T051 (composition) still need this adapter wired into
+the runner/composition root; T050 (selected vendor) remains `BLOCKED_EXTERNAL: PLANQ-003`.

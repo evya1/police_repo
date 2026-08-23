@@ -65,7 +65,7 @@ A task is never marked `done` because code exists. `implementation_present` and 
 | T046 | C06 | component | done | complete | P0 | REPORT-005, REPORT-006, REPORT-007, REPORT-008, REPORT-009, OBS-006 | T033, T034 | yes | — | [task](tasks/T046-replayable-kit-artifact-emission.md) |
 | T047 | C05 | component | done | complete | P0 | OBS-006, OBS-007, QR-006 | T033, T038, T046 | yes | — | [task](tasks/T047-headless-replay-cli-integration.md) |
 | T048 | C06 | component | done | complete | P0 | QR-008 | T002, T017 | yes | — | [task](tasks/T048-central-gatekeeper-hardening.md) |
-| T049 | C06 | component | not_started | not_started | P2 | STRAT-008, QR-008 | T027, T048 | yes | — | [task](tasks/T049-provider-neutral-language-model-adapter.md) |
+| T049 | C06 | component | done | complete | P2 | STRAT-008, QR-008 | T027, T048 | yes | — | [task](tasks/T049-provider-neutral-language-model-adapter.md) |
 | T050 | C06 | component | blocked | not_started | P2 | STRAT-008, SEC-010, QR-014 | T049 | yes | — | [task](tasks/T050-selected-vendor-completion-client.md) |
 | T051 | C06 | integration | not_started | not_started | P2 | STRAT-008, SEC-009, QR-006, QR-018 | T013, T027, T046, T047, T048, T049, T052 | no | — | [task](tasks/T051-llm-composition-and-integration.md) |
 | T052 | C04 | component | not_started | not_started | P2 | NET-001, NET-002, SEC-005, SEC-006, ARCH-004 | T009, T010, T033, T038, T047 | no | — | [task](tasks/T052-league-kit-reference-v3-compatibility.md) |

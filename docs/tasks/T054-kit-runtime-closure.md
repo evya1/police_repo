@@ -1,6 +1,6 @@
 ---
 id: T054
-status: in_review
+status: done
 priority: P2
 task_type: component
 component: C04
@@ -66,7 +66,11 @@ T052 was marked `done` while every conversion it built was dead code. The helper
 their unit tests; the runtime never called them. A unit helper that is green while the
 production path bypasses it is not interoperability — it is the appearance of it.
 
-T052 is reclassified `in_review`; its history is not rewritten. This task owns the closure.
+T052 was temporarily returned to `in_review` for that reason; its history is not rewritten.
+This task supplied and independently validated the production closure (see the defect table
+below), with failing-before/passing-after evidence for each defect. With that closure landed,
+both T052 and T054 are `done`. Project status remains below `kit_interop` until T053 (kit
+artifact projection) and T022 (K0-K4 live/contract gates) also pass.
 
 ## Defects closed (each with a failing-before observation)
 

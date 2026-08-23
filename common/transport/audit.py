@@ -74,7 +74,11 @@ def audit_records(
             continue
 
         intent = record.get("intent")
-        if not intent or not isinstance(intent, str) or not intent.strip():
+        # Only game-turn records (step >= 1) carry an intent. The step-0 declaration
+        # is a system_spec reveal that both the reference (no ``intent``) and police
+        # (``declare``) send; requiring intent there would flag a conformant
+        # opponent's reveal as tampered. The reference itself never checks intent.
+        if step >= 1 and (not intent or not isinstance(intent, str) or not intent.strip()):
             failed.append(step)
             tampered.append(step)
             notes.append(f"step {step}: missing or empty intent field")

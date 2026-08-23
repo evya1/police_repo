@@ -10,16 +10,16 @@ records are ours and are decoded the same defensive way as a matter of course.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, replace
+from typing import TYPE_CHECKING, Protocol
 
 from common.transport.canonical import canonical_bytes
 from common.transport.replay_records import decode_half
 from common.transport.replay_types import ReplayIssue, SealedRecord
 
 if TYPE_CHECKING:
-    from common.transport.series import SeriesRow
+    from common.transport.series import PeerConfig, SeriesRow, TurnEngine
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +44,59 @@ class SubgameReplayEvidence:
     game_id: str = ""
     game_uid: str = ""
     capture_issues: tuple[str, ...] = ()
+
+
+class SubgameDriver(Protocol):
+    """The callable ``PeerFacade._play_sub_game`` invokes for one sub-game.
+
+    ``evidence_sink`` is keyword-only and always passed by the facade (never
+    conditionally) — a conforming driver must accept it, even to ignore it.
+    """
+
+    def __call__(
+        self,
+        channel: object,
+        engine: TurnEngine,
+        config: PeerConfig,
+        sub_game: int,
+        *,
+        evidence_sink: Callable[[SubgameReplayEvidence], None] | None = None,
+    ) -> SeriesRow: ...
+
+
+class EvidenceCollector:
+    """Accumulates one series' per-sub-game replay evidence, in sub-game order.
+
+    ``play_subgame`` builds each ``SubgameReplayEvidence`` before the greeting
+    handshake has resolved identity, so the collector is constructed only after
+    ``PeerFacade`` has ``game_id``/``game_uid`` in hand and attaches them to every
+    entry as it comes in. ``capture`` is the ``evidence_sink`` callback a
+    ``SubgameDriver`` invokes.
+    """
+
+    def __init__(self, game_id: str, game_uid: str) -> None:
+        self._game_id = game_id
+        self._game_uid = game_uid
+        self._entries: list[SubgameReplayEvidence] = []
+
+    def capture(self, evidence: SubgameReplayEvidence) -> None:
+        """Attach the bound identity to ``evidence`` and accumulate it."""
+        self._entries.append(replace(evidence, game_id=self._game_id, game_uid=self._game_uid))
+
+    def finish(self) -> tuple[SubgameReplayEvidence, ...]:
+        """Return the accumulated entries, in the order they were captured."""
+        return tuple(self._entries)
+
+
+def default_subgame_driver() -> SubgameDriver:
+    """Return the production ``play_subgame`` driver, imported lazily to avoid a cycle.
+
+    ``subgame.py`` imports ``series.py`` at module level, so ``series.py`` cannot import
+    ``play_subgame`` back at its own module level without a circular import.
+    """
+    from common.transport.subgame import play_subgame
+
+    return play_subgame
 
 
 def _issue_text(issue: ReplayIssue) -> str:

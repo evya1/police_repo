@@ -20,39 +20,37 @@ from tests.unit.transport.replay_fixtures import (
     jump_step,
     make_config_doc,
     make_log_doc,
+    middle_gap_log_doc,
     nested,
     off_board,
     role_wrong_capture_claim,
     seal,
     steps_with_step_values,
+    verdict_of,
 )
 
 
 # INCOMPLETE: absent required evidence
 def test_no_records_incomplete() -> None:
-    report = verify_replay(make_log_doc([]), make_config_doc())
-    assert report.verdict == ReplayVerdict.INCOMPLETE
+    assert verdict_of(make_log_doc([])) == ReplayVerdict.INCOMPLETE
 
 
 def test_missing_terms_incomplete() -> None:
     cfg = make_config_doc()
     del cfg["terms"]
-    report = verify_replay(make_log_doc(honest_steps(1)), cfg)
-    assert report.verdict == ReplayVerdict.INCOMPLETE
+    assert verdict_of(make_log_doc(honest_steps(1)), cfg) == ReplayVerdict.INCOMPLETE
 
 
 # INVALID: malformed syntax, type, identity, or mixed shape
 def test_malformed_commitment_invalid() -> None:
     own = honest_steps(1)
     own[1]["commit"] = "not-64-hex"
-    report = verify_replay(make_log_doc(own), make_config_doc())
-    assert report.verdict == ReplayVerdict.INVALID
+    assert verdict_of(make_log_doc(own)) == ReplayVerdict.INVALID
 
 
 def test_mixed_shape_invalid() -> None:
     own = [seal({"step": 0, "sender": "thief"}), nested({"step": 1, "sender": "thief"})]
-    report = verify_replay(make_log_doc(own), make_config_doc())
-    assert report.verdict == ReplayVerdict.INVALID
+    assert verdict_of(make_log_doc(own)) == ReplayVerdict.INVALID
 
 
 @pytest.mark.parametrize(
@@ -66,8 +64,7 @@ def test_mixed_shape_invalid() -> None:
 )
 def test_broken_sequence_invalid(label: str, steps: list[int]) -> None:
     own = steps_with_step_values(steps)
-    report = verify_replay(make_log_doc(own), make_config_doc())
-    assert report.verdict == ReplayVerdict.INVALID
+    assert verdict_of(make_log_doc(own)) == ReplayVerdict.INVALID
 
 
 def test_missing_step_zero_invalid() -> None:
@@ -75,8 +72,7 @@ def test_missing_step_zero_invalid() -> None:
     own = steps_with_step_values([1, 2, 3])
     report = verify_replay(make_log_doc(own), make_config_doc())
     assert report.verdict == ReplayVerdict.INVALID
-    skipped = [i for i in report.issues if i.code == "skipped_step"]
-    assert skipped and "0" in skipped[0].message
+    assert any(i.code == "skipped_step" and "0" in i.message for i in report.issues)
 
 
 def test_wrong_config_game_id_invalid() -> None:
@@ -96,8 +92,7 @@ def test_semantic_payload_mutation_tampered() -> None:
     own = honest_steps(3)
     own[2]["move"] = "MOVE:W"  # stale commit left untouched
     report = verify_replay(make_log_doc(own), make_config_doc())
-    assert report.verdict == ReplayVerdict.TAMPERED
-    assert any(i.step == 2 for i in report.issues)
+    assert report.verdict == ReplayVerdict.TAMPERED and any(i.step == 2 for i in report.issues)
 
 
 # VERIFIED_OK: both halves, checked_records count, canonical formatting insensitivity
@@ -105,8 +100,7 @@ def test_both_halves_verified_ok() -> None:
     own = honest_steps(3, sender="thief", intent="evade", start=(3, 3))
     opp = honest_steps(2, sender="police", intent="chase", start=(0, 0))
     report = verify_replay(make_log_doc(own, opp), make_config_doc())
-    assert report.verdict == ReplayVerdict.VERIFIED_OK
-    assert report.checked_records == 7
+    assert (report.verdict, report.checked_records) == (ReplayVerdict.VERIFIED_OK, 7)
 
 
 def test_canonical_whitespace_and_key_order_do_not_affect_verification() -> None:
@@ -125,8 +119,8 @@ def test_canonical_whitespace_and_key_order_do_not_affect_verification() -> None
 def test_physics_and_outcome_failures_illegal(mutate) -> None:
     own = mutate(honest_steps(3))
     report = verify_replay(make_log_doc(own), make_config_doc())
-    assert report.verdict == ReplayVerdict.ILLEGAL
-    assert all(i.code != "commitment_mismatch" for i in report.issues)
+    ok = report.verdict == ReplayVerdict.ILLEGAL
+    assert ok and all(i.code != "commitment_mismatch" for i in report.issues)
 
 
 # Foreign degradation: integrity-only, physics/outcome honestly skipped
@@ -137,18 +131,18 @@ def test_foreign_degradation_verified_ok() -> None:
     ]
     report = verify_replay(make_log_doc(own), make_config_doc())
     assert report.verdict == ReplayVerdict.VERIFIED_OK
-    assert report.coverage.integrity is True
-    assert report.coverage.physics is False
-    assert report.coverage.outcome is False
+    coverage = report.coverage
+    assert (coverage.integrity, coverage.physics, coverage.outcome) == (True, False, False)
 
 
 # external_authenticity is never true from local recomputation alone
 def test_unanchored_authenticity_always_false() -> None:
     report = verify_replay(make_log_doc(honest_steps(2)), make_config_doc())
     assert report.verdict == ReplayVerdict.VERIFIED_OK
-    assert report.coverage.external_authenticity is False
-    assert report.coverage.bundle_digests is False
-    assert report.coverage.live_binding is False
+    coverage = report.coverage
+    assert (coverage.external_authenticity, coverage.bundle_digests, coverage.live_binding) == (
+        False, False, False,
+    )
 
 
 # Deterministic report equality
@@ -180,8 +174,7 @@ def test_withheld_reveal_tampered() -> None:
 def test_live_binding_true_when_fully_supplied() -> None:
     log = make_log_doc(honest_steps(2), own_committed_steps=[0, 1, 2])
     report = verify_replay(log, make_config_doc())
-    assert report.verdict == ReplayVerdict.VERIFIED_OK
-    assert report.coverage.live_binding is True
+    assert (report.verdict, report.coverage.live_binding) == (ReplayVerdict.VERIFIED_OK, True)
 
 
 def test_live_binding_false_when_only_one_half_supplied() -> None:
@@ -189,12 +182,29 @@ def test_live_binding_false_when_only_one_half_supplied() -> None:
     opp = honest_steps(1, sender="police", intent="chase", start=(0, 0))
     log = make_log_doc(own, opp, own_committed_steps=[0, 1, 2])
     report = verify_replay(log, make_config_doc())
-    assert report.verdict == ReplayVerdict.VERIFIED_OK
-    assert report.coverage.live_binding is False
+    assert (report.verdict, report.coverage.live_binding) == (ReplayVerdict.VERIFIED_OK, False)
 
 
 def test_withheld_reveal_precedence_over_physics() -> None:
     own = off_board(honest_steps(3))
     log = make_log_doc(own, own_committed_steps=[0, 1, 2, 3, 4])
-    report = verify_replay(log, make_config_doc())
+    assert verdict_of(log) == ReplayVerdict.TAMPERED
+
+
+# A *middle* step withheld (not trailing) breaks decode_half's contiguity check first; the
+# committed ledger must still reclassify it as TAMPERED, not INVALID (ADR-008).
+def test_middle_withheld_reveal_tampered() -> None:
+    report = verify_replay(middle_gap_log_doc(), make_config_doc())
     assert report.verdict == ReplayVerdict.TAMPERED
+    withheld = [i for i in report.issues if i.code == "withheld_reveal"]
+    assert withheld and withheld[0].step == 4 and withheld[0].half == "own"
+
+
+def test_middle_gap_without_ledger_stays_invalid() -> None:
+    report = verify_replay(middle_gap_log_doc(committed=False), make_config_doc())
+    assert report.verdict == ReplayVerdict.INVALID
+    assert any(i.code == "skipped_step" for i in report.issues)
+
+
+def test_middle_withheld_reveal_beats_physics_violation() -> None:
+    assert verdict_of(middle_gap_log_doc(mutate=off_board)) == ReplayVerdict.TAMPERED

@@ -102,6 +102,16 @@ def decode_half(raw_records: object, half: str) -> tuple[list[SealedRecord], lis
     return records, _check_sequence(records, half)
 
 
+def missing_steps(records: list[SealedRecord]) -> list[int]:
+    """Steps absent from a contiguous 0..len(unique steps)-1 run, sorted ascending.
+
+    Exposed separately from ``_check_sequence`` so a caller (``verify_replay``) can test a
+    contiguity gap against a committed-steps ledger without parsing an issue message.
+    """
+    seen = {r.step for r in records}
+    return sorted(set(range(len(seen))) - seen)
+
+
 def _check_sequence(records: list[SealedRecord], half: str) -> list[ReplayIssue]:
     """Steps must be unique, strictly increasing in list order, and contiguous from 0."""
     issues: list[ReplayIssue] = []
@@ -115,7 +125,7 @@ def _check_sequence(records: list[SealedRecord], half: str) -> list[ReplayIssue]
             issues.append(ReplayIssue("out_of_order_step", msg, rec.step, half))
         seen.add(rec.step)
         prev = rec.step
-    missing = sorted(set(range(len(seen))) - seen)
+    missing = missing_steps(records)
     if missing:
         issues.append(ReplayIssue("skipped_step", f"missing step(s) {missing}", half=half))
     return issues

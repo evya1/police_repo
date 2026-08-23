@@ -14,7 +14,8 @@ import re
 from common.domain.board import Board
 from common.domain.scoring import Role
 from common.transport.audit_physics import _parse_position
-from common.transport.replay_types import ReplayIssue
+from common.transport.replay_records import missing_steps
+from common.transport.replay_types import ReplayIssue, SealedRecord
 
 _BARRIERS_RE = re.compile(r"barriers=\[(.*)\]")
 _CELL_RE = re.compile(r"\[(\d+),\s*(\d+)\]")
@@ -66,6 +67,24 @@ def _outcome_issues(flat: list[dict], terms: dict, half: str) -> list[ReplayIssu
                 msg = f"capture claim invalid for role={role} at step {step}"
                 issues.append(ReplayIssue("invalid_capture_claim", msg, step, half))
     return issues
+
+
+def _gap_is_withheld(
+    decode_issues: list[ReplayIssue], sealed: list[SealedRecord], committed: list[int] | None
+) -> bool:
+    """True when a decode-time sequence gap is fully explained by the committed-steps ledger.
+
+    A missing record is malformed evidence (INVALID) only when nothing proves it was ever
+    committed. When the ledger lists a step absent from the half's records, the gap is a
+    withheld reveal instead — TAMPERED, not INVALID (ADR-008; mirrors audit.py's
+    ``tampered_steps``). Any other decode issue (bad type, duplicate/out-of-order step, mixed
+    shape, …) still forces INVALID unconditionally: only a clean contiguity gap is reinterpreted,
+    and only when a ledger is actually supplied to prove it against.
+    """
+    if committed is None or any(i.code != "skipped_step" for i in decode_issues):
+        return False
+    gap = missing_steps(sealed)
+    return bool(gap) and set(gap) <= set(committed)
 
 
 def _withheld_issues(committed: list[int] | None, revealed: set[int], half: str) -> list[ReplayIssue]:

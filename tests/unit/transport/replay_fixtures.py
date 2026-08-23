@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from common.transport.canonical import commit as hash_commit
 from common.transport.integrity import new_nonce
+from common.transport.replay import verify_replay
 
 GAME_ID = "A-vs-B"
 GAME_UID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -89,6 +90,25 @@ def make_log_doc(
     if opp is not None:
         doc["opponent_records"] = opp
     return doc
+
+
+def verdict_of(log: dict, cfg: dict | None = None):
+    """Run verify_replay and return just the verdict — keeps verdict-only tests to one line."""
+    return verify_replay(log, cfg if cfg is not None else make_config_doc()).verdict
+
+
+def drop_step(steps: list[dict], step: int) -> list[dict]:
+    """Remove the record for ``step`` from an honest sequence — simulates a withheld reveal."""
+    return [r for r in steps if r.get("step") != step]
+
+
+def middle_gap_log_doc(committed: bool = True, mutate=None) -> dict:
+    """A 7-step own half with step 4 dropped mid-sequence; committed ledger/mutation optional."""
+    own = drop_step(honest_steps(6), 4)
+    if mutate is not None:
+        own = mutate(own)
+    kwargs = {"own_committed_steps": list(range(7))} if committed else {}
+    return make_log_doc(own, **kwargs)
 
 
 def steps_with_step_values(step_values: list[int]) -> list[dict]:

@@ -14,7 +14,7 @@ import json
 
 from common.transport.audit_physics import check_physics
 from common.transport.canonical import verify_commit
-from common.transport.replay_layers import _outcome_issues, _withheld_issues
+from common.transport.replay_layers import _gap_is_withheld, _outcome_issues, _withheld_issues
 from common.transport.replay_records import decode_half, is_foreign_record
 from common.transport.replay_types import (
     ReplayIssue,
@@ -80,10 +80,10 @@ def verify_replay(log_doc: dict, config_doc: dict) -> ReplayReport:
 
     sealed_by_half = {}
     checked = 0
-    for half, raw, _committed in halves:
+    for half, raw, committed in halves:
         sealed, decode_issues = decode_half(raw, half)
         checked += len(sealed)
-        if decode_issues:
+        if decode_issues and not _gap_is_withheld(decode_issues, sealed, committed):
             return _report(ReplayVerdict.INVALID, _NO_COVERAGE, checked, decode_issues)
         sealed_by_half[half] = sealed
 

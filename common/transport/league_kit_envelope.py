@@ -21,6 +21,10 @@ from dataclasses import dataclass
 from typing import Literal
 
 from common.domain.board import Board
+
+# One definition of the strict position parser, in the leaf module that walks the trail;
+# re-exported here because it is part of this adapter's published surface.
+from common.transport.audit_physics import parse_kit_position  # noqa: F401
 from common.transport.replay import verify_replay
 from common.transport.replay_types import ReplayIssue, ReplayReport, ReplayVerdict
 
@@ -76,19 +80,6 @@ def terminal_step_delta_ok(prev: tuple[int, int] | None, curr: tuple[int, int] |
     if prev is None or curr is None:
         return True
     return abs(curr[0] - prev[0]) + abs(curr[1] - prev[1]) <= 1
-
-
-def parse_kit_position(payload: dict) -> tuple[int, int] | None:
-    """Strictly parse a kit-style `position: [r, c]`. Anything else degrades to None --
-    never a loose parse that could mis-read a malformed payload into the wrong cell."""
-    pos = payload.get("position") if isinstance(payload, dict) else None
-    if (
-        isinstance(pos, (list, tuple))
-        and len(pos) == 2
-        and all(isinstance(v, int) and not isinstance(v, bool) for v in pos)
-    ):
-        return (int(pos[0]), int(pos[1]))
-    return None
 
 
 CaptureKind = Literal["answer", "concession"]

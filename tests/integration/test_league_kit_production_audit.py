@@ -40,12 +40,40 @@ def test_kit_mode_sender_is_the_role_not_the_group_id() -> None:
     assert all(a["sender"] in {"police", "thief"} for a in sent)
 
 
-def test_internal_mode_audit_shape_is_unchanged() -> None:
-    """The default lane must keep T046/T047 bytes exactly: internal `nonces` stays, and the
-    kit's `sender` must not leak onto it."""
+def test_sender_is_present_at_both_levels_an_unconfigured_peer_sends() -> None:
+    """`sender` must ride the default audit twice over, and both are load-bearing.
+
+    1. The kit's ``AuditPayload`` declares ``sender`` a REQUIRED positional field, so a
+       top-level audit without it makes the opponent raise
+       ``TypeError: AuditPayload.__init__() missing 1 required positional argument:
+       'sender'`` and stop answering — which reaches us as a turn timeout.
+    2. Every sealed record carries its own ``sender`` INSIDE the committed payload
+       (``turnseal.seal_turn``), so it is part of the commitment the opponent re-hashes;
+       it cannot be edited on the wire without failing the audit.
+
+    This runs with NO wire_profile, so it pins the default lane, not an opt-in one.
+    """
     ch_a, ch_b = pair("A", "B")
     sent = spy_audits(ch_a)
     run_pair_on(ch_a, ch_b, "A", "B")
+
+    assert sent, "production never sent an audit"
+    for audit in sent:
+        assert audit["sender"] in {"police", "thief"}, audit["sender"]
+        for record in audit["records"]:
+            assert record["payload"]["sender"] == audit["sender"], record["payload"]
+
+
+def test_internal_mode_audit_shape_is_unchanged() -> None:
+    """The `internal` lane must keep T046/T047 bytes exactly: internal `nonces` stays, and
+    the kit's `sender` must not leak onto it.
+
+    It is now the opt-in lane rather than the default, so it is named explicitly here — but
+    its bytes are unchanged, which is the whole point of this test.
+    """
+    ch_a, ch_b = pair("A", "B")
+    sent = spy_audits(ch_a)
+    run_pair_on(ch_a, ch_b, "A", "B", wire_profile="internal")
 
     assert sent
     for audit in sent:

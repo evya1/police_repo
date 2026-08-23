@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 
 from common.domain.scoring import Role
-from common.transport.audit_wire import AUDIT_WIRE_PROFILES
+from common.transport.audit_wire import AUDIT_WIRE_PROFILES, DEFAULT_WIRE_PROFILE
 from police_peer.runner import run_one_peer
 
 
@@ -31,10 +31,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--turn-timeout", type=float, default=30.0, help="Turn response timeout")
     parser.add_argument(
         "--wire-profile",
-        default=None,
+        default=DEFAULT_WIRE_PROFILE,
         choices=sorted(AUDIT_WIRE_PROFILES),
-        help="Audit wire profile for the opponent (default: internal). Use "
-             "'reference-v3' against a copthief-league-protocol peer.",
+        help=f"Audit wire profile for the opponent (default: {DEFAULT_WIRE_PROFILE}, the "
+             "pinned copthief-league-protocol lane). Pass 'internal' only for a peer that "
+             "speaks this project's own flat audit shape.",
     )
     return parser
 

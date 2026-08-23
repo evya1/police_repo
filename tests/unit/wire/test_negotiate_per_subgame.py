@@ -185,7 +185,12 @@ def test_no_cross_subgame_state_leak_after_a_tampered_subgame() -> None:
         if call_count["n"] == 2 and len(payload.get("records", [])) > 1:  # sub-game 2's audit
             payload = dict(payload)
             records = list(payload["records"])
-            records[-1] = dict(records[-1], move="MOVE:TAMPERED-BY-TEST")
+            # Corrupt the COMMITTED bytes. On the default (`reference-v3`) lane those live
+            # nested under `payload`; a top-level `move` would only add a stray sibling of
+            # `payload` that the verifier rightly ignores, leaving the record re-hashing
+            # clean and this test passing for the wrong reason. If the default ever moves
+            # back to a flat lane this raises KeyError -- loudly, which is the point.
+            records[-1] = dict(records[-1], payload=dict(records[-1]["payload"], move="X"))
             payload["records"] = records
         return original_send_audit(payload)
 

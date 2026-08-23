@@ -17,12 +17,13 @@ from police_peer import runner
 from police_peer.cli import build_parser, main
 
 
-def test_wire_profile_defaults_to_none_so_behaviour_is_unchanged() -> None:
-    assert build_parser().parse_args([]).wire_profile is None
+def test_wire_profile_defaults_to_the_kit_lane() -> None:
+    """The league IS the pinned kit, so an unconfigured peer must already speak its wire."""
+    assert build_parser().parse_args([]).wire_profile == "reference-v3"
 
 
-def test_wire_profile_accepts_the_kit_lane() -> None:
-    assert build_parser().parse_args(["--wire-profile", "reference-v3"]).wire_profile == "reference-v3"
+def test_the_internal_lane_stays_reachable_for_a_non_kit_peer() -> None:
+    assert build_parser().parse_args(["--wire-profile", "internal"]).wire_profile == "internal"
 
 
 def test_unknown_wire_profile_is_refused_at_the_command_line() -> None:
@@ -62,6 +63,18 @@ def test_the_kit_profile_resolves_to_the_kit_adapter() -> None:
     from common.transport.audit_wire import resolve_audit_wire
 
     assert isinstance(resolve_audit_wire("reference-v3"), KitAuditWire)
+
+
+def test_an_unconfigured_peer_resolves_to_the_kit_adapter() -> None:
+    """The flipped default, at the seam that decides it: `None` must mean the kit lane.
+
+    `play_subgame`'s own `audit_wire=None` fallback reads the same constant, so a direct
+    caller that bypasses the CLI cannot drift onto a different default.
+    """
+    from common.transport.audit_wire import default_audit_wire, resolve_audit_wire
+
+    assert isinstance(resolve_audit_wire(None), KitAuditWire)
+    assert isinstance(default_audit_wire(), KitAuditWire)
 
 
 class _StubChannel:

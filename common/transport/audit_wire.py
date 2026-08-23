@@ -9,11 +9,17 @@ which adapter that is.
 
 Two implementations, one port:
 
-* :class:`IdentityAuditWire` -- the default internal lane. Byte-for-byte what T046/T047
+* :class:`KitAuditWire` -- the ``reference-v3`` lane, and the DEFAULT
+  (``DEFAULT_WIRE_PROFILE``). Top level is exactly ``sender`` / ``records`` /
+  ``result_claim``; each record nests the *exact* payload that was already committed.
+* :class:`IdentityAuditWire` -- the opt-in ``internal`` lane. Byte-for-byte what T046/T047
   already publish; the kit's ``sender`` never leaks onto it.
-* :class:`KitAuditWire` -- the ``reference-v3`` lane. Top level is exactly ``sender`` /
-  ``records`` / ``result_claim``; each record nests the *exact* payload that was already
-  committed.
+
+The default is the kit lane because the league IS the pinned kit: an opponent speaking
+``reference-v3`` that receives a flat internal audit verifies zero records and settles
+``tamper_forfeit``, which App. E rule 35 zeroes for BOTH teams. A wrong default that costs
+both sides the game is worse than one that costs a sibling-vs-sibling run its wire shape,
+and both siblings default the same way, so they still agree with each other.
 
 Neither adapter hashes anything. Outbound wraps a payload that is already sealed, so there
 is still exactly one commitment authority; inbound normalizes *before* the existing
@@ -112,16 +118,25 @@ AUDIT_WIRE_PROFILES: dict[str, AuditWireAdapter] = {
     "reference-v3": KitAuditWire(),
 }
 
+#: The lane an unconfigured peer speaks. ONE default, named here and nowhere else, so the
+#: composition root and any direct ``play_subgame`` caller cannot drift apart.
+DEFAULT_WIRE_PROFILE = "reference-v3"
+
+
+def default_audit_wire() -> AuditWireAdapter:
+    """The adapter an unconfigured caller gets. Never inline ``IdentityAuditWire()``."""
+    return AUDIT_WIRE_PROFILES[DEFAULT_WIRE_PROFILE]
+
 
 def resolve_audit_wire(profile: str | None) -> AuditWireAdapter:
     """Resolve a configured wire profile, or refuse an unknown one at startup.
 
     Failing here -- at composition, before a game exists -- is the whole point: an
-    unrecognized profile that silently fell back to the internal lane would look like a
+    unrecognized profile that silently fell back to some other lane would look like a
     working peer and produce an unreadable audit for the opponent.
     """
     if profile is None:
-        return AUDIT_WIRE_PROFILES["internal"]
+        return default_audit_wire()
     try:
         return AUDIT_WIRE_PROFILES[profile]
     except KeyError:

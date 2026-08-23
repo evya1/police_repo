@@ -8,7 +8,6 @@ tail of a finished sub-game never enters the next one's reorder window (rule 35)
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 
 from common.transport.inbox import Inbox
 from common.transport.refusals import Refused
@@ -68,29 +67,6 @@ def wait_for_step(
             return
         time.sleep(budgets.poll_interval)
     raise TimeoutError(f"timed out waiting for opponent turn {step}")
-
-
-def wait_for_reveal(
-    channel, inbox: Inbox, applied: dict[int, dict], step: int, budgets, board_size: int,
-    settled: Callable[[], object] | None = None,
-) -> bool:
-    """Wait for the opponent's `step`; return False when a settled peer owes nothing more.
-
-    ``settled`` is consulted ONLY after the deadline has passed, and only where the caller
-    knows a mirror step may never be owed: SPEC 3.1 lets two peers' ledgers differ by
-    exactly one terminal step, so a thief whose own step already reached the survival
-    threshold finishes without a police step of the same number. Everywhere else
-    (``settled=None``, the default, which is a plain strict wait), and wherever our own
-    state does NOT settle the sub-game, the opponent has simply gone silent and the
-    ``TimeoutError`` stands.
-    """
-    try:
-        wait_for_step(channel, inbox, applied, step, budgets, board_size)
-    except TimeoutError:
-        if settled is None or settled() is None:
-            raise
-        return False
-    return True
 
 
 def wait_audit(channel, budgets) -> dict | None:

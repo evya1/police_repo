@@ -16,7 +16,7 @@ from collections.abc import Callable
 
 from common.domain.scoring import Outcome, Role, role_for, score_for, settled_outcome
 from common.transport.audit import audit_records
-from common.transport.audit_wire import AuditWireAdapter, IdentityAuditWire
+from common.transport.audit_wire import AuditWireAdapter, default_audit_wire
 from common.transport.inbox import Inbox
 from common.transport.replay_evidence import SubgameReplayEvidence, capture_subgame_evidence
 from common.transport.series import PeerConfig, SeriesRow, TurnEngine
@@ -24,7 +24,7 @@ from common.transport.state import PeerState, PeerStateMachine
 from common.transport.turnfeed import (
     reconcile_subgame_boundary,
     wait_audit,
-    wait_for_reveal,
+    wait_for_step,
 )
 from common.transport.turnseal import audit_payload, seal_turn, settle_final
 
@@ -40,7 +40,7 @@ def play_subgame(
 ) -> SeriesRow:
     """Play one sub-game: strict thief-first alternation, mutual audit."""
     terms = config.terms or {}
-    wire = audit_wire if audit_wire is not None else IdentityAuditWire()
+    wire = audit_wire if audit_wire is not None else default_audit_wire()
     max_steps = int(terms.get("max_steps", 35))
     survival_threshold = int(terms.get("survival_threshold", max_steps))
     max_moves = int(terms.get("max_moves", max_steps))
@@ -66,7 +66,7 @@ def play_subgame(
 
     if not is_thief:
         # Police honours thief-first (FR-18): hold thief's first move before sending own
-        wait_for_reveal(channel, inbox, applied, 1, config.budgets, board_size)
+        wait_for_step(channel, inbox, applied, 1, config.budgets, board_size)
 
     flush = getattr(channel, "flush", None)
     terminal: Outcome | None = None
@@ -82,14 +82,20 @@ def play_subgame(
         if flush is not None:
             flush()
 
-        machine.to(PeerState.AWAITING_REVEAL)
-        # On the thief's FINAL lap the police settles from our own threshold-reaching
-        # step and owes no step of that number back (SPEC 3.1's one-step ledger
-        # tolerance); anywhere else a missing reveal is still a hard fault.
-        if not wait_for_reveal(channel, inbox, applied, lap, config.budgets, board_size,
-                               engine.terminal if is_thief and lap == max_steps else None):
-            terminal = engine.terminal()
+        # The THIEF's game can end on the move it just applied, and only it knows:
+        # the survival threshold crossed, a barrier on its own cell or no legal move
+        # (rules 46/47), or an answered cop claim. In every one the referee settles
+        # on what it just received and owes NO same-numbered reply — the reference's
+        # settling POLICE sends no terminal turn (``netplay._play_one`` ->
+        # ``terminal_message`` is nil without a concession/answer/survival). Waiting
+        # for an orphaned next opponent turn deadlocks a sub-game the thief already
+        # won, so settle here on our own knowledge, before the wait.
+        if is_thief and (terminal := engine.terminal()) is not None:
+            settle_final(channel, machine, engine, role, is_thief, lap + 1, our_records, flush)
             break
+
+        machine.to(PeerState.AWAITING_REVEAL)
+        wait_for_step(channel, inbox, applied, lap, config.budgets, board_size)
 
         machine.to(PeerState.VERIFYING)
         _observe_once(applied, applied_seen, engine, lap)
@@ -108,7 +114,7 @@ def play_subgame(
         # A terminal arriving there settles with a sealed STAY (step lap+1) so both
         # ledgers record the same final step; the thief was still owed that step.
         if not is_thief and lap < max_steps:
-            wait_for_reveal(channel, inbox, applied, lap + 1, config.budgets, board_size)
+            wait_for_step(channel, inbox, applied, lap + 1, config.budgets, board_size)
             _observe_once(applied, applied_seen, engine, lap + 1)
             terminal = engine.terminal()
             if terminal is not None:
@@ -119,7 +125,7 @@ def play_subgame(
         # A thief captured on the FINAL lap owes the max_steps+1 concession; a silent
         # thief stays TECHNICAL_LOSS. The police never seals past the physics ceiling.
         try:
-            wait_for_reveal(channel, inbox, applied, max_steps + 1, config.budgets, board_size)
+            wait_for_step(channel, inbox, applied, max_steps + 1, config.budgets, board_size)
             _observe_once(applied, applied_seen, engine, max_steps + 1)
             terminal = engine.terminal()
         except TimeoutError:

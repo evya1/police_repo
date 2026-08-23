@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from common.domain.scoring import Role
+from common.transport.audit_wire import AUDIT_WIRE_PROFILES
 from police_peer.runner import run_one_peer
 
 
@@ -28,6 +29,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0, help="Random seed")
     parser.add_argument("--connect-timeout", type=float, default=30.0, help="Peer connect timeout")
     parser.add_argument("--turn-timeout", type=float, default=30.0, help="Turn response timeout")
+    parser.add_argument(
+        "--wire-profile",
+        default=None,
+        choices=sorted(AUDIT_WIRE_PROFILES),
+        help="Audit wire profile for the opponent (default: internal). Use "
+             "'reference-v3' against a copthief-league-protocol peer.",
+    )
     return parser
 
 
@@ -48,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
         role=Role.POLICE,
         connect_timeout=args.connect_timeout,
         turn_timeout=args.turn_timeout,
+        wire_profile=args.wire_profile,
     )
 
 

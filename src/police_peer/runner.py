@@ -70,6 +70,7 @@ def run_one_peer(
     connect_timeout: float = 30.0,
     turn_timeout: float = 30.0,
     poll_interval: float = 0.01,
+    wire_profile: str | None = None,
 ) -> int:
     """Run one independent peer process: serve MCP, dial peer, run 6 subgames."""
     inboxes = Inboxes()
@@ -115,6 +116,7 @@ def run_one_peer(
             group_id=group_id,
             budgets=budgets,
             mode=mode,
+            wire_profile=wire_profile,
         )
 
         result = facade.run()

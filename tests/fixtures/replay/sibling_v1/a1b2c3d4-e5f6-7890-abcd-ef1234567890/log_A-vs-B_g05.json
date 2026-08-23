@@ -1,0 +1,48 @@
+{
+  "artifact_kind": "log",
+  "game_id": "A-vs-B",
+  "game_uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "opponent_committed_steps": [],
+  "records": [
+    {
+      "commit": "e7da73cf02ac6be04783e3ae8e8899ba0df17c82ed00a29d8dbec6e1401a02ac",
+      "intent": "declare",
+      "nonce": "8c5d1a0d44a9b34aa78f2b0c4e9c9ab9",
+      "sender": "thief",
+      "step": 0
+    },
+    {
+      "commit": "1a7c14fc41d347c981bef9330c5abf671740cb9f07ec95efbefee0644376e01c",
+      "hint": "hint",
+      "intent": "evade",
+      "move": "MOVE:S",
+      "nonce": "00e5455ff97d0c7b8ded71fc5f4a45bd",
+      "sender": "thief",
+      "state": "grid=7x7;self=[4, 3];barriers=[]",
+      "step": 1
+    },
+    {
+      "commit": "0223291262a6434a2fad822198230167d8084e87129a8eecd34da8d29b19822e",
+      "hint": "hint",
+      "intent": "evade",
+      "move": "MOVE:E",
+      "nonce": "8baeec3d7e416283e703370759a15d64",
+      "sender": "thief",
+      "state": "grid=7x7;self=[4, 4];barriers=[]",
+      "step": 2
+    },
+    {
+      "commit": "de5fbc995a854a287606d7d67c7529f70971aa0623c6fba00cd7a49ab5ce813e",
+      "hint": "hint",
+      "intent": "evade",
+      "move": "MOVE:S",
+      "nonce": "997c349e46678afa0959e39fd2a7e221",
+      "sender": "thief",
+      "state": "grid=7x7;self=[5, 4];barriers=[]",
+      "step": 3
+    }
+  ],
+  "schema_status": "internal_interop",
+  "schema_version": "internal-interop-1",
+  "sub_game_index": 5
+}

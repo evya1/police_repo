@@ -1,0 +1,14 @@
+{
+  "artifact_kind": "config",
+  "game_id": "A-vs-B",
+  "game_uid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "schema_status": "internal_interop",
+  "schema_version": "internal-interop-1",
+  "sub_game_index": 5,
+  "terms": {
+    "barriers_max": 14,
+    "board_size": 7,
+    "max_steps": 35,
+    "survival_threshold": 20
+  }
+}

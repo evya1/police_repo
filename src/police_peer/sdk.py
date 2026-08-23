@@ -9,6 +9,8 @@ from common.config import ConfigError, load_config, validate_config
 from common.domain.scoring import Role
 from common.transport.loopback import pair
 from common.transport.series import PeerConfig, PeerFacade, SeriesResult
+from police_peer.replay_service import BundleReplayReport
+from police_peer.replay_service import verify_bundle as _verify_replay_bundle
 from police_peer.strategy import Strategy
 from police_peer.wire import BrainDrivenEngine, StandInEngine
 from police_peer.wire.config import (
@@ -26,12 +28,21 @@ SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.0", "1.1", "1.2"})
 
 __all__ = [
     "Budgets",
+    "BundleReplayReport",
     "PeerFacade",
     "SeriesResult",
     "create_peer",
     "validate_startup_config",
+    "verify_replay_bundle",
     "__version__",
 ]
+
+
+def verify_replay_bundle(path: str | Path) -> BundleReplayReport:
+    """Load and verify one published replay bundle (T047). The sole application entrypoint
+    for replay verification — CLI/GUI adapters call only this, never the service module.
+    """
+    return _verify_replay_bundle(path)
 
 
 def validate_startup_config(raw_config: dict[str, Any]) -> None:

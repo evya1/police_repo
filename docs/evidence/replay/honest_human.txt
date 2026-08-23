@@ -1,0 +1,11 @@
+$ uv run python scripts/replay.py <honest-bundle-dir>
+bundle a1b2c3d4-e5f6-7890-abcd-ef1234567890 (A-vs-B): VERIFIED_OK
+coverage: integrity=True, live_binding=False, physics=True, outcome=True, bundle_digests=True, external_authenticity=False
+NOTE: unanchored bundle — never reported as externally authentic.
+  sub_game 1: verified_ok
+  sub_game 2: verified_ok
+  sub_game 3: verified_ok
+  sub_game 4: verified_ok
+  sub_game 5: verified_ok
+  sub_game 6: verified_ok
+exit code: 0

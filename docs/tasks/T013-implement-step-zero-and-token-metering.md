@@ -1,6 +1,6 @@
 ---
 id: T013
-status: blocked
+status: in_review
 priority: P0
 task_type: component
 component: C03
@@ -105,3 +105,56 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+**Status: `implementation_present` / `in_review`, not `done`.** The evidence package itself is
+complete and independently tested; it is not yet wired to the two integration points the
+acceptance criteria require, and those points are intentionally owned by later tasks:
+
+- The signed Step-0 declaration's *signing seam* (`build_signed_step_zero`) is implemented,
+  fails closed for counted play with no signer/code_revision/config_digest, and is fully
+  tested — but no composition root yet supplies a real signer or invokes it before the first
+  move. That wiring belongs to **T051** (composition root) and is gated on **INPUT-003**
+  (`step_zero_key`): no course-supplied signing credential has been observed, so there is
+  still no real signer to inject in production. The acceptance criterion "collected and signed
+  before the first move ... once provisioned" therefore stays open on the `step_zero_key`
+  criterion gate, exactly as the task's own `gates:` entry states — this was never expected to
+  close before a credential exists.
+- The token ledger (`TokenLedger`, `event_from_hint_result`) is implemented and independently
+  tested for all twelve required accounting cases (see `tests/unit/evidence/test_tokens.py`,
+  `test_token_ledger.py`) — but nothing yet calls `event_from_hint_result` from the real
+  per-turn `BrainBase.decide()` path, and nothing yet projects `TokenLedger.as_dict()` into
+  `reporting/schemas.py`'s `SeriesResult.total_llm_tokens_per_series` /
+  `total_llm_tokens_per_sub_game` fields (which exist but are currently always `0`/`{}`). That
+  wiring is **T051**'s (per-turn recording) and **T055**'s (artifact projection) job, not this
+  task's write set (`src/police_peer/evidence/`, `tests/unit/evidence/` only).
+
+No claim of a completed signing or artifact-projection integration is made here. What T013
+does deliver, independently verified:
+
+- `src/police_peer/evidence/tokens.py`, `token_ledger.py` — `UsageStatus` (`known_zero` /
+  `known_nonzero` / `unknown`), validated `TokenEvent`, `event_from_hint_result` (consumes the
+  existing T027 `HintResult`/`TokenUsage` boundary directly — no competing provider type),
+  append-only idempotent `TokenLedger` with per-sub-game/per-series/warmup-vs-counted
+  aggregation, `assert_counted_eligible`.
+- `src/police_peer/evidence/step_zero.py`, `runtime_summary.py` — `StepZeroDeclaration`,
+  `build_signed_step_zero` (fails closed via `MissingCodeRevisionError` /
+  `MissingConfigDigestError` / `MissingSigningCredentialError`), `verify_signed_step_zero`,
+  `collect_runtime_summary` (secret-free: no hostname, username, path, or env value).
+- Files changed: 4 new source modules + `__init__.py`, 3 new test modules + 1 shared fixture
+  module, all under the declared write set.
+- Tests: `uv run pytest tests/unit/evidence -q` → 41 passed, 0 failed.
+- `uv run ruff check src/police_peer/evidence tests/unit/evidence` → clean.
+- `uv run python scripts/check_line_cap.py` → 282 files within 150 logical lines (5 baselined,
+  unchanged from before this task — no new baseline entries; `step_zero.py`/`tokens.py` were
+  split into 4 focused modules to stay under the cap rather than baselined).
+- `git diff --check` → clean.
+
+**Newly discovered work:** none beyond what T051/T055 already own per the execution graph.
+
+**Deviations:** none from the task packet's design; the module was split into
+`tokens.py`/`token_ledger.py` and `step_zero.py`/`runtime_summary.py` purely to satisfy the
+150-line ratchet — no behavioral change from a single-file design.
+
+**Blockers:** INPUT-003 (no course-supplied Step-0 signing credential observed) blocks the
+`step_zero_key` acceptance criterion specifically, not this task's implementation. (orchestrator,
+2026-08-23)

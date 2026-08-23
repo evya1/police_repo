@@ -41,7 +41,7 @@ A task is never marked `done` because code exists. `implementation_present` and 
 | T010 | C04 | integration | blocked | not_started | P0 | ARCH-004, ARCH-005, ARCH-006 | T004, T005, T008, T009 | yes | — | [task](tasks/T010-implement-orchestrator-state-machine.md) |
 | T011 | C04 | component | blocked | not_started | P0 | ARCH-008, NET-005, CFG-007, CFG-008 | T010 | yes | — | [task](tasks/T011-implement-deadlines-retry-and-watchdog.md) |
 | T012 | C03 | component | blocked | implementation_present | P1 | NET-005, SEC-002, SEC-005 | T009, T010 | yes | — | [task](tasks/T012-implement-inbound-delivery-safety.md) |
-| T013 | C03 | component | blocked | not_started | P0 | SEC-008, SEC-009, LEAGUE-007, QR-018 | T008, T010, T027 | yes | — | [task](tasks/T013-implement-step-zero-and-token-metering.md) |
+| T013 | C03 | component | in_review | implementation_present | P0 | SEC-008, SEC-009, LEAGUE-007, QR-018 | T008, T010, T027 | yes | — | [task](tasks/T013-implement-step-zero-and-token-metering.md) |
 | T014 | C05 | component | blocked | not_started | P0 | OBS-001, OBS-002, OBS-003, OBS-004, QR-017 | T006, T010 | yes | — | [task](tasks/T014-implement-live-gui.md) |
 | T015 | C05 | component | blocked | not_started | P0 | OBS-005, OBS-006, SEC-005, SEC-006 | T008, T010, T014, T047 | yes | — | [task](tasks/T015-implement-replay-and-audit-view.md) |
 | T016 | C06 | component | blocked | not_started | P0 | CFG-009, CFG-010, REPORT-005, REPORT-006, REPORT-007, REPORT-008, REPORT-009 | — | yes | — | [task](tasks/T016-adopt-official-report-artifact-schemas.md) |

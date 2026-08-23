@@ -1,6 +1,17 @@
 # P2P Police Peer
 
-> **Status:** the C01 foundation is implemented on the integration branch — shared domain rules, board geometry, movement/barrier/capture legality, the fixed scoring table, and the configuration boundary, with unit tests. Everything above C01 is not started. No screenshots, benchmarks, league results, or completed-series evidence exist yet. Per-task state is in `docs/TODO.md`.
+> **Status** (verified against branch `claude/replay-llm-completion-20260823`, evidence-based, not
+> a claim of full project completion): the C01 foundation (domain, scent/belief, configuration),
+> C02 role strategy, C03 FastMCP transport/Commit-Reveal integrity, C04 orchestration/reliability,
+> the headless Replay verifier and its internal-interop bundle/SDK/CLI (T033/T034/T046/T047), the
+> central external-service Gatekeeper with reporting/llm lane reservation (T048), and the
+> deterministic LLM hint boundary (T027) are implemented and tested. Not yet done: the
+> provider-neutral/vendor LLM adapter and full LLM composition (T049/T013/T051), the selected-vendor
+> LLM client (T050, blocked on `PLANQ-003`), league-kit protocol/lifecycle compatibility and its
+> artifact projection (T052/T053) and the four live external kit runs under T022, official
+> submission-schema compliance (blocked on `INPUT-001`/T016), a real GUI, real Replay/GUI
+> screenshots, any counted external match, live Gmail-send evidence, and the `v1.0-submission` tag.
+> No screenshot, benchmark, or league result exists yet. Per-task state is in `docs/TODO.md`.
 
 This repository implements the autonomous Police side of a two-peer Police/Thief system. It owns only its local truth and communicates with the sibling peer through FastMCP/MCP. The shared intent is in `docs/PRD.md`; the role-specific strategy is in `docs/PLAN.md`; execution state lives in `docs/TODO.md` and individual task files.
 
@@ -37,29 +48,47 @@ Conflicts stop work and go to the orchestrator. Workers do not silently update t
 
 The architecture separates domain rules, scent/belief, police strategy, orchestration/state, FastMCP transport, integrity/audit, reliability, reporting, and GUI/Replay, exposing business behavior through one thin programmatic facade. See `docs/PLAN.md` for the boundaries and the target tree; a path in that tree is not an implementation-status claim.
 
-Implemented on the integration branch: shared domain and configuration modules under `common/`, the role re-export surface under `src/police_peer/domain/`, and the shared game contract at `config/game.json`. The programmatic facade, transport, integrity, orchestration, observability, and reporting layers are not started.
+Implemented on this branch: shared domain and configuration modules under `common/`; the role
+strategy under `src/police_peer/strategy/`; the FastMCP transport and Commit-Reveal integrity
+core; the orchestrator state machine and reliability layer; the headless Replay
+verifier/service/SDK/CLI (`src/police_peer/replay_service.py`, `police_peer.sdk.verify_replay_bundle`,
+`scripts/replay.py`) over the internal-interop bundle (`src/police_peer/reporting/replay_bundle.py`,
+`replay_documents.py`); the central `ExternalApiGatekeeper` with `reporting`/`llm` lane reservation
+(`src/police_peer/infra/`); and the deterministic, privacy-bounded LLM hint plan (T027). Not yet
+implemented: the real-time Live GUI, the provider-neutral/selected-vendor LLM adapter and full
+composition (T049/T013/T051/T050), and league-kit protocol compatibility (T052/T053, see
+`docs/decisions/ADR-011-league-kit-interoperability-boundary.md`).
 
 ## Installation
 
-Prerequisite: a compatible `uv` installation.
-
-```sh
-uv sync --all-groups
-```
-
-The runtime baseline is recorded as PLANQ-002 in `docs/spec/OPEN_QUESTIONS.md`: Python 3.12 as the CI baseline over a declared `>=3.12` range, FastMCP as a direct runtime dependency at `fastmcp>=3.4,<4`, and the existing test/quality tooling. T002 executes that baseline and commits the validated `uv.lock`; once it lands, use:
+Prerequisite: a compatible `uv` installation. T002's validated `uv.lock` is committed; use:
 
 ```sh
 uv sync --locked --all-groups
 ```
 
-Do not install with `pip`, create a separate `requirements.txt`, or commit a provisional lock generated before T002 approval.
+Do not install with `pip`, create a separate `requirements.txt`, or commit a lock outside `uv`'s
+own resolution.
 
 ## Usage
 
-`TODO_BEFORE_SUBMISSION`: document the exact launcher, FastMCP endpoint, tunnel setup, warm-up/counted modes, GUI start, Replay command, controlled shutdown, and expected output only after those interfaces exist and have been verified.
+`TODO_BEFORE_SUBMISSION`: document the exact FastMCP launcher, tunnel setup, warm-up/counted mode
+switch, Live GUI start, and controlled shutdown once those interfaces exist and are verified.
 
-Planned programmatic entry: `police_peer.sdk` (final public names are owned by T003).
+**Replay (verified, works today).** `police_peer.sdk.verify_replay_bundle(path)` is the sole
+public entrypoint; `scripts/replay.py` is a thin CLI over it:
+
+```sh
+uv run python scripts/replay.py <bundle-dir>          # human-readable report
+uv run python scripts/replay.py <bundle-dir> --json    # machine-readable report
+```
+
+Exit codes: `0` verified, `4` illegal, `5` invalid or incomplete, `6` tampered, `2` path/usage
+error. A bundle directory has one `manifest_<game_uid>.json`, one `declaration_*`, six
+`config_*_g<NN>.json`, six `log_*_g<NN>.json`, and one `result_*.json` — `schema_status:
+internal_interop`, `external_authenticity=false`; this is not an official submission schema. See
+`docs/evidence/replay/README.md`, `scripts/smoke_replay_integration.py` (produces a bundle from a
+real settled series), and `scripts/check_replay_parity.py` (reciprocal cross-repo verification).
 
 ## Configuration
 
@@ -67,7 +96,11 @@ Planned programmatic entry: `police_peer.sdk` (final public names are owned by T
 - `config/game.toml`: private role-local choices; it cannot override or weaken a shared value.
 - `.env`: local secret-bearing environment only; never commit it.
 - `credentials.json` and `token.json`: local Gmail OAuth material; never commit them.
-- Optional language-model provider: T027 may implement a provider-neutral adapter only after PLANQ-003/PLANQ-004 approval. Template mode remains valid without a provider; any selected external provider uses the Gatekeeper and local secret configuration, with no credential variable predefined before selection.
+- Optional language-model hint boundary: T027's deterministic, privacy-bounded hint plan is
+  implemented (local wording only, `NON_CLAIM` makes no provider call). The provider-neutral
+  adapter that would let a real model render wording (T049), full composition (T051), and any
+  selected vendor (T050) are not yet implemented; T050 stays blocked on `PLANQ-003`. No credential
+  variable is predefined before a vendor is selected.
 
 See `config/README.md`. Official reporting templates and the remaining private/team values are still missing and must not be guessed.
 
@@ -109,7 +142,13 @@ uv run pytest
 uv run python scripts/run_quality_gates.py
 ```
 
-The quality configuration enforces Ruff zero, 85% global coverage, a 150 logical-code-line limit, required docs, task-ID/TODO consistency, local Markdown links, secret/archive protection, and least-privilege workflow permissions. The coverage gate currently measures `scripts/`; it extends to `src/` and `common/` as component tasks land tests there.
+The quality configuration enforces Ruff zero, 85% global coverage, required docs, task-ID/TODO
+consistency, local Markdown links, secret/archive protection, and least-privilege workflow
+permissions. The 150-logical-line cap now scans `src/` and `common/` as well as `tests/` and
+`scripts/` (T040 repaired the earlier `source_dirs = []` blind spot); a small pinned
+`[line_cap_baseline]` ratchet in `config/repo_quality.toml` names the historical files still over
+the cap — no new file may join that list, and each entry must exactly match the file's current
+line count.
 
 Verification proceeds as a ladder — deterministic unit and golden-vector tests, a local two-process protocol smoke test, a full practice series, artifact validation, network readiness, an uncounted external game, and only then a counted game. The stages, their owning tasks, and their gates are recorded in `docs/PLAN.md`.
 

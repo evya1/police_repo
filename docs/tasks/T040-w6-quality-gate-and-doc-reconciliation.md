@@ -81,7 +81,7 @@ Fix the governance/tooling-visible defects found during the 2026-08-22 governanc
 
 ## Acceptance criteria
 
-- [ ] `config/repo_quality.toml` has `source_dirs = ["src", "common"]`.
+- [x] `config/repo_quality.toml` has `source_dirs = ["src", "common"]`.
 - [ ] `scripts/check_planning_graph.py` reports 0 issues (including the `PS-01` dangling dependency).
 - [ ] The 6 over-limit files are each behavior-preservingly split under 150 logical lines (separate execution pass).
 - [ ] `scripts/check_planning_graph.py` runs as part of `scripts/run_quality_gates.py` or CI.
@@ -98,3 +98,57 @@ Fix the governance/tooling-visible defects found during the 2026-08-22 governanc
 Report files changed, tests executed, exact results, decisions, deviations, blockers.
 
 ## Result and evidence
+
+**Partial completion — line-cap ratchet only.** Not all of T040 is done; see remaining items below.
+
+`config/repo_quality.toml`'s `source_dirs = []` blind spot is repaired: `source_dirs = ["src", "common"]`,
+plus a `[line_cap_baseline]` ratchet table (`scripts/line_cap_ratchet.py`, split out of
+`scripts/check_line_cap.py` to respect the cap itself) so unscanned production debt cannot hide
+behind an empty `source_dirs` again, while genuinely pre-existing oversized files are not
+silently swept under the rug or compressed to fit.
+
+**Baseline, independently measured at this commit's HEAD** (`uv run python scripts/check_line_cap.py`
+against the full default scan of `src/`, `common/`, `tests/`, `scripts/`):
+
+| File | Logical lines |
+|---|---|
+| `src/police_peer/reporting/schemas.py` | 448 |
+| `common/config/__init__.py` | 278 |
+| `common/transport/negotiate.py` | 196 |
+| `common/transport/series.py` | 183 |
+| `src/police_peer/wire/session.py` | 173 |
+| `src/police_peer/league/preflight.py` | 165 |
+| `common/transport/audit.py` | 157 |
+
+**Ratchet semantics implemented and proven** (`tests/test_line_cap_ratchet.py`, 10 tests):
+an unlisted file over the cap fails; an exact baseline match passes; baseline+1 (drift upward)
+fails; a real reduction without lowering the baseline fails (must lower it in the same commit);
+a reduction to at-or-below the cap with a stale baseline entry left in place fails; removing the
+entry once at/below cap passes; a baseline entry naming a missing, wildcard, or directory-wide
+path fails; a non-integer baseline value is a config error; default (no explicit CLI paths)
+execution scans the configured `source_dirs` (`src` and `common`).
+
+**Commands run:**
+```
+uv run python scripts/check_line_cap.py               # OK: 254 file(s) ... (7 baselined)
+uv run pytest tests/test_line_cap_ratchet.py tests/test_line_docs_common.py tests/test_cli_repository_gates.py -q --no-cov   # 23 passed
+uv run pytest --no-cov                                 # 1187 passed
+uv run ruff check .                                    # All checks passed!
+uv run python scripts/run_quality_gates.py              # all 7 gates OK
+git diff --check                                        # clean
+```
+
+**Deviations:** none from the declared ratchet semantics. `find_violations` was kept (baseline-
+unaware) for the pre-existing unit tests in `test_line_docs_common.py` that exercise it directly.
+
+**Remaining (explicitly NOT done by this pass, per this task's own "Explicitly NOT in this
+task's scope" section and per the orchestrator's Phase B instruction not to mark unrelated
+criteria complete):**
+- The 6 pre-existing oversized files are pinned, not split — a separate behavior-preserving
+  extraction pass is required to actually retire baseline entries.
+- `scripts/check_planning_graph.py`'s reported issues (T009/T030 and T016/T032 write-set
+  overlaps, the dangling `PS-01` dependency on `T007-extend-kpi-harness`/`T007-extend-wire-brain-swap`)
+  are untouched.
+- `scripts/check_planning_graph.py` is not yet wired into `run_quality_gates.py`.
+- `docs/TODO.md`/`README.md` staleness beyond the line-cap gate itself is not reconciled here;
+  full documentation reconciliation is a separate later phase.

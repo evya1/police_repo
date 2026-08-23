@@ -41,7 +41,7 @@ A task is never marked `done` because code exists. `implementation_present` and 
 | T010 | C04 | integration | blocked | not_started | P0 | ARCH-004, ARCH-005, ARCH-006 | T004, T005, T008, T009 | yes | — | [task](tasks/T010-implement-orchestrator-state-machine.md) |
 | T011 | C04 | component | blocked | not_started | P0 | ARCH-008, NET-005, CFG-007, CFG-008 | T010 | yes | — | [task](tasks/T011-implement-deadlines-retry-and-watchdog.md) |
 | T012 | C03 | component | blocked | implementation_present | P1 | NET-005, SEC-002, SEC-005 | T009, T010 | yes | — | [task](tasks/T012-implement-inbound-delivery-safety.md) |
-| T013 | C03 | component | blocked | not_started | P0 | SEC-008, SEC-009, LEAGUE-007, QR-018 | T008, T010, T027 | yes | — | [task](tasks/T013-implement-step-zero-and-token-metering.md) |
+| T013 | C03 | component | in_review | implementation_present | P0 | SEC-008, SEC-009, LEAGUE-007, QR-018 | T008, T010, T027 | yes | — | [task](tasks/T013-implement-step-zero-and-token-metering.md) |
 | T014 | C05 | component | blocked | not_started | P0 | OBS-001, OBS-002, OBS-003, OBS-004, QR-017 | T006, T010 | yes | — | [task](tasks/T014-implement-live-gui.md) |
 | T015 | C05 | component | blocked | not_started | P0 | OBS-005, OBS-006, SEC-005, SEC-006 | T008, T010, T014, T047 | yes | — | [task](tasks/T015-implement-replay-and-audit-view.md) |
 | T016 | C06 | component | blocked | not_started | P0 | CFG-009, CFG-010, REPORT-005, REPORT-006, REPORT-007, REPORT-008, REPORT-009 | — | yes | — | [task](tasks/T016-adopt-official-report-artifact-schemas.md) |
@@ -50,21 +50,25 @@ A task is never marked `done` because code exists. `implementation_present` and 
 | T019 | C06 | component | blocked | implementation_present | P0 | GAME-013, LEAGUE-001, LEAGUE-005, LEAGUE-006 | T004, T010, T013 | yes | — | [task](tasks/T019-implement-series-and-scoring.md) |
 | T020 | C06 | component | blocked | implementation_present | P0 | LEAGUE-002, LEAGUE-003, LEAGUE-004, LEAGUE-007 | T018, T019 | yes | — | [task](tasks/T020-implement-league-pairing-guards.md) |
 | T021 | system | verification | blocked | not_started | P1 | QR-005, QR-009, QR-010, QR-011 | T004, T005, T006, T007, T008 | yes | — | [task](tasks/T021-close-unit-property-and-coverage-gaps.md) |
-| T022 | system | integration | blocked | not_started | P1 | NET-001, NET-005, SEC-002, SEC-005, REPORT-009 | T011, T012, T018, T019 | yes | — | [task](tasks/T022-build-recovery-and-interoperability-tests.md) |
+| T022 | system | integration | blocked | not_started | P1 | NET-001, NET-005, SEC-002, SEC-005, REPORT-009 | T011, T012, T018, T019, T052, T053 | yes | — | [task](tasks/T022-build-recovery-and-interoperability-tests.md) |
 | T023 | system | governance | blocked | not_started | P1 | OBS-007, SUB-003, SUB-004, SUB-005, SUB-012, QR-002, QR-015, QR-017 | T014, T015, T020, T022 | no | — | [task](tasks/T023-complete-documentation-and-real-evidence.md) |
 | T024 | system | verification | blocked | not_started | P1 | QR-001, QR-003, QR-004, QR-005, QR-006, QR-007, QR-010, QR-011, QR-012, QR-013, QR-014, QR-019 | T021, T022, T023 | no | — | [task](tasks/T024-run-repository-compliance-audit.md) |
 | T025 | system | verification | blocked | not_started | P2 | QR-016 | T022 | yes | — | [task](tasks/T025-run-optional-excellence-study.md) |
 | T026 | system | release | blocked | not_started | P0 | SUB-001, SUB-002, SUB-003, SUB-004, SUB-005, SUB-006, SUB-007, SUB-008, SUB-009, SUB-010, SUB-011 | T020, T024 | no | — | [task](tasks/T026-prepare-release-and-submission.md) |
-| T027 | C02 | component | not_started | not_started | P2 | STRAT-008, SEC-009 | T002, T007, T045 | yes | — | [task](tasks/T027-implement-optional-language-model-provider-adapter.md) |
+| T027 | C02 | component | done | complete | P2 | STRAT-008, SEC-009 | T002, T007, T045 | yes | — | [task](tasks/T027-implement-optional-language-model-provider-adapter.md) |
 | T028 | C01 | component | blocked | not_started | P0 | CFG-001, CFG-009 | T003 | yes | — | [task](tasks/T028-author-shared-game-contract.md) |
 | T029 | C01 | verification | blocked | not_started | P1 | GAME-013, GAME-014 | T004, T028 | yes | — | [task](tasks/T029-run-stage-one-gate.md) |
 | T030 | C03 | component | blocked | implementation_present | P1 | — | T010 | yes | — | [task](tasks/T030-port-fsm-alternative-driver.md) |
 | T032 | C06 | component | ready | implementation_present | P0 | REPORT-005, REPORT-006, REPORT-007, REPORT-008, REPORT-009 | T002, T003 | yes | — | [task](tasks/T032-internal-reporting-artifact-contract.md) |
-| T033 | C03 | component | not_started | not_started | P0 | SEC-005, SEC-006, OBS-006 | T008 | yes | — | [task](tasks/T033-replay-shape-adapter-headless-harness.md) |
-| T034 | C03 | component | not_started | not_started | P0 | OBS-006, SEC-005, SEC-006 | T008, T033 | yes | — | [task](tasks/T034-per-subgame-evidence-capture.md) |
-| T046 | C06 | component | not_started | not_started | P0 | REPORT-005, REPORT-006, REPORT-007, REPORT-008, REPORT-009, OBS-006 | T033, T034 | yes | — | [task](tasks/T046-replayable-kit-artifact-emission.md) |
-| T047 | C05 | component | not_started | not_started | P0 | OBS-006, OBS-007, QR-006 | T033, T038, T046 | yes | — | [task](tasks/T047-headless-replay-cli-integration.md) |
-| T048 | C06 | component | not_started | not_started | P0 | QR-008 | T002, T017 | yes | — | [task](tasks/T048-central-gatekeeper-hardening.md) |
-| T049 | C06 | component | not_started | not_started | P2 | STRAT-008, QR-008 | T027, T048 | yes | — | [task](tasks/T049-provider-neutral-language-model-adapter.md) |
+| T033 | C03 | component | done | complete | P0 | SEC-005, SEC-006, OBS-006 | T008 | yes | — | [task](tasks/T033-replay-shape-adapter-headless-harness.md) |
+| T034 | C03 | component | done | complete | P0 | OBS-006, SEC-005, SEC-006 | T008, T033 | yes | — | [task](tasks/T034-per-subgame-evidence-capture.md) |
+| T046 | C06 | component | done | complete | P0 | REPORT-005, REPORT-006, REPORT-007, REPORT-008, REPORT-009, OBS-006 | T033, T034 | yes | — | [task](tasks/T046-replayable-kit-artifact-emission.md) |
+| T047 | C05 | component | done | complete | P0 | OBS-006, OBS-007, QR-006 | T033, T038, T046 | yes | — | [task](tasks/T047-headless-replay-cli-integration.md) |
+| T048 | C06 | component | done | complete | P0 | QR-008 | T002, T017 | yes | — | [task](tasks/T048-central-gatekeeper-hardening.md) |
+| T049 | C06 | component | done | complete | P2 | STRAT-008, QR-008 | T027, T048 | yes | — | [task](tasks/T049-provider-neutral-language-model-adapter.md) |
 | T050 | C06 | component | blocked | not_started | P2 | STRAT-008, SEC-010, QR-014 | T049 | yes | — | [task](tasks/T050-selected-vendor-completion-client.md) |
-| T051 | C06 | integration | not_started | not_started | P2 | STRAT-008, SEC-009, QR-006, QR-018 | T013, T027, T046, T047, T048, T049 | no | — | [task](tasks/T051-llm-composition-and-integration.md) |
+| T051 | C06 | integration | not_started | not_started | P2 | STRAT-008, SEC-009, QR-006, QR-018 | T013, T027, T046, T047, T048, T049, T052 | no | — | [task](tasks/T051-llm-composition-and-integration.md) |
+| T052 | C04 | component | done | complete | P2 | NET-001, NET-002, SEC-005, SEC-006, ARCH-004 | T009, T010, T033, T038, T047 | no | — | [task](tasks/T052-league-kit-reference-v3-compatibility.md) |
+| T053 | C06 | component | not_started | not_started | P2 | REPORT-005, REPORT-006, OBS-006 | T046, T052 | yes | — | [task](tasks/T053-league-kit-artifact-projection.md) |
+| T054 | C04 | component | done | complete | P2 | NET-001, NET-002, SEC-005, SEC-006, ARCH-004 | T027, T030, T035, T039, T040, T044, T052 | no | — | [task](tasks/T054-kit-runtime-closure.md) |
+| T055 | C06 | component | not_started | not_started | P2 | REPORT-005, REPORT-006, REPORT-007, REPORT-008, OBS-006 | T046, T052, T053, T054 | yes | — | [task](tasks/T055-project-schema-profile.md) |

@@ -11,13 +11,13 @@ sides zeroed, no repair path (FR-29). The per-sub-game turn loop lives in
 
 from __future__ import annotations
 
-import threading
 import time
 from dataclasses import dataclass, field
 from typing import Protocol
 
 from common.domain.scoring import Outcome, Role, settled_outcome
 from common.transport import replay_evidence as _replay_evidence
+from common.transport.opponent_pin import OpponentPin
 from common.transport.replay_evidence import SubgameDriver, SubgameReplayEvidence
 
 DEFAULT_MAX_STEPS = 35
@@ -104,12 +104,17 @@ class PeerFacade:
         name: str = "peer",
         subgame_driver: SubgameDriver | None = None,
         mode: str | None = None,
+        opponent_pin: OpponentPin | None = None,
     ) -> None:
         self.channel = channel
         self.engine = engine
         self.config = config
         self.name = name
         self.mode = mode or getattr(config, "mode", "warmup")
+        # T054: ONE pin per series. The composition root hands the same object to the
+        # per-sub-game negotiation driver, so sub-game 1's verified opponent -- learned
+        # right here -- is the one sub-games 2-6 are compared against.
+        self._opponent_pin = opponent_pin if opponent_pin is not None else OpponentPin()
         self._game_id = ""
         self._game_uid = ""
         self._ledgers: list[SeriesRow] = []
@@ -166,48 +171,12 @@ class PeerFacade:
             1,
             our_locks=self.config.locks,
         )
+        self._opponent_pin.bind(agreed.opponent_group, sub_game=1)
         self._game_id = agreed.game_id
         self._game_uid = agreed.game_uid
 
 
-def run_series(
-    channel_a,
-    channel_b,
-    config_a: PeerConfig,
-    config_b: PeerConfig,
-    engine_a: TurnEngine,
-    engine_b: TurnEngine,
-    subgame_driver: SubgameDriver | None = None,
-) -> tuple[SeriesResult, SeriesResult]:
-    """Run a series with two peers on opposite ends of a channel. Returns (a, b)."""
-    facade_a = PeerFacade(channel_a, engine_a, config_a, "A", subgame_driver=subgame_driver)
-    facade_b = PeerFacade(channel_b, engine_b, config_b, "B", subgame_driver=subgame_driver)
-    results: list[SeriesResult | None] = [None, None]
-    errors: list[Exception] = []
-
-    def run_a() -> None:
-        try:
-            results[0] = facade_a.run()
-        except Exception as exc:  # noqa: BLE001
-            errors.append(exc)
-
-    def run_b() -> None:
-        try:
-            results[1] = facade_b.run()
-        except Exception as exc:  # noqa: BLE001
-            errors.append(exc)
-
-    thread_a = threading.Thread(target=run_a, daemon=True)
-    thread_b = threading.Thread(target=run_b, daemon=True)
-    thread_a.start()
-    thread_b.start()
-    thread_a.join(timeout=60)
-    thread_b.join(timeout=60)
-    if thread_a.is_alive() or thread_b.is_alive():
-        raise TimeoutError("series worker timed out / stuck")
-    if errors:
-        raise RuntimeError(f"series errors: {errors}")
-    result_a, result_b = results
-    if result_a is None or result_b is None:
-        raise RuntimeError("series worker returned no result")
-    return result_a, result_b
+# ``run_series`` (the two-peer harness that drives both ends of one channel) lives in its
+# own module so this one stays at the engine itself; re-exported here because it has always
+# been part of this module's public surface.
+from common.transport.run_series import run_series  # noqa: E402, F401

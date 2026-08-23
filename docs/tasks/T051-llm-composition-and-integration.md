@@ -23,6 +23,8 @@ depends_on:
   - T047
   - T048
   - T049
+  - T052
+  - T054
 gates:
   - id: PLANQ-003
     kind: decision

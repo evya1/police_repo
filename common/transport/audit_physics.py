@@ -2,6 +2,14 @@
 
 Position trail validation, orthogonal step enforcement, barrier quota, and step ceiling.
 All checks derive from the position trail — never the peer's move spelling (FR-26/FR-27).
+
+The trail is read from the record's explicit sealed ``position`` where present, falling
+back to parsing the ``state`` string. That order matters for interoperability: `state` is
+spelled to *our* convention, and a conforming peer that spells it differently used to make
+every physics check silently skip — no answer, presented as a clean one. An explicit
+position is parsed strictly (two real ints, never a bool); anything else degrades to the
+`state` fallback rather than being loosely re-read into the wrong cell, and an unreadable
+record skips the physics layer rather than manufacturing an accusation.
 """
 
 from __future__ import annotations
@@ -23,7 +31,7 @@ def check_physics(records: list[dict], terms: dict) -> list[tuple[int, str]]:
             continue
 
         state = record.get("state", "")
-        pos = _parse_position(state)
+        pos = parse_kit_position(record) or _parse_position(state)
 
         if pos is not None:
             r, c = pos
@@ -44,6 +52,24 @@ def check_physics(records: list[dict], terms: dict) -> list[tuple[int, str]]:
             problems.append((step, f"barrier count {barrier_count} exceeds quota {barriers_max}"))
 
     return problems
+
+
+def parse_kit_position(payload: dict) -> tuple[int, int] | None:
+    """Strictly parse a kit-style `position: [r, c]`, or None.
+
+    Strict on purpose: exactly two real ints (a bool is not an int here, however much
+    Python disagrees). Anything else returns None so the caller degrades to the `state`
+    fallback -- never a loose parse that could mis-read a malformed payload into the wrong
+    cell and then accuse the peer of moving there.
+    """
+    pos = payload.get("position") if isinstance(payload, dict) else None
+    if (
+        isinstance(pos, (list, tuple))
+        and len(pos) == 2
+        and all(isinstance(v, int) and not isinstance(v, bool) for v in pos)
+    ):
+        return (int(pos[0]), int(pos[1]))
+    return None
 
 
 def _parse_position(state: str) -> tuple[int, int] | None:

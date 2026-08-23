@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from common.domain.scoring import Outcome, Role
+from police_peer.wire.sealed_payload import build_terminal_final
 from police_peer.wire.session import SubgameSession
 
 
@@ -66,32 +67,10 @@ class StandInEngine:
         return self._session.terminal()
 
     def terminal_final(self) -> dict | None:
-        """The game-ending final step owed after settling, or None.
+        """The sealed game-ending final step owed after settling, or None.
 
-        A thief that saw its own capture (rules 46/47 — a fact only the thief can
-        see) owes a concession: a STAY naming its own final cell with caught=true.
-        An answered claim or a survival claim already rode the last normal step, so
-        only the invisible capture needs the extra sealed final. A police settling
-        from the thief's final owes a plain sealed STAY.
+        One derivation, shared with the other wire adapter (T054).
         """
-        if self._session is None or self._session.engine is None:
+        if self._session is None:
             return None
-        eng = self._session.engine
-        trail = self._session.trail
-        smell_grid = trail.full_turn(eng.position) if trail is not None else {}
-        if eng.role is Role.THIEF:
-            if eng.self_captured() is None:
-                return None
-            self._session.apply_move("STAY")
-            return {
-                "move": "STAY",
-                "hint": "",
-                "state": eng.state_string(),
-                "smell_grid": smell_grid,
-                "claim_response": {"claim": [int(eng.position[0]), int(eng.position[1])],
-                                   "caught": True},
-            }
-        if self.terminal() is None:
-            return None
-        self._session.apply_move("STAY")
-        return {"move": "STAY", "hint": "", "state": eng.state_string(), "smell_grid": smell_grid}
+        return build_terminal_final(self._session)

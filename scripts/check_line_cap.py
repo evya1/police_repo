@@ -1,4 +1,6 @@
-"""Enforce a configurable line-count limit for source files."""
+"""Enforce a configurable line-count limit for source files, ratcheted against a pinned
+per-file baseline (T040) so historical debt cannot hide behind an unscanned directory.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +9,13 @@ import sys
 import tokenize
 from pathlib import Path
 
+from line_cap_ratchet import (
+    find_violations,
+    load_baseline,
+    logical_line_count,
+    ratchet_problems,
+    raw_line_count,
+)
 from quality_common import (
     QualityError,
     integer_value,
@@ -18,39 +27,9 @@ from quality_common import (
     string_value,
 )
 
-_TOKEN_SKIP = {
-    tokenize.ENCODING,
-    tokenize.ENDMARKER,
-    tokenize.NEWLINE,
-    tokenize.NL,
-    tokenize.INDENT,
-    tokenize.DEDENT,
-    tokenize.COMMENT,
-}
-
-
-def raw_line_count(path: Path) -> int:
-    """Count physical lines."""
-    return len(path.read_text(encoding="utf-8").splitlines())
-
-
-def _is_source_line(line: str) -> bool:
-    """Return True if a line is non-blank and not a comment."""
-    stripped = line.strip()
-    return bool(stripped) and not stripped.startswith(("#", "//"))
-
-
-def logical_line_count(path: Path) -> int:
-    """Count non-blank, non-comment lines."""
-    if path.suffix.lower() != ".py":
-        lines = path.read_text(encoding="utf-8").splitlines()
-        return sum(1 for line in lines if _is_source_line(line))
-    source_lines: set[int] = set()
-    with path.open("rb") as handle:
-        for token in tokenize.tokenize(handle.readline):
-            if token.type not in _TOKEN_SKIP:
-                source_lines.update(range(token.start[0], token.end[0] + 1))
-    return len(source_lines)
+__all__ = [
+    "find_violations", "load_baseline", "logical_line_count", "ratchet_problems", "raw_line_count",
+]
 
 
 def collect_files(
@@ -74,12 +53,6 @@ def collect_files(
             and not is_excluded(candidate, repo, excluded_dirs)
         )
     return sorted(files)
-
-
-def find_violations(files: list[Path], limit: int, mode: str) -> list[tuple[Path, int]]:
-    """Return every file whose selected line count exceeds the limit."""
-    measure = raw_line_count if mode == "raw" else logical_line_count
-    return [(path, count) for path in files if (count := measure(path)) > limit]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -117,16 +90,17 @@ def main(argv: list[str] | None = None) -> int:
         files = collect_files(args.repo, paths, extensions, excluded)
         if not files:
             raise QualityError("no matching source files found")
-        violations = find_violations(files, limit, mode)
+        baseline = load_baseline(config)
+        problems = ratchet_problems(files, args.repo, limit, mode, baseline)
     except (IndentationError, OSError, QualityError, SyntaxError, tokenize.TokenError) as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1
-    if violations:
-        print(f"FAIL: {len(violations)} file(s) exceed {limit} {mode} lines")
-        for path, count in violations:
-            print(f"  {path.relative_to(args.repo)}: {count}")
+    if problems:
+        print(f"FAIL: {len(problems)} line-cap ratchet issue(s)")
+        for problem in problems:
+            print(f"  {problem}")
         return 1
-    print(f"OK: {len(files)} file(s) are within {limit} {mode} lines")
+    print(f"OK: {len(files)} file(s) are within {limit} {mode} lines ({len(baseline)} baselined)")
     return 0
 
 

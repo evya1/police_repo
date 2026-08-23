@@ -78,7 +78,7 @@ exclude_dirs = []
             with contextlib.redirect_stdout(output):
                 result = check_line_cap.main(["--repo", str(root), "--config", str(config)])
             self.assertEqual(result, 1)
-            self.assertIn("exceed", output.getvalue())
+            self.assertIn("new unlisted violation", output.getvalue())
 
     def test_missing_documents_reports_only_absent_paths(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

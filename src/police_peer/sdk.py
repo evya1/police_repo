@@ -5,9 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from common.config import ConfigError, load_config, validate_config
+from common.config import ConfigError, load_config
 from common.domain.scoring import Role
+from common.transport.audit_wire import resolve_audit_wire
 from common.transport.loopback import pair
+from common.transport.opponent_pin import OpponentPin
 from common.transport.series import PeerConfig, PeerFacade, SeriesResult
 from police_peer.replay_service import BundleReplayReport
 from police_peer.replay_service import verify_bundle as _verify_replay_bundle
@@ -21,15 +23,16 @@ from police_peer.wire.config import (
     peer_locks,
     project_terms,
 )
+from police_peer.wire.negotiate_per_subgame import negotiated_subgame_driver
+from police_peer.wire.startup import SUPPORTED_SCHEMA_VERSIONS, validate_startup_config
 from police_peer.wire.strategy_settings import assemble_strategy_config
 
 __version__ = "1.0.0"
-SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.0", "1.1", "1.2"})
-
 __all__ = [
     "Budgets",
     "BundleReplayReport",
     "PeerFacade",
+    "SUPPORTED_SCHEMA_VERSIONS",
     "SeriesResult",
     "create_peer",
     "validate_startup_config",
@@ -45,18 +48,6 @@ def verify_replay_bundle(path: str | Path) -> BundleReplayReport:
     return _verify_replay_bundle(path)
 
 
-def validate_startup_config(raw_config: dict[str, Any]) -> None:
-    """Validate raw config at startup, checking schema version and fields."""
-    if not isinstance(raw_config, dict):
-        raise ConfigError("Config must be a dictionary")
-    version = raw_config.get("schema_version")
-    if version is None:
-        raise ConfigError("Missing required field 'schema_version'")
-    if not isinstance(version, str) or version not in SUPPORTED_SCHEMA_VERSIONS:
-        raise ConfigError(f"Unsupported schema_version: {version!r}")
-    validate_config(raw_config)
-
-
 def create_peer(
     config_path: str | Path | dict[str, Any],
     *,
@@ -68,6 +59,7 @@ def create_peer(
     group_id: str = "police-local",
     budgets: Budgets | None = None,
     mode: str = "warmup",
+    wire_profile: str | None = None,
 ) -> PeerFacade:
     """Public factory creating a validated PeerFacade.
 
@@ -88,6 +80,11 @@ def create_peer(
     selects the legacy ``StandInEngine`` path with that ``Strategy``
     plugged in, for callers that still want to override move selection
     directly rather than through the private ``[strategy]`` config.
+
+    ``wire_profile`` selects the audit wire (T054): the default internal lane
+    publishes exactly the T046/T047 bytes, while ``"reference-v3"`` speaks the
+    pinned kit's nested audit envelope. It is resolved here, once, and an
+    unknown profile fails fast before a game exists.
     """
     if isinstance(config_path, (str, Path)):
         raw_config = load_config(config_path)
@@ -148,10 +145,19 @@ def create_peer(
         ch_local, _ = pair(group_id, "loopback-peer")
         channel = ch_local
 
+    # ONE pin and ONE audit wire per series, resolved here and shared by both
+    # greeting paths -- never rebuilt inside the driver (T054).
+    audit_wire = resolve_audit_wire(wire_profile)
+    opponent_pin = OpponentPin()
+
     return PeerFacade(
         channel=channel,
         engine=engine,
         config=peer_cfg,
         name=group_id,
         mode=mode,
+        opponent_pin=opponent_pin,
+        subgame_driver=negotiated_subgame_driver(
+            group_id, opponent_pin=opponent_pin, audit_wire=audit_wire,
+        ),
     )

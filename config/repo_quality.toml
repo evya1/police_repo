@@ -2,7 +2,7 @@ python_version = "3.12"
 
 line_limit = 150
 line_mode = "logical"
-source_dirs = []
+source_dirs = ["src", "common"]
 test_dirs = ["tests"]
 script_dirs = ["scripts"]
 code_extensions = [".py"]
@@ -59,3 +59,17 @@ secret_banned_globs = [".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "id_rsa", "
 
 workflow_dirs = [".github/workflows"]
 workflow_allowed_write_permissions = []
+
+# Ratchet: every historical file over line_limit gets one exact-path entry pinned to its
+# current logical line count, measured independently at this commit's HEAD via
+# `scripts/check_line_cap.py`. An unlisted file must stay at or under line_limit. A pinned
+# count that no longer matches (higher OR lower) fails the gate — a genuine reduction must
+# lower this table in the same commit. This is a starting inventory for later
+# behavior-preserving splits (T040), not a licence to leave these files oversized forever.
+# This table must be the last section in the file: TOML tables extend to the next [header].
+[line_cap_baseline]
+"src/police_peer/reporting/schemas.py" = 448
+"common/config/__init__.py" = 278
+"common/transport/negotiate.py" = 196
+"src/police_peer/league/preflight.py" = 165
+"common/transport/audit.py" = 157

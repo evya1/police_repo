@@ -21,6 +21,7 @@ from police_peer.wire.config import (
     peer_locks,
     project_terms,
 )
+from police_peer.wire.negotiate_per_subgame import negotiated_subgame_driver
 from police_peer.wire.strategy_settings import assemble_strategy_config
 
 __version__ = "1.0.0"
@@ -154,4 +155,5 @@ def create_peer(
         config=peer_cfg,
         name=group_id,
         mode=mode,
+        subgame_driver=negotiated_subgame_driver(group_id),
     )

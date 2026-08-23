@@ -20,6 +20,7 @@ read_set:
 depends_on:
   - T046
   - T052
+  - T054
 gates: []
 parallel_safe: true
 claimed_by:

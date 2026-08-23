@@ -25,6 +25,7 @@ depends_on:
   - T019
   - T052
   - T053
+  - T054
 gates:
   - id: G-LIVE
     kind: input_gate

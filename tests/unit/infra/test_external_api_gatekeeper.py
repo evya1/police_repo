@@ -2,6 +2,7 @@ import pytest
 
 from police_peer.infra.external_api_gatekeeper import (
     DailyQuotaExceededError,
+    DeadlineExceededError,
     DosLockoutError,
     ExternalApiGatekeeper,
     ExternalCallError,
@@ -104,3 +105,66 @@ def test_max_retries_exceeded():
 
     with pytest.raises(ExternalCallError):
         gk.execute(bad_service)
+
+
+def test_daily_quota_resets_after_window():
+    clock = FakeClock()
+    cfg = GatekeeperConfig(bucket_capacity=10, daily_quota=1, dos_threshold=100)
+    gk = ExternalApiGatekeeper(config=cfg, time_provider=clock)
+
+    gk.execute(lambda: 1)
+    with pytest.raises(DailyQuotaExceededError):
+        gk.execute(lambda: 2)
+
+    clock.advance(86400.1)
+    assert gk.execute(lambda: 3) == 3
+
+
+def test_deadline_exceeded_fails_fast_no_real_wait():
+    """A deadline already in the past must fail immediately, without blocking."""
+    clock = FakeClock()
+    cfg = GatekeeperConfig(concurrent_requests=1, queue_depth=5, bucket_capacity=100, dos_threshold=100)
+    gk = ExternalApiGatekeeper(config=cfg, time_provider=clock)
+
+    gk.acquire_permission(lane="reporting")  # occupy the only permit; never released
+
+    with pytest.raises(DeadlineExceededError):
+        gk.execute(lambda: "must not run", lane="reporting", deadline=clock.now - 1.0)
+
+
+def test_retry_respects_deadline_budget():
+    clock = FakeClock()
+
+    def fake_sleep(seconds: float) -> None:
+        clock.advance(seconds)
+
+    cfg = GatekeeperConfig(bucket_capacity=10, max_retries=5, retry_backoff_sec=1.0, dos_threshold=100)
+    gk = ExternalApiGatekeeper(config=cfg, time_provider=clock, sleeper=fake_sleep)
+
+    attempts = 0
+
+    def flaky_service():
+        nonlocal attempts
+        attempts += 1
+        raise Http429Error()
+
+    deadline = clock.now + 1.5  # enough for one 1.0s backoff, not for the next 2.0s one
+    with pytest.raises(DeadlineExceededError):
+        gk.execute(flaky_service, deadline=deadline)
+    assert attempts == 2
+
+
+def test_no_leak_on_exception():
+    cfg = GatekeeperConfig(bucket_capacity=10, dos_threshold=100, max_retries=0)
+    gk = ExternalApiGatekeeper(config=cfg)
+
+    def boom():
+        raise ValueError("boom")
+
+    with pytest.raises(ExternalCallError):
+        gk.execute(boom, lane="llm")
+
+    stats = gk.get_stats()
+    assert stats["active_calls"] == 0
+    assert stats["active_by_lane"] == {"reporting": 0, "llm": 0}
+    assert stats["waiting_count"] == 0

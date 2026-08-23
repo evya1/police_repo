@@ -12,6 +12,7 @@ from common.transport.loopback import Inboxes
 from common.transport.mcp_client import McpChannel, edge_answers
 from common.transport.mcp_server import serve_background
 from common.transport.series import SeriesResult
+from police_peer.reporting.replay_bundle import publish_replay_bundle
 from police_peer.sdk import Budgets, create_peer
 from police_peer.strategy import Strategy
 
@@ -120,6 +121,8 @@ def run_one_peer(
 
         if artifacts_dir:
             write_artifacts(artifacts_dir, result, role=role, group_id=group_id, mode=mode)
+            if result.settled:
+                publish_replay_bundle(artifacts_dir, result)
 
         return 0 if result.settled else 6
     except Exception as exc:

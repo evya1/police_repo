@@ -93,9 +93,9 @@ unexpected production files were observed. Representative changed paths:
 | T013 Step 0 / token ledger | `not_executed` | no T013 commit/evidence on this branch |
 | T014/T015 Live/Replay GUI | `not_executed` | no GUI implementation/evidence on this branch |
 | T050 conditional vendor | `not_executed` | blocked; no PLANQ-003 record on this branch |
-| T051 provider-neutral composition | `accepted` | T049 adapter + T051 task present; contract tests pass |
+| T051 provider-neutral composition | `not_executed` / `pending` | only its prerequisite adapter (T049) exists; composition-root integration (`create_peer`/`PeerFacade` wiring, settings, provider guide) is not_started |
 | T052/T054 kit runtime closure | `accepted` | T052/T054 commits present; kit fixtures pinned and verified |
-| T053 kit artifact projection | `accepted` | T053 task + governance present |
+| T053 kit artifact projection | `not_executed` | only the task/governance packet exists; the 14-artifact kit projection is not implemented |
 | T022 K0-K4 / kit matrix | `partial` | kit fixtures and contract tests present; full K0-K4 live runs require explicit `--kit-root` and are not reproduced here |
 | Partner provenance / component docs | `accepted` | provenance map present |
 | Replay / provider / kit evidence | `accepted` (fixture-level) | replay parity clean; kit vector hashes verified |
@@ -105,7 +105,7 @@ unexpected production files were observed. Representative changed paths:
 | Label | Verdict |
 |---|---|
 | `internal_interop` | `accepted` — Replay parity clean, cross-peer replay tests present |
-| `kit_interop` | `accepted` — pinned kit vector hashes reproduced |
+| `kit_interop` | `partial` — fixture/vector conformance proven (K0); production `kit_interop` not yet claimed pending T053 (artifact projection) and live K2/K3/K4 |
 | `official_schema` | `blocked` — official templates (INPUT-001) not present; not claimed |
 
 ## Accepted head

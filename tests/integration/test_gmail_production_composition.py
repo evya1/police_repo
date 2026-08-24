@@ -132,3 +132,35 @@ def test_send_requires_authorization_and_confirmed_result(tmp_path: Path) -> Non
     )
     with pytest.raises(ConfigError, match="agreement"):
         reporter.report(path)
+
+
+def test_send_refuses_missing_local_oauth_files(tmp_path: Path) -> None:
+    with pytest.raises(ConfigError, match="must exist"):
+        compose_gmail_reporter(
+            EmailSettings("recipient@example.invalid", "send"), tmp_path, _GatekeeperSpy(),
+            authorize_send=True,
+            environment={
+                "GMAIL_SENDER_EMAIL": "sender@example.invalid",
+                "GMAIL_OAUTH_CLIENT_FILE": str(tmp_path / "missing-client.json"),
+                "GMAIL_OAUTH_TOKEN_FILE": str(tmp_path / "missing-token.json"),
+            },
+        )
+
+
+def test_rehashed_but_incoherent_result_never_reaches_gmail(tmp_path: Path) -> None:
+    path, document = _published_result(tmp_path)
+    document["sub_games"][0]["score"]["group-a"] = 0
+    document["mutual_agreement"] = mutual_agreement(
+        document["game_id"], document["final_result"], document["sub_games"], confirmed=True,
+    )
+    path.write_text(json.dumps(document), encoding="utf-8")
+    gatekeeper, service = _GatekeeperSpy(), _Service()
+    reporter = compose_gmail_reporter(
+        EmailSettings("recipient@example.invalid", "send"), tmp_path, gatekeeper,
+        authorize_send=True, environment={"GMAIL_SENDER_EMAIL": "sender@example.invalid"},
+        service_client=service,
+    )
+    with pytest.raises(ConfigError, match="malformed"):
+        reporter.report(path)
+    assert service.resource.body is None
+    assert gatekeeper.lanes == []

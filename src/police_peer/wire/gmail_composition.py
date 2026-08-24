@@ -11,8 +11,10 @@ from pathlib import Path
 from typing import Any
 
 from common.config import ConfigError
-from common.transport.kit_consensus import consensus_scope, consensus_sha256
-from common.transport.kit_names import result_name
+from common.transport.kit_result_validation import (
+    KitResultValidationError,
+    validate_emailed_result,
+)
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.infra.gmail_oauth import build_gmail_service
 from police_peer.reporting.gmail import GMAIL_SEND_SCOPE, FileIdempotencyStore, GmailSender
@@ -129,6 +131,10 @@ def compose_gmail_reporter(
             raise ConfigError("Gmail OAuth file environment is required for live Gmail mode")
         client_file = Path(client_value) if client_value else None
         token_file = Path(token_value) if token_value else None
+        if service_client is None and not (
+            client_file.is_file() or token_file.is_file()
+        ):
+            raise ConfigError("a local Gmail OAuth client or token file must exist")
     else:
         sender = sender or "sender@example.invalid"
         client_file = token_file = None
@@ -142,19 +148,11 @@ def compose_gmail_reporter(
 def _validated_result(path: Path) -> dict[str, Any]:
     try:
         document = json.loads(path.read_text(encoding="utf-8"))
-        game_id, game_uid = document["game_id"], document["game_uid"]
-        rows, final = document["sub_games"], document["final_result"]
-        agreement = document["mutual_agreement"]
-        expected = consensus_sha256(consensus_scope(game_id, final, rows))
-    except (OSError, ValueError, KeyError, TypeError) as exc:
+        return validate_emailed_result(document, filename=path.name)
+    except KitResultValidationError as exc:
+        raise ConfigError(str(exc)) from exc
+    except (OSError, ValueError) as exc:
         raise ConfigError("published Gmail result is malformed") from exc
-    if not isinstance(game_id, str) or not isinstance(game_uid, str):
-        raise ConfigError("published Gmail result identifiers are malformed")
-    if path.name != result_name(game_id) or len(rows) != 6:
-        raise ConfigError("published Gmail result does not match the kit contract")
-    if agreement.get("confirmed") is not True or agreement.get("sha256") != expected:
-        raise ConfigError("published Gmail result has no verified mutual agreement")
-    return document
 
 
 def _outbox(root: Path, game_uid: str) -> Path:

@@ -45,7 +45,7 @@ def _make(tmp_path: Path, *, client=None) -> GmailSender:
     return GmailSender(
         gatekeeper=ExternalApiGatekeeper(),
         scopes=["https://www.googleapis.com/auth/gmail.send"],
-        default_recipient="rmisegal+uoh26finalgame@gmail.com",
+        default_recipient="recipient@example.invalid",
         service_client=client,
         idempotency_store=FileIdempotencyStore(tmp_path / "sent.json"),
     )
@@ -135,4 +135,3 @@ def test_missing_recipient_raises(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="Recipient email address must be explicitly provided"):
         sender.send_kit_result(game_uid="g", result=_result())
-

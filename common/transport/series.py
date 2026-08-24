@@ -70,6 +70,11 @@ class SeriesResult:
 
     game_id: str
     game_uid: str
+    # The opponent's group id, as the greeting resolved it. `game_id` is the SORTED pair, so it
+    # cannot say which half is theirs -- and every per-group projection (scores, roles, tokens,
+    # repo links) needs to. Our own id is configuration the caller already holds, so only the
+    # discovered half is carried here.
+    opponent_group_id: str = ""
     ledger: list[SeriesRow] = field(default_factory=list)
     settled: bool = False
     settled_outcome: Outcome = Outcome.TAMPER_FORFEIT
@@ -115,8 +120,7 @@ class PeerFacade:
         # per-sub-game negotiation driver, so sub-game 1's verified opponent -- learned
         # right here -- is the one sub-games 2-6 are compared against.
         self._opponent_pin = opponent_pin if opponent_pin is not None else OpponentPin()
-        self._game_id = ""
-        self._game_uid = ""
+        self._game_id = self._game_uid = self._opponent_group_id = ""
         self._ledgers: list[SeriesRow] = []
         self._subgame_driver = subgame_driver or _replay_evidence.default_subgame_driver()
 
@@ -135,6 +139,7 @@ class PeerFacade:
         return SeriesResult(
             game_id=self._game_id,
             game_uid=self._game_uid,
+            opponent_group_id=self._opponent_group_id,
             ledger=self._ledgers,
             settled=settled,
             settled_outcome=final_outcome,
@@ -172,8 +177,8 @@ class PeerFacade:
             our_locks=self.config.locks,
         )
         self._opponent_pin.bind(agreed.opponent_group, sub_game=1)
-        self._game_id = agreed.game_id
-        self._game_uid = agreed.game_uid
+        self._game_id, self._game_uid = agreed.game_id, agreed.game_uid
+        self._opponent_group_id = agreed.opponent_group
 
 
 # ``run_series`` (the two-peer harness that drives both ends of one channel) lives in its

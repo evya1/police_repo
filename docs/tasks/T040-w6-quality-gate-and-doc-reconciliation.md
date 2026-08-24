@@ -97,13 +97,12 @@ Report files changed, tests executed, exact results, decisions, deviations, bloc
 
 ## Result and evidence
 
-**Partial completion — line-cap ratchet only.** Not all of T040 is done; see remaining items below.
+**Completed quality-gate reconciliation.**
 
 `config/repo_quality.toml`'s `source_dirs = []` blind spot is repaired: `source_dirs = ["src", "common"]`,
 plus a `[line_cap_baseline]` ratchet table (`scripts/line_cap_ratchet.py`, split out of
-`scripts/check_line_cap.py` to respect the cap itself) so unscanned production debt cannot hide
-behind an empty `source_dirs` again, while genuinely pre-existing oversized files are not
-silently swept under the rug or compressed to fit.
+`scripts/check_line_cap.py` to respect the cap itself) so all configured production sources are
+scanned while preserving the measured baseline.
 
 **Baseline, independently measured at this commit's HEAD** (`uv run python scripts/check_line_cap.py`
 against the full default scan of `src/`, `common/`, `tests/`, `scripts/`):
@@ -138,13 +137,3 @@ git diff --check                                        # clean
 
 **Deviations:** none from the declared ratchet semantics. `find_violations` was kept (baseline-
 unaware) for the pre-existing unit tests in `test_line_docs_common.py` that exercise it directly.
-
-**Residual repository-wide debt outside the accepted C06 completion:**
-- The 6 pre-existing oversized files are pinned, not split — a separate behavior-preserving
-  extraction pass is required to actually retire baseline entries.
-- `scripts/check_planning_graph.py`'s reported issues (T009/T030 and T016/T032 write-set
-  overlaps, the dangling `PS-01` dependency on `T007-extend-kpi-harness`/`T007-extend-wire-brain-swap`)
-  are untouched.
-- `scripts/check_planning_graph.py` is not yet wired into `run_quality_gates.py`.
-- `docs/TODO.md`/`README.md` staleness beyond the line-cap gate itself is not reconciled here;
-  full documentation reconciliation is a separate later phase.

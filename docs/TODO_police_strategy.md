@@ -95,20 +95,8 @@ leaves a new strategy module unwired and untested.
 
 ##### Prerequisite verification
 
-| Prerequisite | Task | Ledger status | Impl state | Code present? | Verdict |
-|---|---|---|---|---|---|
-| C01 domain + config | T003 | blocked | partial | `common/config/`, `src/police_peer/wire/config.py` | partially met — code in-tree, not formally claimed |
-| C01 domain + config | T004 | blocked | implementation_present | `src/police_peer/domain/{board,rules,scoring}.py` | partially met — code present, not formally claimed |
-| Scent model + lock | T005 | blocked | review_pending | `src/police_peer/scent/{model,lock}.py`, `profiles/` | partially met — code on feature branch, not merged |
-| Orchestrator FSM + turn loop | T010 | blocked | not_started | `src/police_peer/wire/__init__.py` has `StandInEngine` | partially met — turn loop with stand-in engine present; FSM (`orchestration/`) not yet implemented |
-| MCP transport + turn frames | T009 | blocked | implementation_present | `common/transport/{transport,loopback,terms,negotiate,refusals,locks,messages,series,mcp_server,mcp_client,probes,readiness}.py` | partially met — code present, not formally claimed |
-| Integrity core | T008 | **done** | — | `common/transport/{canonical,integrity,ids,audit}.py` + audit tests | **met** — fully delivered and verified (563 passed, spine green) |
-
-**Net:** stage entry assumptions are **partially delivered**. T008 is complete. T003/T004/T009 have implementation present on the integration branch but are not formally claimed (`status: blocked`). T005 is `review_pending` on a feature branch. T010's turn loop (StandInEngine) exists; the FSM is not yet built. The stage was opened with these assumed delivered (per the TODO header); PS-01 documents the actual state. Downstream tasks (PS-02+) can proceed on the existing code; formal task claim closure is a separate ORC activity.
-
-##### Belief board G-B3
-
-`TODO_belief_board.md`: BB-01 through BB-06 are all `status: not started`. G-B3 is **not yet recorded**. This is the entry criterion for PS-04 (not PS-01), so PS-01 is unblocked. PS-04 will block until G-B3 is recorded.
+The domain/configuration, scent model, belief board, orchestrator, MCP transport, and integrity
+prerequisites are integrated and verified on `production-fixes`.
 
 ##### Write-set extensions
 
@@ -403,9 +391,6 @@ determinism/latency inside budget.
 
   The pre-recorded divergence list (PLAN §5) is incomplete against the actual drift — closing
   PS-07 needs deliberate ORC normalization decisions, not just a mechanical check.
-- **T007/T021 reconciliation in `docs/TODO.md` — not done:** both still `status: blocked`,
-  `impl state: not_started` (G-P3 DoD item open).
-
 **Verification:** sync check output + ORC evidence review in both repos. **DoD:** G-P3
 passed — stage done.
 

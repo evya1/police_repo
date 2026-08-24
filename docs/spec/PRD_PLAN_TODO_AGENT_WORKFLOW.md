@@ -148,7 +148,7 @@ Before implementation and after material changes, verify:
 
 ## 11. Prohibited workflow patterns
 
-Do not duplicate requirements across artifacts, maintain competing status ledgers, create vague mega-tasks, code before required approval, micro-plan stale future details, run false parallel work, share mutable state without isolation, expand scope silently, guess missing requirements, mark unverified work done, hide failure, retry without bounds, keep decisions only in conversation memory, or model a criterion-scoped ambiguity as a whole-task `depends_on` edge when a `gates:` entry with `blocks: criterion` or `blocks: integration` is the honest representation.
+Do not duplicate requirements across artifacts, maintain competing status ledgers, create vague mega-tasks, code before required approval, micro-plan stale future details, run false parallel work, share mutable state without isolation, expand scope silently, guess missing requirements, mark work done without evidence, hide failure, retry without bounds, keep decisions only in conversation memory, or model a criterion-scoped ambiguity as a whole-task `depends_on` edge when a `gates:` entry with `blocks: criterion` or `blocks: integration` is the honest representation.
 
 ## 12. Bundle/submodule-aware synchronization
 

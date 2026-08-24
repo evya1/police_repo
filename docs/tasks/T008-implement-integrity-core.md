@@ -178,7 +178,7 @@ repos' `docs/TODO.md`.
 | TC-20 (clean + tampered) + TC-17 (final) | green | green |
 | Cross-repo sync (`diff -rq` over `common/` + the four files above) | 0 differing files | 0 differing files |
 
-**Also fixed during quality-check closeout (pre-existing debt):** `check_line_cap.py` was red in both
+**Also fixed during quality-check closeout:** `check_line_cap.py` was red in both
 repos — `tests/unit/transport/test_negotiate.py` (253 logical lines) split into `test_negotiate.py`
 + `test_negotiate_verify.py`; `tests/unit/wire/test_config.py` (281) de-duplicated via a
 `valid_terms_data` fixture in `tests/unit/wire/conftest.py` (the same terms document was

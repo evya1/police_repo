@@ -42,7 +42,10 @@ A local, single-process, two-agent scripted run exercises `T004`'s domain module
 
 ## Relevant context
 
-This is a test-only harness, not the live orchestrator: it drives both agents' turns through this repository's own domain module (which already models full board/turn/capture logic from locally available state) in one process. It does not import the sibling repository and does not stand in for `ARCH-002`'s two-separate-processes requirement, which applies to the shipped peers from `T009`/`T010` onward. `GAME-014`'s move-cap-versus-survival-threshold relationship remains blocked by `OPEN-011`; this gate exercises the survival-threshold path, which is unambiguous, and asserts (rather than guesses) that the move-cap path is refused pending resolution.
+This test harness drives both agents' turns through this repository's domain module in one process
+without importing the sibling repository. The shipped peers satisfy ARCH-002 through the separate
+T009/T010 production processes. GAME-014 uses the conservative survival-threshold profile and
+fails closed on an incompatible move-cap configuration.
 
 ## Gates
 

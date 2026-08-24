@@ -54,7 +54,8 @@ Every value in the Decision section above is an **operational convention**: a pr
 - It does **not** override the project book or the official software-quality guide. The source authority order is unchanged: official sources first, canonical requirements second, this operational convention third.
 - Neither profile in `M-01` §B may be described as the officially correct reading. `multiplicative_book_v1` is the closest reading of the printed figure, but its upper clamp, evaluation order, and no-rounding policy are still interpretation.
 - A future official clarification can require a profile change. That is expected and inexpensive by construction, which is the point of keeping the selection behind an interface.
-- `smell_binding: commit_grid_v1` is deliberately excluded: it is not implemented anywhere the project can verify today, and it would change a commitment preimage, so it must not sit on the critical path.
+- `smell_binding: commit_grid_v1` is deliberately excluded from the approved profile because it
+  changes the commitment preimage.
 
 What `OPEN-009` no longer does is block implementation. Scent implementation, default-model selection, model-lock generation and declaration, and local testing all proceed against this profile. Confirmation against an official answer happens before counted play.
 

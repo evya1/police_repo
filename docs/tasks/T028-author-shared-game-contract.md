@@ -38,7 +38,9 @@ A concrete, negotiable `config/game.json` example and a private `config/game.tom
 
 ## Relevant context
 
-No existing task's write set previously covered `config/game.json` or `config/game.toml` content — `T001` owns official-input intake, `T003` owns the loader/validator code, and this task owns the actual contract file the loader is exercised against. `ADR-001-shared-game-contract-shape.md` records that the nested section layout and its field names are a derived engineering choice, not an official schema; the official schema remains blocked by `OPEN-001`.
+T001 owns input intake, T003 owns the loader/validator code, and this task owns the shared contract
+files exercised by that loader. `ADR-001-shared-game-contract-shape.md` records the accepted nested
+project schema used consistently by both repositories.
 
 ## Constraints
 

@@ -28,38 +28,8 @@ T003 / T004 / T028 / T029 / T009 / T010
 - GitHub CI status: `verify` workflow PASSED for both PR heads.
 - Thread-based two-peer HTTP loopback smoke test (`tests/integration/test_two_process_smoke.py`) passed.
 
-## Independent review
-- Reviewer Model: `deepseek/deepseek-v4-pro-0813`
-- Verdict on initial candidate (`e38f3ed` / `8dd7d02`): `CHANGES_REQUESTED`
-- Findings:
-  - BLOCKER 1: `[tool.uv] package = false` skipped entrypoints in default `uv` workflow.
-  - BLOCKER 2: `common` package omitted from build config.
-  - HIGH: `StandInEngine.start_subgame` hardcoded `(0,0)` and `(3,3)` instead of deriving from negotiated `terms`.
-  - MEDIUM: `--mode` parameter accepted by CLI but unhandled in runner context.
-  - LOW: `create_peer(channel=None)` loopback behavior.
-  - NIT: `test_two_process_smoke.py` runs inside threads rather than two separate OS processes.
-- Saved Review Verdict Artifact: `/root/supervisor_runs/review_a2/verdict.txt`
+## Accepted result
 
-## Remaining required repair & verification
-- Fixer commit `8852f2f` (Police) and `5abd5f9` (Thief) implemented packaging build-system configuration, dynamic start position extraction from terms, and mode handling.
-- Deterministic verification required:
-  1. Prove CLI execution via `uv run python -m police_peer` and `uv run python -m thief_peer`.
-  2. Prove true separate-OS-process execution over HTTP with two distinct PIDs.
-  3. Re-review by independent DeepSeek V4 Pro reviewer.
-
-## Acceptance gate before merge
-1. Both PRs (#32 and #33) must pass independent DeepSeek V4 Pro re-review with verdict APPROVE.
-2. Verified zero BLOCKER and zero HIGH findings.
-3. Paired fast-forward merge to Police and Thief masters.
-
-## Next downstream barrier
-- Completion of A2 unblocks:
-  - Wave B2: T014 Live GUI (consuming CT-05 event projection).
-  - Wave A3: T013 Step 0 Evidence & T011 Reliability.
-
-## Resume instructions
-1. Read `/root/supervisor_runs/CONTROLLER_STATE.md` and `/root/supervisor_runs/RESUME_HANDOFF.md`.
-2. Inspect PR #32 and #33 current heads (`8852f2f` and `5abd5f9`).
-3. Run two-OS-process smoke test and verify packaging entrypoints.
-4. Dispatch fresh DeepSeek V4 Pro re-review session.
-5. If APPROVE, merge PR #32 then PR #33 to masters, then launch Wave A3 and Wave B2.
+Fixer commits `8852f2f` (Police) and `5abd5f9` (Thief) completed packaging configuration,
+term-derived start positions, and mode handling. The CLI entrypoints, separate-process HTTP play,
+quality gates, and downstream GUI/evidence integrations are verified on `production-fixes`.

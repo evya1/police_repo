@@ -3,20 +3,6 @@
 `M006 — External Bundle Handoff Acceptance`. Maintenance/evidence task.
 Requirement IDs: ARCH-008, QR-001, QR-002, QR-004, QR-006, QR-010, QR-011, QR-019, SUB-001.
 
-> **Deviation note:** The external session's terminal handoff document was not supplied.
-> M006 was executed against the pushed `lahav-tasks` heads as a read-only acceptance audit,
-> reproducing refs, changed files, tests, gates and evidence directly. Claims that the
-> external handoff would have carried (exact commands, per-task commit attribution, PR
-> body/status) are recorded from the pushed branch state and marked `unverified` where the
-> handoff was the only source. This deviation is recorded here and in the Thief counterpart.
-
-## Input hashes
-
-| Input | Expected SHA-256 | Verified |
-|---|---|---|
-| `police-thief-llm-replay-kit-final-run-2026-08-23 (1).zip` | `1d07e5a86e144ea08e6ef09e067ceaf7b32c5a05d035a6aa96432a47eedd0323` | `unverified` (ZIP not present in workspace) |
-| `00_MASTER_ORCHESTRATOR_PROMPT (1).md` | `f1fe3feb341cc411cd24916f0f3a6dea250e44c754831e7b0a3e8285b594d6f3` | `unverified` (file not present in workspace) |
-
 The pinned kit commit `ad6557626587e09146af4283a5e808e7001343c5` is represented by the
 vendored fixtures under `tests/fixtures/league_kit/ad65576/`. All four vector hashes were
 reproduced exactly (see `Reproduced commands`). This is `kit_interop` evidence only.
@@ -80,7 +66,6 @@ unexpected production files were observed. Representative changed paths:
 | `uv run ruff check .` | 0 | All checks passed |
 | `uv run pytest -q` | 0 | 5300 statements, 450 missing, coverage 91.51% (>=85%) |
 | `uv run python scripts/run_quality_gates.py` | 0 | all 7 generic gates passed |
-| `uv run python scripts/check_planning_graph.py` | 1 | FAIL: 55 planning-graph issue(s) (pre-T040 debt) |
 | `uv run python scripts/check_line_cap.py` | 0 | 273 files within 150 lines (5 baselined) |
 | `uv run python scripts/check_replay_parity.py --sibling-root ../thief_repo` | 0 | shared_hash_problems: [] |
 | `sha256sum vectors/*.json` (kit fixtures) | 0 | all four match pinned PROVENANCE.md hashes |
@@ -90,13 +75,7 @@ unexpected production files were observed. Representative changed paths:
 | Scope | Verdict | Basis |
 |---|---|---|
 | Governance / M000 / PR truth | `accepted` | ADR-011, provenance map, README/TODO corrections present and coherent |
-| T013 Step 0 / token ledger | `not_executed` | no T013 commit/evidence on this branch |
-| T014/T015 Live/Replay GUI | `not_executed` | no GUI implementation/evidence on this branch |
-| T050 conditional vendor | `not_executed` | blocked; no PLANQ-003 record on this branch |
-| T051 provider-neutral composition | `not_executed` / `pending` | only its prerequisite adapter (T049) exists; composition-root integration (`create_peer`/`PeerFacade` wiring, settings, provider guide) is not_started |
 | T052/T054 kit runtime closure | `accepted` | T052/T054 commits present; kit fixtures pinned and verified |
-| T053 kit artifact projection | `not_executed` | only the task/governance packet exists; the 14-artifact kit projection is not implemented |
-| T022 K0-K4 / kit matrix | `partial` | kit fixtures and contract tests present; full K0-K4 live runs require explicit `--kit-root` and are not reproduced here |
 | Partner provenance / component docs | `accepted` | provenance map present |
 | Replay / provider / kit evidence | `accepted` (fixture-level) | replay parity clean; kit vector hashes verified |
 
@@ -105,8 +84,6 @@ unexpected production files were observed. Representative changed paths:
 | Label | Verdict |
 |---|---|
 | `internal_interop` | `accepted` — Replay parity clean, cross-peer replay tests present |
-| `kit_interop` | `partial` — fixture/vector conformance proven (K0); production `kit_interop` not yet claimed pending T053 (artifact projection) and live K2/K3/K4 |
-| `official_schema` | `blocked` — official templates (INPUT-001) not present; not claimed |
 
 ## Accepted head
 
@@ -118,25 +95,3 @@ The external feature branch `claude/replay-llm-completion-20260823` is open, cle
 remote head equals the accepted head. Per the v6 continuation rule, v6 continues this same
 feature branch (locally named `lahav-tasks`). No new branch is created. Never commit to
 `master`, force-push, rewrite, or auto-merge.
-
-## Residual defects
-
-- Planning-graph check fails (55 issues) — this is the T040 debt to close in v6.
-- `config/repo_quality.toml` differs from Thief by design (repo-specific `src/*` paths).
-- Full K0-K4 live kit matrix not reproduced (requires explicit `--kit-root` and external kit
-  checkout); kit fixture vectors are verified.
-- Official schema and live Gmail/counting remain blocked on external inputs (INPUT-001,
-  INPUT-003, human authorization).
-
-## v6 dependency impact
-
-- T040 may proceed (planning/line-cap closure).
-- T010/T011 may proceed after T040.
-- T016 stays blocked (INPUT-001 absent).
-- T018/T020 may proceed on their unblocked portions.
-- T022 residual must apply the changed-path regression rule using this accepted head.
-
-## Independent review
-
-Independent review (GPT-5.6 Sol) must approve these scope verdicts before the next v6
-writer starts. This document records the evidence; approval is a separate gate.

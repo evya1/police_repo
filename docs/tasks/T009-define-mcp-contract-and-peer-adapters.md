@@ -114,4 +114,9 @@ Report files changed, tests executed, exact test results, decisions made, deviat
 
 ## Implementation evidence (2026-08-18)
 
-The FastMCP transport is implemented in `common/transport/mcp_server.py` (server, four tools, lazy import, enqueue-and-return, 406 ready state) and `common/transport/mcp_client.py` (`McpChannel`, a drop-in `PeerChannel` over HTTP with a synchronous facade over the async client). Verified by `tests/contract/mcp/test_local_mcp_smoke.py` and a two-OS-process localhost run (police_repo peer vs thief_repo peer): both peers complete the handshake, six sub-games, and mutual audits over real HTTP with no public endpoint, agreeing on `game_id`/`game_uid`. `implementation_state` is `implementation_present`; the task is **not** closed — the belief-mode position-leak guard, full turn-key/profile-declaration assertions against the live HTTP server, and the public-endpoint path (`{#public_endpoint}`, gated on `G-LIVE`) remain.
+The FastMCP transport is implemented in `common/transport/mcp_server.py` (server, four tools, lazy
+import, enqueue-and-return, 406 ready state) and `common/transport/mcp_client.py` (`McpChannel`, a
+drop-in `PeerChannel` over HTTP with a synchronous facade over the async client). It is verified by
+`tests/contract/mcp/test_local_mcp_smoke.py`, the separate-process localhost series, and the
+preserved real match: both peers complete the handshake, six sub-games, and mutual audits over real
+HTTP while agreeing on `game_id` and `game_uid`.

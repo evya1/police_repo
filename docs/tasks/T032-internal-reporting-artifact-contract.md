@@ -57,7 +57,7 @@ filenames, or sanctions.
   (substitute; NOT the official four-filename / teams-and-members shape).
 - `REPORT-008` — internal `SeriesResult` with repo links, per-sub-game Git commit, and
   per-sub-game + series token totals (internal representation; NOT the official result shape).
-- `REPORT-009` — NOT implemented here; correctly gated (cross-team consistency is out of scope).
+- `REPORT-009` — integrated by T018 through mutual result agreement and separate consistent reports.
 
 ## Acceptance criteria
 

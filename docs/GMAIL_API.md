@@ -49,10 +49,7 @@ arbitrary strings; the example uses `dry-run`, but there is no mode enum, send b
 explicit authorization parameter. `GmailSender` separately exposes `sender_email`,
 `default_recipient`, `scopes`, `service_client`, and `idempotency_store` as constructor inputs.
 
-- Authoritative recipient: `rmisegal+uoh26finalgame@gmail.com` (PDF p. 71, §9.3; p. 141,
-  Appendix F table 20). `EmailSettings` defaults to it. **The Gmail adapter does not enforce it**:
-  any non-empty per-call or default address is accepted, and a per-call value overrides the
-  default.
+- Default recipient is the placeholder `example@example.com`; the real league address must be set in private config before a counted run. **The Gmail adapter does not enforce any address**: any non-empty per-call or default address is accepted, and a per-call value overrides the default.
 - OAuth scope: `https://www.googleapis.com/auth/gmail.send` (PDF p. 105, Appendix A §1.3).
   `validate_oauth_scope` also accepts the shorthand `gmail.send`; broader scopes fail before a
   call.
@@ -238,7 +235,7 @@ fake = FakeService()
 sender = GmailSender(
     gatekeeper=ExternalApiGatekeeper(),
     scopes=["https://www.googleapis.com/auth/gmail.send"],
-    default_recipient="rmisegal+uoh26finalgame@gmail.com",
+    default_recipient="example@example.com",
     service_client=fake,
     idempotency_store=FileIdempotencyStore(Path("artifacts/state/gmail-sent.json")),
 )
@@ -256,7 +253,7 @@ from police_peer.reporting.gmail import build_email_message
 
 message, raw = build_email_message(
     sender="peer@local",
-    recipient="rmisegal+uoh26finalgame@gmail.com",
+    recipient="example@example.com",
     subject=f"[PoliceThief-Report] Series {bundle.declaration.game_uid}",
     body="Automated Police/Thief series report attached.",
     attachments=bundle.to_attachments(),
@@ -284,7 +281,7 @@ generated Gmail outbox or receipt file.
 | PDF requirement | Implemented location | Status |
 | --- | --- | --- |
 | Each peer automatically emails after every legal counted game (p. 71, §9.3) | `reporting.pipeline.ReportingPipeline.process_and_send`; absent from `runner.run_one_peer` | not wired |
-| Only `rmisegal+uoh26finalgame@gmail.com` is allowed (p. 71; p. 141, App. F table 20) | `wire.identity_config.LECTURER_REPORT_ADDRESS`; `GmailSender.send_report` accepts overrides | partial |
+| Only `rmisegal+uoh26finalgame@gmail.com` is the league address (p. 71; p. 141, App. F table 20); the code default is now `example@example.com` | `wire.identity_config.LECTURER_REPORT_ADDRESS`; `GmailSender.send_report` accepts overrides | placeholder |
 | Send-only OAuth scope (p. 105, App. A §1.3) | `reporting.gmail.GMAIL_SEND_SCOPE` / `validate_oauth_scope` | implemented |
 | Local OAuth files and consent/refresh flow (pp. 105–109, App. A) | ignore/safety configuration; no Gmail client factory | missing |
 | Gatekeeper rate, quota, DoS, and 429 backoff (pp. 72–79, §9.3.1–3) | `infra.external_api_gatekeeper.ExternalApiGatekeeper` | implemented |

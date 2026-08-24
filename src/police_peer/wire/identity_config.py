@@ -25,8 +25,8 @@ from dataclasses import dataclass, field
 
 from common.config import ConfigError
 
-#: App. F table 20 -- the one address the agent's automated reports may target.
-LECTURER_REPORT_ADDRESS = "rmisegal+uoh26finalgame@gmail.com"
+#: Placeholder report address (override with the real league address in private config).
+LECTURER_REPORT_ADDRESS = "example@example.com"
 
 
 @dataclass(frozen=True, slots=True)

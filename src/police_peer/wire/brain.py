@@ -1,20 +1,20 @@
-"""BrainDrivenEngine — the S3 glue swap: real PoliceBrain on POLICE sub-games.
+"""Brain-driven Police turn adapter composed around one ``SubgameSession``.
 
-Composes a ``SubgameSession`` (does NOT subclass ``StandInEngine``, and is not subclassed
-by it — both adapters compose the shared session). On POLICE sub-games it resolves the
-configured brain + belief, normalizes incoming scent at the wire boundary, and drives the
-belief through the canonical ``apply_half_turn`` order once per accepted half-turn. A
-barrier this peer places itself is excluded from the belief as soon as the domain
-placement succeeds. THIEF sub-games keep the stand-in behaviour (SD-P7) via the same
-``SubgameSession``, duplicated minimally rather than inherited.
+Natural-role turns use the configured brain and belief; opposite-role turns retain
+the baseline. Hint wording runs only after deterministic action selection.
 """
 
 from __future__ import annotations
 
+import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 from common.domain.scoring import Outcome, Role
+from police_peer.evidence.token_ledger import TokenLedger
+from police_peer.evidence.tokens import event_from_hint_result
+from police_peer.strategy.hint_types import TextProvider
 from police_peer.wire.evidence import normalize_scent_field
 from police_peer.wire.sealed_payload import build_terminal_final
 from police_peer.wire.session import SubgameSession
@@ -29,6 +29,10 @@ class BrainDrivenEngine:
     seed: int = 0
     terms: dict | None = None
     config: dict | None = None
+    text_provider: TextProvider | None = None
+    token_ledger: TokenLedger | None = None
+    counted: bool = False
+    clock: Callable[[], float] = time.monotonic
 
     _session: SubgameSession | None = None
     _brain: Any = None
@@ -36,6 +40,7 @@ class BrainDrivenEngine:
     _last_field: dict[str, float] = field(default_factory=dict)
     _last_opponent_hint: str = ""
     _arena: str = "New York"
+    _sub_game: int = 0
 
     def start_subgame(self, sub_game: int, role: Role, terms: dict | None = None) -> None:
         """Fresh session for every sub-game; on POLICE sub-games, fresh brain + belief too."""
@@ -47,6 +52,7 @@ class BrainDrivenEngine:
             scent_model=scent_model,
         )
         self._session.start(sub_game, role, terms=t)
+        self._sub_game = sub_game
         self._brain = None
         self._belief = None
         self._last_field = {}
@@ -57,7 +63,7 @@ class BrainDrivenEngine:
             from police_peer.belief import build_belief
             from police_peer.strategy import resolve_brain
 
-            self._brain = resolve_brain(cfg, role)
+            self._brain = resolve_brain(cfg, role, llm=self.text_provider)
             self._brain.reset(self._session.engine.position)
             self._belief = build_belief(self._session.engine.board, cfg, probe=None)
 
@@ -68,8 +74,17 @@ class BrainDrivenEngine:
 
         if self._brain is not None:
             self._brain.note_evidence(self._last_field)
-            decision = self._brain.decide(
-                self._session.engine, self._belief, self._last_opponent_hint, self._arena,
+            cfg = self.config or {}
+            llm_cfg = cfg.get("llm") if isinstance(cfg, dict) else None
+            step_budget = (
+                float(llm_cfg.get("step_deadline_seconds", 30.0))
+                if isinstance(llm_cfg, dict) else 30.0
+            )
+            deadline = self.clock() + step_budget if self.text_provider is not None else None
+            args = (self._session.engine, self._belief, self._last_opponent_hint, self._arena)
+            decision = (
+                self._brain.decide(*args, deadline=deadline)
+                if self.text_provider is not None else self._brain.decide(*args)
             )
             # Barrier first: place barrier if decided, then apply move (FR-P2/FR-P4).
             if decision.barrier_cell is not None:
@@ -80,6 +95,12 @@ class BrainDrivenEngine:
                 if self._belief is not None:
                     self._belief.exclude(decision.barrier_cell)
             self._session.apply_move(decision.action)
+            sealed_hint = getattr(getattr(self._brain, "hint_writer", None), "last_result", None)
+            if self.token_ledger is not None and sealed_hint is not None:
+                self.token_ledger.record(event_from_hint_result(
+                    sub_game_id=str(self._sub_game), step=self._session.engine.step,
+                    counted=self.counted, hint_result=sealed_hint,
+                ))
             return self._session.build_result(
                 move=decision.action,
                 hint=decision.hint,

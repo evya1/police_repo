@@ -86,6 +86,15 @@ class TestLogRecordFlattening:
 
 
 class TestBundleMembership:
+    def test_result_preserves_unknown_token_usage(self) -> None:
+        usage = {
+            "series_total": {"status": "unknown", "input_tokens": 0, "output_tokens": 0},
+            "per_sub_game": {"1": {"status": "unknown", "input_tokens": 0, "output_tokens": 0}},
+        }
+        files = docs.build_all_documents(_result(), usage)
+        result = json.loads(files[f"result_{GAME_ID}.json"])
+        assert result["token_usage"] == usage
+
     def test_exact_fifteen_members_with_expected_names(self) -> None:
         files = docs.build_all_documents(_result())
         assert len(files) == 15

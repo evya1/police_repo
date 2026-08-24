@@ -1,10 +1,4 @@
-"""Pure builders for internal-interop replay documents (RP-03, RP-08, RP-12).
-
-No filesystem, clock, or network: every function takes immutable evidence and returns a
-plain dict or bytes; ``replay_bundle.py`` owns all I/O. Every document is labelled
-``schema_status: internal_interop`` (INPUT-001 is unresolved). ``check_completeness``
-re-checks a *reloaded* log against the manifest's expected counts (RP-12).
-"""
+"""Pure internal replay builders; ``replay_bundle.py`` owns all I/O."""
 
 from __future__ import annotations
 
@@ -98,7 +92,7 @@ def build_log(evidence: SubgameReplayEvidence) -> dict:
     return doc
 
 
-def build_result(result: SeriesResult) -> dict:
+def build_result(result: SeriesResult, token_usage: dict | None = None) -> dict:
     # One per series: ledger plus the per-sub-game record-count summary (RP-12).
     _validate_evidence(result.replay_evidence)
     doc = _base("result", result.game_id, result.game_uid)
@@ -118,6 +112,8 @@ def build_result(result: SeriesResult) -> dict:
     ]
     ordered = sorted(result.replay_evidence, key=lambda e: e.sub_game_index)
     doc["sub_games"] = [_sub_game_summary(e) for e in ordered]
+    if token_usage is not None:
+        doc["token_usage"] = token_usage
     return doc
 
 
@@ -145,7 +141,7 @@ def member_filename(kind: str, game_id: str, sub_game_index: int | None = None) 
     return f"{kind}_{game_id}_g{sub_game_index:02d}.json"
 
 
-def build_all_documents(result: SeriesResult) -> dict[str, bytes]:
+def build_all_documents(result: SeriesResult, token_usage: dict | None = None) -> dict[str, bytes]:
     """Build the exact 15-member set: name -> serialized bytes, manifest included last."""
     _validate_evidence(result.replay_evidence)
     game_id = result.game_id
@@ -161,7 +157,8 @@ def build_all_documents(result: SeriesResult) -> dict[str, bytes]:
         (member_filename("log", game_id, e.sub_game_index), serialize_document(build_log(e)))
         for e in entries
     ]
-    members.append((member_filename("result", game_id), serialize_document(build_result(result))))
+    members.append((member_filename("result", game_id),
+                    serialize_document(build_result(result, token_usage))))
     manifest_bytes = serialize_document(build_manifest(result, members))
     files = dict(members)
     files[member_filename("manifest", game_id)] = manifest_bytes

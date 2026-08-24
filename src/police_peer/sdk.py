@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -11,9 +12,13 @@ from common.transport.audit_wire import resolve_audit_wire
 from common.transport.loopback import pair
 from common.transport.opponent_pin import OpponentPin
 from common.transport.series import PeerConfig, PeerFacade, SeriesResult
+from police_peer.evidence.token_ledger import TokenLedger
+from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
+from police_peer.infra.llm_client import CompletionClient
 from police_peer.replay_service import BundleReplayReport
 from police_peer.replay_service import verify_bundle as _verify_replay_bundle
 from police_peer.strategy import Strategy
+from police_peer.strategy.hint_types import TextProvider
 from police_peer.wire import BrainDrivenEngine, StandInEngine
 from police_peer.wire.config import (
     Budgets,
@@ -23,18 +28,17 @@ from police_peer.wire.config import (
     peer_locks,
     project_terms,
 )
+from police_peer.wire.llm_composition import compose_text_provider
 from police_peer.wire.negotiate_per_subgame import negotiated_subgame_driver
 from police_peer.wire.startup import SUPPORTED_SCHEMA_VERSIONS, validate_startup_config
 from police_peer.wire.strategy_settings import assemble_strategy_config
 
 __version__ = "1.0.0"
+_AUTO_TEXT_PROVIDER = object()
 __all__ = [
-    "Budgets",
-    "BundleReplayReport",
-    "PeerFacade",
+    "Budgets", "BundleReplayReport", "PeerFacade",
     "SUPPORTED_SCHEMA_VERSIONS",
-    "SeriesResult",
-    "create_peer",
+    "SeriesResult", "create_peer",
     "validate_startup_config",
     "verify_replay_bundle",
     "__version__",
@@ -61,31 +65,19 @@ def create_peer(
     mode: str = "warmup",
     wire_profile: str | None = None,
     identity_block: dict | None = None,
+    environment: Mapping[str, str] | None = None,
+    completion_client: CompletionClient | None = None,
+    gatekeeper: ExternalApiGatekeeper | None = None,
+    text_provider: TextProvider | None | object = _AUTO_TEXT_PROVIDER,
+    token_ledger: TokenLedger | None = None,
 ) -> PeerFacade:
-    """Public factory creating a validated PeerFacade.
+    """Create a validated production peer from shared JSON and private TOML.
 
-    Raw shared (JSON) and private (TOML) config are validated/normalized
-    ONCE, here, at startup: ``validate_startup_config`` on the shared side,
-    ``load_private`` + ``assemble_strategy_config`` on the private side. The
-    fully resolved configuration is then passed explicitly to the engine —
-    no strategy module reads a file or reaches for global state itself.
-
-    Default behaviour (no explicit ``strategy=``): POLICE sub-games run the
-    real, configured ``PoliceBrain`` behind ``BrainDrivenEngine`` (never the
-    stand-in — the previous wiring built ``StandInEngine`` unconditionally
-    even for POLICE, which made the real brain dead code in production).
-    Opposite-role sub-games keep the documented baseline (stand-in)
-    behaviour on the same engine (SD-P7).
-
-    An explicitly supplied ``strategy=`` remains backward compatible: it
-    selects the legacy ``StandInEngine`` path with that ``Strategy``
-    plugged in, for callers that still want to override move selection
-    directly rather than through the private ``[strategy]`` config.
-
-    ``wire_profile`` selects the audit wire (T054): the default internal lane
-    publishes exactly the T046/T047 bytes, while ``"reference-v3"`` speaks the
-    pinned kit's nested audit envelope. It is resolved here, once, and an
-    unknown profile fails fast before a game exists.
+    Configuration and optional OpenRouter dependencies are resolved once here;
+    downstream strategy code reads no files or environment. The default uses
+    ``BrainDrivenEngine`` for natural-role play, while an explicit ``strategy``
+    preserves the legacy stand-in override. The audit wire is likewise resolved
+    once, and an unknown profile fails before a game exists.
     """
     if isinstance(config_path, (str, Path)):
         raw_config = load_config(config_path)
@@ -100,6 +92,16 @@ def create_peer(
         role = Role(role.lower())
 
     private = load_private(private_config_path) if private_config_path else PrivateConfig()
+    if text_provider is _AUTO_TEXT_PROVIDER:
+        resolved_provider = compose_text_provider(
+            private.llm, raw_config, environment=environment,
+            completion_client=completion_client, gatekeeper=gatekeeper,
+        )
+    else:
+        if text_provider is not None and not isinstance(text_provider, TextProvider):
+            raise TypeError("text_provider must implement TextProvider.render")
+        resolved_provider = text_provider
+    ledger = token_ledger if token_ledger is not None else TokenLedger()
     terms = project_terms(raw_config, private.__dict__)
     terms["num_games"] = 6
 
@@ -141,6 +143,9 @@ def create_peer(
             seed=peer_cfg.seed,
             terms=terms,
             config=strategy_config,
+            text_provider=resolved_provider,
+            token_ledger=ledger,
+            counted=mode == "counted",
         )
 
     if channel is None:

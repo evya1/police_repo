@@ -30,6 +30,7 @@ class FallbackReason(Enum):
 
     NO_PROVIDER = "no_provider"
     NON_CLAIM = "non_claim"
+    SKIPPED = "skipped"
     TIMEOUT = "timeout"
     EXCEPTION = "exception"
     MALFORMED = "malformed"

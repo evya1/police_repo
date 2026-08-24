@@ -63,8 +63,8 @@ def _combine(events: list[TokenEvent]) -> TokenTotal:
 class TokenLedger:
     """Append-only per-series token accounting.
 
-    Warmup events (``counted=False``) are recorded but excluded from every
-    total -- warmup and counted play are always kept in separate buckets.
+    Warmup events are recorded but excluded unless ``include_warmup=True``;
+    counted readiness therefore never mistakes warmup evidence for league play.
     """
 
     def __init__(self) -> None:
@@ -81,31 +81,41 @@ class TokenLedger:
             )
         self._events[event.key] = event
 
-    def _counted_events(self, *, sub_game_id: str | None = None) -> list[TokenEvent]:
+    def _selected_events(
+        self, *, sub_game_id: str | None = None, include_warmup: bool = False,
+    ) -> list[TokenEvent]:
         return [
             event
             for event in self._events.values()
-            if event.counted and (sub_game_id is None or event.sub_game_id == sub_game_id)
+            if (include_warmup or event.counted)
+            and (sub_game_id is None or event.sub_game_id == sub_game_id)
         ]
 
-    def sub_game_total(self, sub_game_id: str) -> TokenTotal:
-        return _combine(self._counted_events(sub_game_id=sub_game_id))
+    def sub_game_total(self, sub_game_id: str, *, include_warmup: bool = False) -> TokenTotal:
+        return _combine(self._selected_events(
+            sub_game_id=sub_game_id, include_warmup=include_warmup,
+        ))
 
-    def series_total(self) -> TokenTotal:
-        return _combine(self._counted_events())
+    def series_total(self, *, include_warmup: bool = False) -> TokenTotal:
+        return _combine(self._selected_events(include_warmup=include_warmup))
 
     def has_unknown_counted_usage(self) -> bool:
         return self.series_total().status is UsageStatus.UNKNOWN
 
-    def sub_game_ids(self) -> list[str]:
-        return sorted({event.sub_game_id for event in self._counted_events()})
+    def sub_game_ids(self, *, include_warmup: bool = False) -> list[str]:
+        return sorted({
+            event.sub_game_id
+            for event in self._selected_events(include_warmup=include_warmup)
+        })
 
-    def as_dict(self) -> dict[str, Any]:
+    def as_dict(self, *, include_warmup: bool = False) -> dict[str, Any]:
         return {
-            "series_total": self.series_total().as_dict(),
+            "series_total": self.series_total(include_warmup=include_warmup).as_dict(),
             "per_sub_game": {
-                sub_game_id: self.sub_game_total(sub_game_id).as_dict()
-                for sub_game_id in self.sub_game_ids()
+                sub_game_id: self.sub_game_total(
+                    sub_game_id, include_warmup=include_warmup,
+                ).as_dict()
+                for sub_game_id in self.sub_game_ids(include_warmup=include_warmup)
             },
         }
 

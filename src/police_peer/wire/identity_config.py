@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from common.config import ConfigError
+
 #: App. F table 20 -- the one address the agent's automated reports may target.
 LECTURER_REPORT_ADDRESS = "rmisegal+uoh26finalgame@gmail.com"
 
@@ -49,10 +51,14 @@ class Endpoints:
 
 @dataclass(frozen=True, slots=True)
 class LlmSettings:
-    """From `[llm]`. `model` is declared in the pre-game identity, so it is not cosmetic."""
+    """Validated local `[llm]` settings; credentials are deliberately absent."""
 
+    provider: str = "template"
     model: str = "template"
+    provider_slug: str = ""
     step_deadline_seconds: float = 30.0
+    max_output_tokens: int = 32
+    every_n_steps: int = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,14 +108,32 @@ def load_endpoints(toml_data: dict) -> Endpoints:
 
 
 def load_llm_settings(toml_data: dict) -> LlmSettings:
-    """Read `[llm]`, tolerating absence."""
+    """Read `[llm]`; enabled invalid configuration fails during startup."""
     block = toml_data.get("llm", {})
     if not isinstance(block, dict):
-        return LlmSettings()
-    return LlmSettings(
-        model=str(block.get("model", "template")),
-        step_deadline_seconds=float(block.get("step_deadline_seconds", 30.0)),
-    )
+        raise ConfigError("[llm] must be a TOML table")
+    provider = str(block.get("provider", "template")).strip().lower()
+    model = str(block.get("model", "template")).strip()
+    provider_slug = str(block.get("provider_slug", "")).strip()
+    try:
+        deadline = float(block.get("step_deadline_seconds", 30.0))
+        max_tokens = int(block.get("max_output_tokens", 32))
+        cadence = int(block.get("every_n_steps", 1))
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ConfigError("[llm] numeric settings must contain finite numbers") from exc
+    if provider not in {"template", "openrouter"}:
+        raise ConfigError("[llm].provider must be 'template' or 'openrouter'")
+    if provider == "openrouter" and (not model or model == "template"):
+        raise ConfigError("[llm].model is required when provider='openrouter'")
+    if provider == "openrouter" and not provider_slug:
+        raise ConfigError("[llm].provider_slug is required when provider='openrouter'")
+    if not 0 < deadline <= 60:
+        raise ConfigError("[llm].step_deadline_seconds must be in (0, 60]")
+    if not 1 <= max_tokens <= 64:
+        raise ConfigError("[llm].max_output_tokens must be between 1 and 64")
+    if cadence < 1:
+        raise ConfigError("[llm].every_n_steps must be at least 1")
+    return LlmSettings(provider, model, provider_slug, deadline, max_tokens, cadence)
 
 
 def load_email_settings(toml_data: dict) -> EmailSettings:

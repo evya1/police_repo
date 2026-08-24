@@ -2,59 +2,31 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import time
+from functools import partial
 from pathlib import Path
 
+from common.config import ConfigError, load_config
 from common.domain.scoring import Role
 from common.transport.loopback import Inboxes
 from common.transport.mcp_client import McpChannel, edge_answers
 from common.transport.mcp_server import serve_background
-from common.transport.series import SeriesResult
+from police_peer.evidence.token_ledger import (
+    CountedPlayIneligibleError,
+    assert_counted_eligible,
+)
 from police_peer.league.readiness import CountedPlayNotReadyError
 from police_peer.league.runtime_evidence import prepare_runtime_evidence
-from police_peer.reporting.replay_bundle import publish_replay_bundle
+from police_peer.reporting.replay_bundle import publish_replay_bundle as _publish_replay_bundle
+from police_peer.reporting.runtime_artifacts import write_artifacts
 from police_peer.reporting.settlement import publish_kit, settle
 from police_peer.sdk import Budgets, __version__, create_peer
 from police_peer.strategy import Strategy
+from police_peer.wire.config import PrivateConfig, load_private
+from police_peer.wire.llm_composition import compose_text_provider
 
 logger = logging.getLogger(__name__)
-
-
-def write_artifacts(
-    artifacts_dir: Path | str,
-    result: SeriesResult,
-    role: Role = Role.POLICE,
-    group_id: str = "police-local",
-    mode: str = "warmup",
-) -> None:
-    """Persist series results and ledger to the artifacts directory."""
-    path = Path(artifacts_dir)
-    path.mkdir(parents=True, exist_ok=True)
-    summary = {
-        "group_id": group_id,
-        "mode": mode,
-        "natural_role": role.value,
-        "game_id": result.game_id,
-        "game_uid": result.game_uid,
-        "settled": result.settled,
-        "settled_outcome": result.settled_outcome.value if result.settled_outcome else None,
-        "ledger": [
-            {
-                "sub_game_number": row.sub_game_number,
-                "role": row.role.value,
-                "outcome": row.outcome.value,
-                "steps": row.steps,
-                "score_police": row.score_police,
-                "score_thief": row.score_thief,
-                "audit_ok": row.audit_ok,
-            }
-            for row in result.ledger
-        ],
-    }
-    filename = f"result_{result.game_id}.json" if result.game_id else "result.json"
-    (path / filename).write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
 
 def run_one_peer(
@@ -80,13 +52,16 @@ def run_one_peer(
 ) -> int:
     """Run one independent peer process: serve MCP, dial peer, run 6 subgames."""
     try:
+        raw_config = load_config(shared_config)
+        private = load_private(private_config) if private_config else PrivateConfig()
+        text_provider = compose_text_provider(private.llm, raw_config)
         runtime = prepare_runtime_evidence(
             private_config=private_config, shared_config=shared_config, group_id=group_id,
             mode=mode, group_code_confirmed=group_code_confirmed, public_url=public_url,
             repo_root=Path(__file__).resolve().parents[2], code_version=__version__,
         )
-    except CountedPlayNotReadyError as exc:
-        logger.error("Counted play refused before transport startup: %s", exc)
+    except (ConfigError, CountedPlayNotReadyError) as exc:
+        logger.error("Startup refused before transport startup: %s", exc)
         return 2
     inboxes = Inboxes()
     serve_background(
@@ -133,19 +108,39 @@ def run_one_peer(
             mode=mode,
             wire_profile=wire_profile,
             identity_block=runtime.greeting_identity,
+            text_provider=text_provider,
+            token_ledger=runtime.token_ledger,
         )
 
         result = facade.run()
+        publish_replay_bundle = partial(
+            _publish_replay_bundle, token_ledger=runtime.token_ledger,
+        )
+        if mode == "counted":
+            try:
+                assert_counted_eligible(runtime.token_ledger)
+            except CountedPlayIneligibleError as exc:
+                logger.error("Counted series refused after token accounting: %s", exc)
+                if artifacts_dir:
+                    write_artifacts(
+                        artifacts_dir, result, role=role, group_id=group_id, mode=mode,
+                    )
+                    if result.settled:
+                        publish_replay_bundle(artifacts_dir, result)
+                return 2
         agreement = settle(channel, result, our_group=group_id, budget=turn_timeout)
 
         if artifacts_dir:
-            write_artifacts(artifacts_dir, result, role=role, group_id=group_id, mode=mode)
+            write_artifacts(
+                artifacts_dir, result, role=role, group_id=group_id, mode=mode,
+            )
             if result.settled:
                 publish_replay_bundle(artifacts_dir, result)
                 if emit_kit_bundle:
                     publish_kit(artifacts_dir, result, our_group=group_id, mode=mode,
                                 confirmed=agreement.agreed, identity=runtime.identity,
-                                opponent_identity=result.opponent_identity)
+                                opponent_identity=result.opponent_identity,
+                                token_ledger=runtime.token_ledger)
 
         if mode == "counted" and not agreement.agreed:
             # The series played and audited cleanly; only the settlement handshake did not

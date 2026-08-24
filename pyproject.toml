@@ -31,6 +31,9 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--tb=short -q --cov --cov-report=term-missing --cov-fail-under=85"
+markers = [
+  "live_openrouter: opt-in real OpenRouter smoke test (never run in normal CI)",
+]
 
 [tool.coverage.run]
 branch = false

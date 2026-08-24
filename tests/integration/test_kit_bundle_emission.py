@@ -1,10 +1,4 @@
-"""The emitted kit bundle must satisfy the kit's own gates, checked here without the kit.
-
-These assertions are transcriptions of what `tools/check_artifacts.py` and `sparring.cli
-replay` enforce, so a regression is caught in CI rather than by an opponent. The kit itself is
-run against a produced bundle as the packet's acceptance step; this keeps that honest between
-runs.
-"""
+"""The emitted kit bundle must satisfy the kit's own gates without the kit installed."""
 
 from __future__ import annotations
 
@@ -24,12 +18,13 @@ from common.transport.ids import game_uid as derive_uid
 from common.transport.loopback import pair
 from common.transport.series import PeerFacade, SeriesResult
 from common.transport.terms import TERMS_KEYS
+from police_peer.evidence.token_ledger import TokenLedger
+from police_peer.evidence.tokens import TokenEvent, UsageStatus
 from police_peer.reporting.kit_bundle import publish_kit_bundle
+from police_peer.reporting.settlement import publish_kit
 from police_peer.sdk import Budgets, create_peer
 
-KIT_NAME_RE = re.compile(
-    r"^(declaration|config|log|result)_(?P<gid>.+?)(?:_g(?P<nn>\d+))?\.json$"
-)
+KIT_NAME_RE = re.compile(r"^(declaration|config|log|result)_(?P<gid>.+?)(?:_g(?P<nn>\d+))?\.json$")
 POLICE, THIEF = "kit-police", "kit-thief"
 
 
@@ -139,6 +134,19 @@ def test_tokens_total_is_the_sum_of_the_per_row_tokens(bundle):
         for g in result["groups"]
     }
     assert result["final_result"]["tokens_total_series"] == derived
+
+
+def test_runtime_token_ledger_reaches_kit_rows_and_total(series, tmp_path):
+    ledger = TokenLedger()
+    event = TokenEvent(sub_game_id="1", step=1, counted=False, provider_called=True,
+                       fallback=False, status=UsageStatus.KNOWN_NONZERO, input_tokens=17, output_tokens=4)
+    ledger.record(event)
+    publish_kit(tmp_path, series, our_group=POLICE, mode="warmup", confirmed=False,
+                token_ledger=ledger)
+    emitted = docs(tmp_path / "kit" / series.game_uid)
+    result = next(doc for name, doc in emitted.items() if name.startswith("result_"))
+    assert result["sub_games"][0]["tokens"][POLICE] == 21
+    assert result["final_result"]["tokens_total_series"][POLICE] == 21
 
 
 def test_a_warm_up_never_arms_the_league_fields(bundle):

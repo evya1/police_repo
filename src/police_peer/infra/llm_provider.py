@@ -67,14 +67,10 @@ def build_prompt(request: HintRenderRequest) -> str:
     """
     return "\n".join((
         PROMPT_VERSION,
-        f"role: {request.role.value}",
-        f"arena: {request.arena}",
-        f"landmark: {request.target_landmark}",
-        f"claim: {request.claim}",
-        f"style: {request.style}",
-        f"max_words: {request.max_words}",
-        "Write exactly one short plain-text sentence matching the above. "
-        "Do not return JSON, code, or any other structured format.",
+        f"role={request.role.value}; arena={request.arena}",
+        f"landmark={request.target_landmark}; claim={request.claim}",
+        f"style={request.style}; max_words={request.max_words}",
+        "One plain sentence. Mention the landmark exactly. No JSON or code.",
     ))
 
 

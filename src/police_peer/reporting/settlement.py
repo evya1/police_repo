@@ -16,6 +16,8 @@ from common.transport.kit_agreement import AgreementOutcome, build_proposal
 from common.transport.kit_identity import GroupIdentity, group_block
 from common.transport.kit_settlement import result_row, series_final
 from common.transport.series import SeriesResult
+from police_peer.evidence.token_ledger import TokenLedger
+from police_peer.evidence.tokens import UsageStatus
 from police_peer.reporting.kit_bundle import publish_kit_bundle
 from police_peer.wire.result_agreement import exchange
 
@@ -58,6 +60,7 @@ def publish_kit(
     confirmed: bool,
     identity: GroupIdentity | None = None,
     opponent_identity: dict | None = None,
+    token_ledger: TokenLedger | None = None,
 ) -> None:
     """Publish the kit projection beside the internal bundle.
 
@@ -84,10 +87,24 @@ def publish_kit(
         if result.replay_evidence:
             terms = json.loads(result.replay_evidence[0].terms_bytes)
             max_tokens = terms.get("token_budget_per_series")
+        tokens_by_sub_game = None
+        if token_ledger is not None:
+            tokens_by_sub_game = {}
+            for row in result.ledger:
+                total = token_ledger.sub_game_total(
+                    str(row.sub_game_number), include_warmup=not counted,
+                )
+                if total.status is UsageStatus.UNKNOWN:
+                    raise ValueError("unknown token usage cannot be projected as zero")
+                tokens_by_sub_game[row.sub_game_number] = {
+                    our_group: total.input_tokens + total.output_tokens,
+                    result.opponent_group_id: 0,
+                }
         publish_kit_bundle(
             artifacts_dir, result, our_group=our_group, counted=counted,
             confirmed=confirmed, groups=groups, games_played=games_played,
             max_tokens_per_game=max_tokens,
+            tokens_by_sub_game=tokens_by_sub_game,
         )
     except Exception as exc:  # noqa: BLE001 - never let a projection fault destroy evidence
         logger.error("Kit bundle projection failed (internal bundle is intact): %s", exc)

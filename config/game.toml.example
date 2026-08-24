@@ -30,8 +30,12 @@ turn_timeout_seconds = 180
 
 [llm]
 # The move is ALWAYS decided in Python. The language model touches the verbal layer only.
-model = "template"                              # template = zero tokens, the default
+provider = "template"                           # template | openrouter
+model = "inclusionai/ling-3.0-flash"             # required only when openrouter is enabled
+provider_slug = "novita"
 step_deadline_seconds = 30
+max_output_tokens = 32
+every_n_steps = 1
 
 [email]
 # App. F table 20: the one address the agent's automated reports may target.

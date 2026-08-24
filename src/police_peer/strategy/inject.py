@@ -75,17 +75,23 @@ def resolve_brain(
 
     arena = "New York"
     max_words = 15
+    every_n_steps = 1
     if config is not None:
         world = config.get("world")
         if isinstance(world, Mapping):
             arena = str(world.get("map_area", "New York"))
             max_words = int(world.get("hint_max_words", 15))
+        llm_settings = config.get("llm")
+        if isinstance(llm_settings, Mapping):
+            every_n_steps = int(llm_settings.get("every_n_steps", 1))
 
     from .hints import HintWriter
 
     if llm is not None and not isinstance(llm, TextProvider):
         raise TypeError(f"llm={llm!r} does not implement TextProvider.render")
-    hint_writer = HintWriter(role, rng, arena, max_words, provider=llm)
+    hint_writer = HintWriter(
+        role, rng, arena, max_words, provider=llm, every_n_steps=every_n_steps,
+    )
     kwargs: dict[str, object] = {"rng": rng, "arena": arena, "max_words": max_words,
                                   "hint_writer": hint_writer}
     # Apply role-specific config weights (PRD §9).

@@ -185,6 +185,27 @@ current, incomplete, and unrelated sessions were excluded. No session or turn id
 machine paths, account details, personal information, email addresses, or credentials are
 recorded here.
 
+### Usage at a glance
+
+```mermaid
+flowchart LR
+    I["Input<br/>36.49M tokens"] --> C{"Cache lookup"}
+    C -->|"98.65% hit"| H["Cache read<br/>35.99M tokens"]
+    C -->|"1.35% miss"| U["Non-cached input<br/>0.49M tokens"]
+    H --> M["GPT-5.6 Sol"]
+    U --> M
+    M --> O["Output<br/>0.05M tokens"]
+```
+
+| Token flow | Tokens | Relative volume |
+| --- | ---: | --- |
+| Input | 36,485,763 | `████████████████████` 100% |
+| Cache read | 35,991,808 | `███████████████████▋` 98.65% of input |
+| Non-cached input | 493,955 | `▎` 1.35% of input |
+| Output | 54,393 | `▏` 0.15% of input |
+
+**Cache hit rate: 98.65%** · **Output-to-input ratio: 0.15%**
+
 | Metric | Completed-session total |
 | --- | ---: |
 | Sessions | 1 |

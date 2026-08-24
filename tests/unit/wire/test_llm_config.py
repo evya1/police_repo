@@ -32,12 +32,16 @@ def test_template_mode_constructs_neither_client_nor_gatekeeper(monkeypatch) -> 
     assert compose_text_provider(LlmSettings(), {}, environment={}) is None
 
 
-def test_openrouter_without_key_fails_at_composition() -> None:
+def test_live_opt_in_without_key_never_constructs_client(monkeypatch) -> None:
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("missing-key path constructed a network client")
+
+    monkeypatch.setattr("police_peer.wire.llm_composition.OpenRouterClient", forbidden)
     settings = LlmSettings(
         provider="openrouter", model="inclusionai/ling-3.0-flash", provider_slug="novita",
     )
     with pytest.raises(ConfigError, match="OPENROUTER_API_KEY"):
-        compose_text_provider(settings, {}, environment={})
+        compose_text_provider(settings, {}, environment={"RUN_LIVE_OPENROUTER_TESTS": "1"})
 
 
 @pytest.mark.parametrize(

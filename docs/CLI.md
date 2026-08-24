@@ -95,6 +95,9 @@ the SDK and recorded in the summary artifact when artifacts are enabled.
 
 ## Configuration precedence
 
+OpenRouter's configuration, Python API, request/response fields, fallback behavior, token
+accounting, and safe test commands are documented in [OpenRouter hint-wording API](OPENROUTER.md).
+
 - CLI path flags select the shared JSON and optional private TOML. There is no environment-variable
   configuration layer in `cli.py`.
 - Shared JSON supplies the negotiated game terms and wins over conflicting private TOML values;

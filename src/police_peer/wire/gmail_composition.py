@@ -27,6 +27,7 @@ class GmailDeliveryReceipt:
 
     delivery_mode: str
     gmail_api_contacted: bool
+    gmail_api_accepted: bool
     message_composed: bool
     gatekeeper_traversed: bool
     delivery_not_verified: bool
@@ -87,13 +88,17 @@ class GmailKitReporter:
             default_recipient=self.recipient, service_client=client,
             idempotency_store=FileIdempotencyStore(self.artifact_root / "state" / state_name),
         )
-        sender.send_kit_result(
+        response = sender.send_kit_result(
             game_uid=game_uid, result=document, filename=result_path.name,
         )
+        accepted = capture is None and bool(response.get("id"))
+        if capture is None and not accepted:
+            raise ConfigError("Gmail API did not acknowledge the message")
         if capture is not None:
             _write_message(self.artifact_root, game_uid, capture.resource.raw)
         receipt = GmailDeliveryReceipt(
             delivery_mode=self.settings.mode, gmail_api_contacted=capture is None,
+            gmail_api_accepted=accepted,
             message_composed=True, gatekeeper_traversed=True, delivery_not_verified=True,
         )
         _write_receipt(self.artifact_root, game_uid, receipt)

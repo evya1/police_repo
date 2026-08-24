@@ -98,6 +98,7 @@ def test_dry_run_uses_friend_sender_and_writes_local_outbox(tmp_path: Path) -> N
     assert attachment.get_filename() == path.name
     assert attachment.get_payload(decode=True) == canonical_bytes(document)
     assert receipt.gmail_api_contacted is False
+    assert receipt.gmail_api_accepted is False
     assert gatekeeper.lanes == ["reporting"]
     assert "recipient" not in (outbox / "receipt.json").read_text(encoding="utf-8")
 
@@ -115,6 +116,7 @@ def test_live_mode_reaches_gmail_compatible_client_once(tmp_path: Path) -> None:
     message = _message(service.resource.body["raw"])
     assert message["To"] == "recipient@example.invalid"
     assert receipt.gmail_api_contacted is True
+    assert receipt.gmail_api_accepted is True
     assert gatekeeper.lanes == ["reporting"]
     with pytest.raises(DuplicateSendError):
         reporter.report(path)

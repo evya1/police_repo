@@ -38,6 +38,11 @@ name when a required piece is missing.
   for any counted step.
 * `wire/identity_config.py` — the App. B §4 private-TOML sections (`[game]`, `[network]`,
   `[llm]`, `[email]`), all optional so a warm-up never needs a filled-in declaration.
+* `league/runtime_evidence.py`, `sdk.py`, and `runner.py` — the production composition path.
+  Counted readiness is resolved before the MCP server starts; the verified public identity
+  subset is carried in every greeting, the opponent's actual subset is retained, and the two
+  honest blocks are projected into the declaration. An opponent URL is never relabelled as our
+  own public endpoint.
 
 ## Verification
 
@@ -46,6 +51,7 @@ uv run pytest tests/unit/evidence/test_git_revision.py       11 passed
 uv run pytest tests/unit/league/test_counted_readiness.py    10 passed
 uv run pytest tests/unit/test_private_config_identity.py      7 passed
 uv run pytest tests/integration/test_declaration_completeness.py   3 passed
+uv run pytest tests/unit/test_runner_composition.py                production refusal covered
 uv run python scripts/smoke_replay_integration.py --config config/game.json \
       --private-config config/game.toml.example --artifact-root /tmp/w2 --json
 python tools/check_artifacts.py /tmp/w2/kit/<uid>            -> ALL ARTIFACT CHECKS PASS

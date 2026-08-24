@@ -34,7 +34,7 @@ def counted_games_played(store: FilePairingHistoryStore | None = None) -> int:
 
 def _endpoints(private, public_url: str) -> dict[str, str]:
     """Our two MCP endpoints. One public address serves both roles from this repository."""
-    url = public_url or private.endpoints.public_url or private.endpoints.opponent_url
+    url = public_url or private.endpoints.public_url
     if not url:
         raise IdentityError(
             "no public MCP address is declared. League play requires the server to be reachable "
@@ -55,6 +55,13 @@ def build_identity(
 ) -> GroupIdentity:
     """Gather every declarable value from a real source, or refuse by name."""
     identity = private.identity
+    if not identity.group_id:
+        raise IdentityError("[game].group_id is required for a counted declaration")
+    if group_id and group_id != identity.group_id:
+        raise IdentityError(
+            f"runtime group_id {group_id!r} does not match configured [game].group_id "
+            f"{identity.group_id!r}"
+        )
     repos = dict(identity.repos)
     missing = sorted(set(REPO_ROLES) - set(repos))
     if missing:
@@ -63,7 +70,7 @@ def build_identity(
             f"declared by both peers and cross-linked in each README (App. E rules 49-50)"
         )
     return GroupIdentity(
-        group_id=group_id or identity.group_id,
+        group_id=identity.group_id,
         group_name=identity.group_name,
         members=tuple(identity.members),
         repos=repos,

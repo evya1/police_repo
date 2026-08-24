@@ -34,7 +34,7 @@ def private_from(tmp_path, body: str):
 def ready(tmp_path, body: str = FULL_TOML, **overrides):
     kwargs = {
         "group_id": "zeroone", "repo_root": ".", "code_version": "1.0.0",
-        "terms": TERMS, "group_code_confirmed": True,
+        "terms": TERMS, "group_code_confirmed": True, "ledger": TokenLedger(),
     }
     kwargs.update(overrides)
     return assert_counted_ready(private_from(tmp_path, body), **kwargs)
@@ -62,6 +62,15 @@ def test_a_missing_repository_link_refuses_naming_it(tmp_path):
 
 def test_a_missing_public_address_refuses_naming_it(tmp_path):
     body = FULL_TOML.replace('public_url = "https://tunnel.invalid/mcp"', "")
+    with pytest.raises(CountedPlayNotReadyError, match="public MCP address"):
+        ready(tmp_path, body)
+
+
+def test_opponent_url_is_never_claimed_as_our_public_address(tmp_path):
+    body = FULL_TOML.replace(
+        'public_url = "https://tunnel.invalid/mcp"',
+        'opponent_url = "https://opponent.invalid/mcp"',
+    )
     with pytest.raises(CountedPlayNotReadyError, match="public MCP address"):
         ready(tmp_path, body)
 
@@ -97,6 +106,11 @@ def test_unknown_token_usage_refuses(tmp_path):
     ))
     with pytest.raises(CountedPlayNotReadyError, match="UNKNOWN"):
         ready(tmp_path, ledger=ledger)
+
+
+def test_missing_token_accounting_refuses(tmp_path):
+    with pytest.raises(CountedPlayNotReadyError, match="accounting is unavailable"):
+        ready(tmp_path, ledger=None)
 
 
 def test_a_clean_ledger_does_not_refuse(tmp_path):

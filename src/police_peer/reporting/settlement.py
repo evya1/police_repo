@@ -8,10 +8,12 @@ by the time anything below executes, the game is verified and only the settlemen
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
 from common.transport.kit_agreement import AgreementOutcome, build_proposal
+from common.transport.kit_identity import GroupIdentity, group_block
 from common.transport.kit_settlement import result_row, series_final
 from common.transport.series import SeriesResult
 from police_peer.reporting.kit_bundle import publish_kit_bundle
@@ -54,6 +56,8 @@ def publish_kit(
     our_group: str,
     mode: str,
     confirmed: bool,
+    identity: GroupIdentity | None = None,
+    opponent_identity: dict | None = None,
 ) -> None:
     """Publish the kit projection beside the internal bundle.
 
@@ -62,9 +66,28 @@ def publish_kit(
     to be seen and fixed, not a reason to lose a settled series.
     """
     try:
+        counted = mode == "counted"
+        groups = None
+        games_played = None
+        if identity is not None:
+            theirs = opponent_identity or {"group_id": result.opponent_group_id}
+            groups = sorted([group_block(identity), theirs], key=lambda item: item["group_id"])
+            their_count = theirs.get("counted_games_played")
+            games_played = {
+                our_group: identity.counted_games_played + (1 if counted else 0),
+                result.opponent_group_id: (
+                    their_count + (1 if counted else 0)
+                    if isinstance(their_count, int) else None
+                ),
+            }
+        max_tokens = None
+        if result.replay_evidence:
+            terms = json.loads(result.replay_evidence[0].terms_bytes)
+            max_tokens = terms.get("token_budget_per_series")
         publish_kit_bundle(
-            artifacts_dir, result, our_group=our_group, counted=(mode == "counted"),
-            confirmed=confirmed,
+            artifacts_dir, result, our_group=our_group, counted=counted,
+            confirmed=confirmed, groups=groups, games_played=games_played,
+            max_tokens_per_game=max_tokens,
         )
     except Exception as exc:  # noqa: BLE001 - never let a projection fault destroy evidence
         logger.error("Kit bundle projection failed (internal bundle is intact): %s", exc)

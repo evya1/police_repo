@@ -69,7 +69,12 @@ def assert_counted_ready(
             "no negotiated terms, so no configuration digest can be computed and the two peers "
             "have nothing to prove they agreed on the same physics"
         )
-    if ledger is not None and ledger.has_unknown_counted_usage():
+    if ledger is None:
+        raise CountedPlayNotReadyError(
+            "token-usage accounting is unavailable; counted play requires an attached ledger "
+            "even when the configured model is expected to consume zero tokens"
+        )
+    if ledger.has_unknown_counted_usage():
         raise CountedPlayNotReadyError(
             "language-model usage is recorded as UNKNOWN for at least one counted step. The "
             "report declares total tokens consumed (App. E rule 54), and an unknown total "

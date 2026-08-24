@@ -16,7 +16,7 @@ seed = 42
 
 [game]
 group_name = "ZeroOne"
-group_id = "zeroone"
+group_id = "ZeroOne1"
 # Publication-intended member identifiers only. Never legal names or government identifiers.
 members = ["id-1001", "id-1002"]
 # BOTH repositories, declared by both peers (App. E rule 49).

@@ -8,7 +8,12 @@ from pathlib import Path
 import pytest
 
 from common.domain.scoring import Role
-from common.transport.kit_identity import config_digest, verify_group_block
+from common.transport.kit_identity import (
+    GroupIdentity,
+    config_digest,
+    identity_greeting_block,
+    verify_group_block,
+)
 from common.transport.loopback import pair
 from common.transport.series import PeerFacade, SeriesResult
 from police_peer.evidence.identity_source import build_identity
@@ -19,6 +24,16 @@ from police_peer.wire.config import PrivateConfig
 from police_peer.wire.identity_config import Endpoints, GameIdentity
 
 GROUP_A, GROUP_B = "decl-a", "decl-b"
+
+
+def greeting_identity(group_id: str) -> dict:
+    return identity_greeting_block(GroupIdentity(
+        group_id=group_id, group_name=group_id, members=("id-1",),
+        repos={"cop": "https://example.invalid/p", "thief": "https://example.invalid/t"},
+        mcp_servers={"cop": "https://example.invalid/mcp", "thief": "https://example.invalid/mcp"},
+        llm_model="template", hardware_spec={"cpu": "test"},
+        github_commit="a" * 40, counted_games_played=0, code_version="1.0.0",
+    ))
 
 
 def an_identity(group_id: str, code_version: str, history: FilePairingHistoryStore) -> object:
@@ -40,9 +55,9 @@ def series() -> SeriesResult:
     channel_a, channel_b = pair(GROUP_A, GROUP_B)
     budgets = Budgets(turn_timeout=10.0, connect_timeout=10.0, poll_interval=0.005)
     police = create_peer(config, channel=channel_a, role=Role.POLICE, group_id=GROUP_A,
-                         budgets=budgets)
+                         budgets=budgets, identity_block=greeting_identity(GROUP_A))
     thief = create_peer(config, channel=channel_b, role=Role.THIEF, group_id=GROUP_B,
-                        budgets=budgets)
+                        budgets=budgets, identity_block=greeting_identity(GROUP_B))
     out: dict[str, SeriesResult] = {}
     errors: list[Exception] = []
 
@@ -61,6 +76,8 @@ def series() -> SeriesResult:
     if errors:
         raise errors[0]
     assert out["p"].settled
+    assert out["p"].opponent_identity["group_id"] == GROUP_B
+    assert "hardware_spec" not in out["p"].opponent_identity
     return out["p"]
 
 

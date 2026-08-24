@@ -45,6 +45,15 @@ def build_parser() -> argparse.ArgumentParser:
              "<artifacts>/kit/<game_uid>/ (ADR-012). The internal replay bundle is written "
              "either way.",
     )
+    parser.add_argument(
+        "--group-code-confirmed", action="store_true",
+        help="Confirm the configured group code against the human-approved team record; "
+             "required for counted play.",
+    )
+    parser.add_argument(
+        "--public-url", default="",
+        help="Actual public MCP URL for the counted declaration (overrides [network].public_url).",
+    )
     return parser
 
 
@@ -67,6 +76,8 @@ def main(argv: list[str] | None = None) -> int:
         turn_timeout=args.turn_timeout,
         wire_profile=args.wire_profile,
         emit_kit_bundle=args.emit_kit_bundle,
+        group_code_confirmed=args.group_code_confirmed,
+        public_url=args.public_url,
     )
 
 

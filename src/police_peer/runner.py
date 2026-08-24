@@ -24,8 +24,7 @@ from police_peer.reporting.settlement import publish_kit, settle
 from police_peer.sdk import Budgets, __version__, create_peer
 from police_peer.strategy import Strategy
 from police_peer.wire.config import PrivateConfig, load_private
-from police_peer.wire.gmail_composition import compose_gmail_reporter
-from police_peer.wire.llm_composition import compose_external_gatekeeper, compose_text_provider
+from police_peer.wire.runtime_services import compose_runtime_services, report_counted_result
 
 logger = logging.getLogger(__name__)
 
@@ -57,22 +56,11 @@ def run_one_peer(
     try:
         raw_config = load_config(shared_config)
         private = load_private(private_config) if private_config else PrivateConfig()
-        email_enabled = mode == "counted" and private.email.mode != "off"
-        gatekeeper = (
-            compose_external_gatekeeper(raw_config)
-            if private.llm.provider == "openrouter" or email_enabled else None
+        services = compose_runtime_services(
+            private, raw_config, mode=mode, artifacts_dir=artifacts_dir,
+            emit_kit_bundle=emit_kit_bundle, email_recipient=email_recipient,
+            authorize_email_send=authorize_email_send,
         )
-        text_provider = compose_text_provider(private.llm, raw_config, gatekeeper=gatekeeper)
-        gmail_reporter = None
-        if email_enabled:
-            if artifacts_dir is None or not emit_kit_bundle:
-                raise ConfigError(
-                    "counted Gmail reporting requires --artifacts-dir and --emit-kit-bundle"
-                )
-            gmail_reporter = compose_gmail_reporter(
-                private.email, artifacts_dir, gatekeeper,
-                recipient=email_recipient, authorize_send=authorize_email_send,
-            )
         runtime = prepare_runtime_evidence(
             private_config=private_config, shared_config=shared_config, group_id=group_id,
             mode=mode, group_code_confirmed=group_code_confirmed, public_url=public_url,
@@ -126,7 +114,7 @@ def run_one_peer(
             mode=mode,
             wire_profile=wire_profile,
             identity_block=runtime.greeting_identity,
-            text_provider=text_provider,
+            text_provider=services.text_provider,
             token_ledger=runtime.token_ledger,
         )
 
@@ -169,11 +157,9 @@ def run_one_peer(
             # owed or sent -- reporting alone on an unconfirmed result is what zeroes both.
             logger.error("Counted series is not reportable: %s", agreement.reason)
             return 6
-        if mode == "counted" and gmail_reporter is not None:
-            if kit_result_path is None:
-                logger.error("Counted series is not reportable: kit projection failed")
-                return 6
-            gmail_reporter.report(kit_result_path)
+        if not report_counted_result(services, kit_result_path, mode=mode):
+            logger.error("Counted series is not reportable: kit projection failed")
+            return 6
         return 0 if result.settled else 6
     except Exception as exc:
         logger.exception("Series execution failed: %s", exc)

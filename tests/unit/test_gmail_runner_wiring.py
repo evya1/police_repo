@@ -5,6 +5,9 @@ from types import SimpleNamespace
 
 from police_peer import runner
 from police_peer.evidence.token_ledger import TokenLedger
+from police_peer.wire import runtime_services
+from police_peer.wire.config import PrivateConfig
+from police_peer.wire.runtime_services import RuntimeServices
 
 
 class _Channel:
@@ -31,25 +34,16 @@ class _Reporter:
 def test_counted_runner_shares_gatekeeper_and_reports_published_result(
     monkeypatch, tmp_path: Path,
 ) -> None:
-    marker, reporter = object(), _Reporter()
-    seen: dict[str, object] = {}
+    reporter = _Reporter()
     result_path = tmp_path / "kit" / "result.json"
     monkeypatch.setattr(runner, "serve_background", lambda *a, **k: None)
     monkeypatch.setattr(runner, "edge_answers", lambda *a, **k: True)
     monkeypatch.setattr(runner, "McpChannel", _Channel)
     monkeypatch.setattr(runner, "create_peer", lambda **kwargs: _Facade())
-    monkeypatch.setattr(runner, "compose_external_gatekeeper", lambda config: marker)
     monkeypatch.setattr(
-        runner, "compose_text_provider",
-        lambda settings, config, gatekeeper: seen.setdefault("llm_gatekeeper", gatekeeper),
+        runner, "compose_runtime_services",
+        lambda *args, **kwargs: RuntimeServices(None, reporter),
     )
-
-    def compose_email(settings, root, gatekeeper, **kwargs):
-        seen["gmail_gatekeeper"] = gatekeeper
-        seen["recipient"] = kwargs["recipient"]
-        return reporter
-
-    monkeypatch.setattr(runner, "compose_gmail_reporter", compose_email)
     monkeypatch.setattr(
         runner, "prepare_runtime_evidence",
         lambda **kwargs: SimpleNamespace(
@@ -68,9 +62,27 @@ def test_counted_runner_shares_gatekeeper_and_reports_published_result(
         mode="counted", artifacts_dir=tmp_path, email_recipient="recipient@example.invalid",
     )
     assert code == 0
-    assert seen == {
-        "llm_gatekeeper": marker,
-        "gmail_gatekeeper": marker,
-        "recipient": "recipient@example.invalid",
-    }
     assert reporter.paths == [result_path]
+
+
+def test_runtime_services_share_one_gatekeeper(monkeypatch, tmp_path: Path) -> None:
+    marker = object()
+    seen: dict[str, object] = {}
+    private = PrivateConfig()
+    monkeypatch.setattr(
+        runtime_services, "compose_external_gatekeeper", lambda config: marker,
+    )
+    monkeypatch.setattr(
+        runtime_services, "compose_text_provider",
+        lambda settings, config, gatekeeper: seen.setdefault("llm", gatekeeper),
+    )
+    monkeypatch.setattr(
+        runtime_services, "compose_gmail_reporter",
+        lambda settings, root, gatekeeper, **kwargs: seen.setdefault("gmail", gatekeeper),
+    )
+    services = runtime_services.compose_runtime_services(
+        private, {}, mode="counted", artifacts_dir=tmp_path, emit_kit_bundle=True,
+        email_recipient="recipient@example.invalid", authorize_email_send=False,
+    )
+    assert seen == {"llm": marker, "gmail": marker}
+    assert services.gmail_reporter is marker

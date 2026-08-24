@@ -20,6 +20,18 @@ uv run police_peer --help
 uv run python -m police_peer --help
 ```
 
+## Live GUI
+
+Run both peers in separate terminals. Each window opens idle; press **Start live peer** in both:
+
+```sh
+uv run python scripts/live_gui.py --artifacts-dir artifacts/live
+```
+
+The Live GUI drives the normal FastMCP runner and displays only this peer's true position,
+locally known barriers, phase, hints, and belief heatmap. `--auto-start` is available for
+automated visual checks, and `--step-delay` controls display pacing without delaying gameplay.
+
 ## Replay GUI
 
 The repository-integrated Tk facade consumes a league-kit `log_*.json` or its bundle directory.
@@ -102,7 +114,7 @@ series and settlement flow.
 | `warmup` | Uncounted run. Missing declaration identity is tolerated. |
 | `counted` | Runs counted readiness before transport starts and fails closed if it is incomplete. After play, lack of result agreement returns exit code `6`. |
 | `competition` | Currently follows the same uncounted runtime path as `warmup`; it has no distinct counted semantics. |
-| `live` | Currently follows the same uncounted runtime path as `warmup`; it has no distinct counted semantics. It does not start a distinct Live GUI path. |
+| `live` | Uncounted runtime semantics; `scripts/live_gui.py --mode live` starts its distinct local-truth GUI path. |
 
 Only `counted` activates counted safeguards. The other mode strings are still passed through to
 the SDK and recorded in the summary artifact when artifacts are enabled.

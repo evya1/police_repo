@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 
@@ -51,6 +52,7 @@ def run_one_peer(
     public_url: str = "",
     email_recipient: str | None = None,
     authorize_email_send: bool = False,
+    listener: Callable[[dict], None] | None = None,
 ) -> int:
     """Run one independent peer process: serve MCP, dial peer, run 6 subgames."""
     try:
@@ -92,9 +94,7 @@ def run_one_peer(
             return 7
 
         budgets = Budgets(
-            turn_timeout=turn_timeout,
-            connect_timeout=connect_timeout,
-            poll_interval=poll_interval,
+            turn_timeout=turn_timeout, connect_timeout=connect_timeout, poll_interval=poll_interval,
         )
         channel = McpChannel(peer_url, inboxes, timeout=turn_timeout)
 
@@ -116,6 +116,7 @@ def run_one_peer(
             identity_block=runtime.greeting_identity,
             text_provider=services.text_provider,
             token_ledger=runtime.token_ledger,
+            listener=listener,
         )
 
         result = facade.run()

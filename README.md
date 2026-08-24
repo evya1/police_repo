@@ -2,9 +2,9 @@
 
 > **Status — `production-fixes`:** the local game, Police strategy, FastMCP transport,
 > Commit-Reveal audit, orchestration/recovery, OpenRouter wording provider, Gmail reporting path,
-> league-kit projection, headless Replay verifier, and repository-integrated Replay GUI are
-> implemented and tested. The screenshot below is from a genuine local six-sub-game smoke run;
-> it is not a counted league result. External matches, real-time Live GUI binding, confirmed team
+> league-kit projection, headless Replay verifier, local-truth Live GUI, and Replay GUI are
+> implemented and tested. The Live and Replay screenshots below are from genuine local runs;
+> neither is a counted league result. External matches, confirmed team
 > metadata, official course inputs, and the final `v1.0-submission` tag remain explicit gates in
 > [`docs/TODO.md`](docs/TODO.md).
 
@@ -46,9 +46,9 @@ The architecture separates domain rules, scent/belief, police strategy, orchestr
 Implemented on this branch: shared domain/configuration and symmetric transport under `common/`;
 the Police policy under `src/police_peer/strategy/`; FastMCP, Commit-Reveal, orchestration and
 recovery; internal and league-kit artifact projection; the Gmail/OpenRouter paths behind the
-central `ExternalApiGatekeeper`; the headless verifier; and the Tk Replay GUI adapter in
-`src/police_peer/replay_gui.py`. The remaining GUI gap is live event binding during a running
-network game; replay of sealed repository output is operational today.
+central `ExternalApiGatekeeper`; the headless verifier; the Tk Replay adapter; and a Live GUI
+bound to redacted events from the real production runner. Live rendering never receives the
+opponent's objective position; Replay opens both tracks only after their commitments verify.
 
 ## Installation
 
@@ -74,6 +74,13 @@ behavior, configuration precedence, exit codes, and artifact boundaries.
 
 See [`docs/GMAIL_API.md`](docs/GMAIL_API.md) for the implemented Gmail/email API and wiring status.
 See [`docs/reporting/README.md`](docs/reporting/README.md) for the reporting API and artifact flow.
+
+**Live GUI (works today).** Start this command in both repositories, then press **Start live
+peer** in each window:
+
+```sh
+uv run python scripts/live_gui.py --mode live --artifacts-dir artifacts/live
+```
 
 **Replay (verified, works today).** `police_peer.sdk.verify_replay_bundle(path)` is the sole
 public entrypoint; `scripts/replay.py` is a thin CLI over it:
@@ -146,9 +153,13 @@ reserving late-game barriers.
 
 ### Live GUI evidence
 
-The Replay GUI includes the same belief-heatmap board component, but its current repository
-adapter consumes sealed post-game artifacts. It is not presented as real-time Live GUI evidence;
-binding the live event stream without exposing objective opponent state remains tracked by T014.
+![Police Live GUI showing local truth and opponent belief](docs/assets/live-gui.png)
+
+This is the actual Police window during a two-process FastMCP warm-up against the Thief repo.
+The observer is attached to the production turn engine: it shows the Police position, locally
+known barriers, turn/connection phase, hints, and opponent-belief heatmap. Its event type has no
+field for objective opponent position. The Start and pacing controls lock as play begins. This
+local run proves the GUI path, not a counted league result.
 
 ### Replay evidence
 

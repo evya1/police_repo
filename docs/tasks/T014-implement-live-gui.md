@@ -63,11 +63,11 @@ The GUI is a thin observer/controller. It must never render objective opponent p
 
 ## Acceptance criteria
 
-- [ ] The local position, locally known barriers, belief heatmap, score, turn, and connection state are distinguishable.
-- [ ] No view model field can carry the opponent's true position.
+- [x] The local position, locally known barriers, belief heatmap, score, turn, and connection state are distinguishable.
+- [x] No view model field can carry the opponent's true position.
 - [ ] Controls lock immediately after commit and unlock only on a legal state transition.
 - [ ] Error, reconnect, timeout, and accessibility states have testable behavior.
-- [ ] Screenshots are not added to README until captured from a verified real run.
+- [x] Screenshots are not added to README until captured from a verified real run.
 
 ## Verification
 
@@ -83,3 +83,12 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Implementation is present on `production-fixes`: `police_peer.live_events` projects typed,
+local-truth-only engine events; `police_peer.live_gui` runs the production FastMCP peer off the
+Tk thread; and `scripts/live_gui.py` exposes the normal runner options. The README screenshot was
+captured from an actual two-process Police/Thief FastMCP warm-up on 2026-08-24. Unit coverage is
+in `tests/unit/test_live_events.py`. The repository-native files replace the task's provisional
+`ui/` paths because the user supplied the reference Live/Replay layout after planning. Formal
+`done` remains blocked on the unchecked error/reconnect/timeout/accessibility acceptance item and
+the repository's dependency-state reconciliation; implementation status is recorded separately.

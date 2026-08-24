@@ -15,6 +15,7 @@ from common.transport.series import PeerConfig, PeerFacade, SeriesResult
 from police_peer.evidence.token_ledger import TokenLedger
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.infra.llm_client import CompletionClient
+from police_peer.live_events import LiveListener, observe, observe_driver
 from police_peer.replay_service import BundleReplayReport
 from police_peer.replay_service import verify_bundle as _verify_replay_bundle
 from police_peer.strategy import Strategy
@@ -36,12 +37,8 @@ from police_peer.wire.strategy_settings import assemble_strategy_config
 __version__ = "1.0.0"
 _AUTO_TEXT_PROVIDER = object()
 __all__ = [
-    "Budgets", "BundleReplayReport", "PeerFacade",
-    "SUPPORTED_SCHEMA_VERSIONS",
-    "SeriesResult", "create_peer",
-    "validate_startup_config",
-    "verify_replay_bundle",
-    "__version__",
+    "Budgets", "BundleReplayReport", "PeerFacade", "SUPPORTED_SCHEMA_VERSIONS",
+    "SeriesResult", "create_peer", "validate_startup_config", "verify_replay_bundle", "__version__",
 ]
 
 
@@ -70,6 +67,7 @@ def create_peer(
     gatekeeper: ExternalApiGatekeeper | None = None,
     text_provider: TextProvider | None | object = _AUTO_TEXT_PROVIDER,
     token_ledger: TokenLedger | None = None,
+    listener: LiveListener | None = None,
 ) -> PeerFacade:
     """Create a validated production peer from shared JSON and private TOML.
 
@@ -148,6 +146,8 @@ def create_peer(
             counted=mode == "counted",
         )
 
+    engine = observe(engine, listener)
+
     if channel is None:
         ch_local, _ = pair(group_id, "loopback-peer")
         channel = ch_local
@@ -164,7 +164,7 @@ def create_peer(
         name=group_id,
         mode=mode,
         opponent_pin=opponent_pin,
-        subgame_driver=negotiated_subgame_driver(
+        subgame_driver=observe_driver(negotiated_subgame_driver(
             group_id, opponent_pin=opponent_pin, audit_wire=audit_wire,
-        ),
+        ), listener),
     )

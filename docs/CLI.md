@@ -20,6 +20,20 @@ uv run police_peer --help
 uv run python -m police_peer --help
 ```
 
+## Replay GUI
+
+The repository-integrated Tk facade consumes a league-kit `log_*.json` or its bundle directory.
+It re-hashes both sealed halves before opening and refuses a tampered log:
+
+```sh
+uv run python scripts/replay_gui.py artifacts/kit/<game_uid> --verify-only
+uv run python scripts/replay_gui.py artifacts/kit/<game_uid>
+```
+
+Use `--verify-only` on a headless host. Exit status is `0` for verified, `6` for tampered, and
+`2` when no compatible log can be resolved. The repository-native adapter and Tk presentation
+live in `police_peer.replay_gui` and `police_peer.replay_gui_window`.
+
 ## Local warm-up
 
 Install both repositories, then start the peers in separate terminals. The defaults are paired

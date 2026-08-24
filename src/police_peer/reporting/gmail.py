@@ -1,124 +1,30 @@
 from __future__ import annotations
 
-import base64
-import json
-from email.message import EmailMessage
-from pathlib import Path
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
 from common.transport.canonical import canonical_bytes
 from common.transport.kit_names import result_name
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
+from police_peer.reporting.gmail_support import (
+    GMAIL_SEND_SCOPE,
+    AttachmentMissingError,
+    DraftSubstitutionError,
+    DuplicateSendError,
+    FileIdempotencyStore,
+    GmailClientNotConfiguredError,
+    GmailError,
+    IdempotencyStore,
+    InvalidScopeError,
+    build_email_message,
+    validate_oauth_scope,
+)
 
-GMAIL_SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send"
-
-
-class GmailError(Exception):
-    """Base error for Gmail reporting operations."""
-
-
-class GmailClientNotConfiguredError(GmailError):
-    """Raised when report transmission is attempted without a configured service client."""
-
-
-class InvalidScopeError(GmailError):
-    """Raised when OAuth scope broader than gmail.send is requested or granted, or scope is missing."""
-
-
-class AttachmentMissingError(GmailError):
-    """Raised when required JSON artifact attachments are missing."""
-
-
-class DraftSubstitutionError(GmailError):
-    """Raised when draft creation is attempted instead of mandatory send."""
-
-
-class DuplicateSendError(GmailError):
-    """Raised when attempting to resend an already-reported series result."""
-
-
-@runtime_checkable
-class IdempotencyStore(Protocol):
-    """Protocol for recording sent game report IDs to guarantee idempotency across process restarts."""
-
-    def mark_sent(self, game_uid: str) -> None:
-        """Mark a game_uid as sent."""
-        ...
-
-    def is_sent(self, game_uid: str) -> bool:
-        """Check if a game_uid has already been marked as sent."""
-        ...
-
-
-class FileIdempotencyStore:
-    """Durable JSON file-backed idempotency store."""
-
-    def __init__(self, file_path: str | Path = ".sent_game_uids.json") -> None:
-        self.file_path = Path(file_path)
-
-    def _load(self) -> set[str]:
-        if not self.file_path.exists():
-            return set()
-        try:
-            with open(self.file_path, encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    return set(data)
-                return set()
-        except Exception:
-            return set()
-
-    def is_sent(self, game_uid: str) -> bool:
-        return game_uid in self._load()
-
-    def mark_sent(self, game_uid: str) -> None:
-        sent = self._load()
-        sent.add(game_uid)
-        if self.file_path.parent:
-            self.file_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_file = self.file_path.with_suffix(self.file_path.suffix + ".tmp")
-        with open(tmp_file, "w", encoding="utf-8") as f:
-            json.dump(sorted(sent), f, indent=2)
-        tmp_file.replace(self.file_path)
-
-
-def validate_oauth_scope(scopes: list[str] | str | None) -> None:
-    if scopes is None:
-        raise InvalidScopeError("OAuth scope is mandatory and cannot be None.")
-    scope_list = [scopes] if isinstance(scopes, str) else list(scopes)
-    if not scope_list:
-        raise InvalidScopeError("OAuth scope list cannot be empty.")
-    for scope in scope_list:
-        normalized = scope.strip()
-        if normalized not in (GMAIL_SEND_SCOPE, "gmail.send"):
-            raise InvalidScopeError(f"Unauthorized OAuth scope '{normalized}'. Only gmail.send is permitted.")
-
-
-def build_email_message(
-    *,
-    sender: str,
-    recipient: str,
-    subject: str,
-    body: str,
-    attachments: list[tuple[str, bytes]],
-) -> tuple[EmailMessage, str]:
-    if not attachments:
-        raise AttachmentMissingError("Email report must contain at least one JSON artifact attachment.")
-
-    msg = EmailMessage()
-    msg["From"] = sender
-    msg["To"] = recipient
-    msg["Subject"] = subject
-    msg.set_content(body)
-
-    for filename, data in attachments:
-        if not data:
-            raise AttachmentMissingError(f"Attachment {filename} is empty.")
-        msg.add_attachment(data, maintype="application", subtype="json", filename=filename)
-
-    raw_bytes = msg.as_bytes()
-    raw_b64 = base64.urlsafe_b64encode(raw_bytes).decode("ascii")
-    return msg, raw_b64
+__all__ = [
+    "GMAIL_SEND_SCOPE", "AttachmentMissingError", "DraftSubstitutionError",
+    "DuplicateSendError", "FileIdempotencyStore", "GmailClientNotConfiguredError",
+    "GmailError", "GmailSender", "IdempotencyStore", "InvalidScopeError",
+    "build_email_message", "validate_oauth_scope",
+]
 
 
 class GmailSender:

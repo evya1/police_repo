@@ -1,17 +1,12 @@
 # P2P Police Peer
 
-> **Status** (verified against branch `claude/replay-llm-completion-20260823`, evidence-based, not
-> a claim of full project completion): the C01 foundation (domain, scent/belief, configuration),
-> C02 role strategy, C03 FastMCP transport/Commit-Reveal integrity, C04 orchestration/reliability,
-> the headless Replay verifier and its internal-interop bundle/SDK/CLI (T033/T034/T046/T047), the
-> central external-service Gatekeeper with reporting/llm lane reservation (T048), and the
-> deterministic LLM hint boundary (T027) are implemented and tested. Not yet done: the
-> provider-neutral/vendor LLM adapter and full LLM composition (T049/T013/T051), the selected-vendor
-> LLM client (T050, blocked on `PLANQ-003`), league-kit protocol/lifecycle compatibility and its
-> artifact projection (T052/T053) and the four live external kit runs under T022, official
-> submission-schema compliance (blocked on `INPUT-001`/T016), a real GUI, real Replay/GUI
-> screenshots, any counted external match, live Gmail-send evidence, and the `v1.0-submission` tag.
-> No screenshot, benchmark, or league result exists yet. Per-task state is in `docs/TODO.md`.
+> **Status — `production-fixes`:** the local game, Police strategy, FastMCP transport,
+> Commit-Reveal audit, orchestration/recovery, OpenRouter wording provider, Gmail reporting path,
+> league-kit projection, headless Replay verifier, and repository-integrated Replay GUI are
+> implemented and tested. The screenshot below is from a genuine local six-sub-game smoke run;
+> it is not a counted league result. External matches, real-time Live GUI binding, confirmed team
+> metadata, official course inputs, and the final `v1.0-submission` tag remain explicit gates in
+> [`docs/TODO.md`](docs/TODO.md).
 
 This repository implements the autonomous Police side of a two-peer Police/Thief system. It owns only its local truth and communicates with the sibling peer through FastMCP/MCP. The shared intent is in `docs/PRD.md`; the role-specific strategy is in `docs/PLAN.md`; execution state lives in `docs/TODO.md` and individual task files.
 
@@ -48,16 +43,12 @@ Conflicts stop work and go to the orchestrator. Workers do not silently update t
 
 The architecture separates domain rules, scent/belief, police strategy, orchestration/state, FastMCP transport, integrity/audit, reliability, reporting, and GUI/Replay, exposing business behavior through one thin programmatic facade. See `docs/PLAN.md` for the boundaries and the target tree; a path in that tree is not an implementation-status claim.
 
-Implemented on this branch: shared domain and configuration modules under `common/`; the role
-strategy under `src/police_peer/strategy/`; the FastMCP transport and Commit-Reveal integrity
-core; the orchestrator state machine and reliability layer; the headless Replay
-verifier/service/SDK/CLI (`src/police_peer/replay_service.py`, `police_peer.sdk.verify_replay_bundle`,
-`scripts/replay.py`) over the internal-interop bundle (`src/police_peer/reporting/replay_bundle.py`,
-`replay_documents.py`); the central `ExternalApiGatekeeper` with `reporting`/`llm` lane reservation
-(`src/police_peer/infra/`); and the deterministic, privacy-bounded LLM hint plan (T027). Not yet
-implemented: the real-time Live GUI, the provider-neutral/selected-vendor LLM adapter and full
-composition (T049/T013/T051/T050), and league-kit protocol compatibility (T052/T053, see
-`docs/decisions/ADR-011-league-kit-interoperability-boundary.md`).
+Implemented on this branch: shared domain/configuration and symmetric transport under `common/`;
+the Police policy under `src/police_peer/strategy/`; FastMCP, Commit-Reveal, orchestration and
+recovery; internal and league-kit artifact projection; the Gmail/OpenRouter paths behind the
+central `ExternalApiGatekeeper`; the headless verifier; and the Tk Replay GUI adapter in
+`src/police_peer/replay_gui.py`. The remaining GUI gap is live event binding during a running
+network game; replay of sealed repository output is operational today.
 
 ## Installation
 
@@ -99,17 +90,23 @@ internal_interop`, `external_authenticity=false`; this is not an official submis
 `docs/evidence/replay/README.md`, `scripts/smoke_replay_integration.py` (produces a bundle from a
 real settled series), and `scripts/check_replay_parity.py` (reciprocal cross-repo verification).
 
+The visual facade accepts either a league-kit log or its containing bundle. It verifies both
+sealed halves before opening the window; `--verify-only` provides the same check on headless CI:
+
+```sh
+uv run python scripts/replay_gui.py artifacts/kit/<game_uid> --verify-only
+uv run python scripts/replay_gui.py artifacts/kit/<game_uid>
+```
+
 ## Configuration
 
 - `config/game.json`: shared, identical, cryptographically locked match contract.
 - `config/game.toml`: private role-local choices; it cannot override or weaken a shared value.
 - `.env`: local secret-bearing environment only; never commit it.
 - `credentials.json` and `token.json`: local Gmail OAuth material; never commit them.
-- Optional language-model hint boundary: T027's deterministic, privacy-bounded hint plan is
-  implemented (local wording only, `NON_CLAIM` makes no provider call). The provider-neutral
-  adapter that would let a real model render wording (T049), full composition (T051), and any
-  selected vendor (T050) are not yet implemented; T050 stays blocked on `PLANQ-003`. No credential
-  variable is predefined before a vendor is selected.
+- Optional language-model hint wording is implemented through a provider-neutral boundary and
+  the production OpenRouter client. A missing key, timeout, 429, invalid response, or exhausted
+  budget falls back to deterministic text without changing the already-selected legal move.
 
 See `config/README.md`. Official reporting templates and the remaining private/team values are still missing and must not be guessed.
 
@@ -117,7 +114,12 @@ See `config/README.md`. Official reporting templates and the remaining private/t
 
 ### Dec-POMDP framing
 
-The two agents act under partial observation: each knows its own position and locally known state, observes opponent scent and natural-language hints, maintains a belief distribution, and selects an action without a central judge. Rewards follow the fixed capture/survival/tie rules. `TODO_BEFORE_SUBMISSION`: relate the implemented state, observation, action, transition, and reward code to this framing with precise file links.
+The two agents act under partial observation: each owns local state and legal transitions in
+[`common/domain/rules.py`](common/domain/rules.py), updates an opponent distribution in
+[`belief/grid.py`](src/police_peer/belief/grid.py), and chooses actions through
+[`strategy/police.py`](src/police_peer/strategy/police.py). The shared terminal rewards are
+implemented in [`common/domain/scoring.py`](common/domain/scoring.py). No strategy receives the
+opponent's objective position; only the immutable Replay may display both revealed tracks.
 
 ### Discrete pursuit on a bounded graph
 
@@ -127,19 +129,36 @@ Scoring is asymmetric by design, not a binary win/lose: every terminal outcome p
 
 ### FastMCP and orchestration dilemmas
 
-The planned solution uses symmetric server/client peers, an explicit lifecycle state machine, immutable request deadlines, bounded retry, and audit evidence. `TODO_BEFORE_SUBMISSION`: document the implemented tool surface, public-connectivity procedure, failure handling, and measured interoperability evidence after OPEN-001/OPEN-007 are resolved.
+The implemented peers expose the symmetric MCP surface in
+[`mcp_server.py`](common/transport/mcp_server.py), call it through
+[`mcp_client.py`](common/transport/mcp_client.py), and preserve deadlines/recovery in the runner
+and transport state machine. Public URLs are operator-supplied metadata—the CLI never pretends to
+create a tunnel. Local HTTP, two-process, fault, and reference-kit tests are automated; counted
+public-endpoint evidence remains a live gate.
 
 ### Implemented strategy
 
-`TODO_BEFORE_SUBMISSION`: describe only the Police strategy actually implemented and tested. Do not claim reinforcement learning. Add learning curves only if RL is genuinely used and its experiment is reproducible.
+The shipped `PoliceBrain` is deterministic, not reinforcement learning. It targets a confident
+belief peak, then scent, then board centre; legal moves minimize Manhattan distance and prefer
+higher belief mass. Before moving, [`barriers.py`](src/police_peer/strategy/barriers.py) scores
+barrier candidates by belief mass and reachable-region cut while protecting the Police route and
+reserving late-game barriers.
 
 ### Live GUI evidence
 
-`TODO_BEFORE_SUBMISSION`: insert a real screenshot showing local truth and the opponent-belief heatmap without revealing objective opponent position.
+The Replay GUI includes the same belief-heatmap board component, but its current repository
+adapter consumes sealed post-game artifacts. It is not presented as real-time Live GUI evidence;
+binding the live event stream without exposing objective opponent state remains tracked by T014.
 
 ### Replay evidence
 
-`TODO_BEFORE_SUBMISSION`: insert a real Replay screenshot showing per-step `Verified OK` from a verified final log. Never manufacture a screenshot or edit a status into one.
+![Police Replay GUI showing both revealed tracks and verified commitments](docs/assets/replay-gui-verified.png)
+
+This screenshot was captured from the actual Tk application after
+`scripts/smoke_replay_integration.py` produced a settled local series. The adapter re-hashed both
+sealed halves before opening; the step panel shows `Verified OK — both sealed halves` and the status shows
+`audit: PASSED`. The committed image is unedited application output, not a fabricated league
+result.
 
 ## Testing and quality gates
 
@@ -169,7 +188,8 @@ Verification proceeds as a ladder — deterministic unit and golden-vector tests
 - **Audit mismatch:** do not repair history; preserve the received commitment and revealed record and follow the TAMPERED path.
 - **Gmail/OAuth issue:** do not broaden scopes or commit credential files; use mocks until the human live-send gate.
 - **Optional provider timeout, 429, or budget limit:** preserve the already selected legal move, fall back to deterministic template text, and never make a live provider call from CI.
-- `TODO_BEFORE_SUBMISSION`: add observed platform-specific failures and verified remedies.
+- **Headless Replay GUI:** use `--verify-only`; for visual CI evidence, run the same command under
+  Xvfb. Tk 8.6 was used for the screenshot above.
 
 ## Contributing
 
@@ -177,7 +197,10 @@ Read `CONTRIBUTING.md` and `AGENTS.md`. Claim exactly one ready task, use its wr
 
 ## License and credits
 
-`TODO_BEFORE_SUBMISSION`: the team must choose and document the repository license and credits policy before release. Do not add a license notice or an attribution without verifying what is actually distributed and legally required — and never remove one that is.
+No repository-wide open-source license is asserted. The team-supplied course Replay Viewer was
+used locally to study the expected kit-log presentation, but its restrictively licensed source
+is not redistributed in this public repository. The checked-in facade is repository-native and
+uses this project's canonical verifier and artifacts.
 
 <!-- ai-usage:start -->
 <!-- generated aggregate data only -->

@@ -81,6 +81,8 @@ uv run police-peer --help
 See [`docs/CLI.md`](docs/CLI.md) for entry points, options, local and remote examples, mode
 behavior, configuration precedence, exit codes, and artifact boundaries.
 
+See [`docs/GMAIL_API.md`](docs/GMAIL_API.md) for the implemented Gmail/email API and wiring status.
+
 **Replay (verified, works today).** `police_peer.sdk.verify_replay_bundle(path)` is the sole
 public entrypoint; `scripts/replay.py` is a thin CLI over it:
 

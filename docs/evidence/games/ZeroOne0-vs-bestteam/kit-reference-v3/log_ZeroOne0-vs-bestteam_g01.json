@@ -1,0 +1,2561 @@
+{
+  "schema_version": "1.1",
+  "schema_profile": "league-kit-reference-v3",
+  "game_id": "ZeroOne0-vs-bestteam",
+  "game_uid": "a42b2bb2-2312-c679-5e69-fa3d5ea0aad9",
+  "links": {
+    "_remark": "match-level files are named <kind>_<game_id>.json; per-sub-game files carry _g<NN>. All four share one game_uid, which is what joins them.",
+    "declaration": "declaration_ZeroOne0-vs-bestteam.json",
+    "config": "config_ZeroOne0-vs-bestteam_g<NN>.json",
+    "log": "log_ZeroOne0-vs-bestteam_g<NN>.json",
+    "result": "result_ZeroOne0-vs-bestteam.json",
+    "github": {
+      "ZeroOne0": {
+        "cop": "https://github.com/evya1/police_repo",
+        "thief": "https://github.com/evya1/thief_repo"
+      },
+      "bestteam": {
+        "cop": "https://github.com/Diana-Koroblov/bestteam-cop",
+        "thief": "https://github.com/Diana-Koroblov/bestteam-thief"
+      }
+    }
+  },
+  "sub_game_number": 1,
+  "summary": {
+    "sub_game_number": 1,
+    "group_id": "ZeroOne0",
+    "role": "police",
+    "opponent_group_id": "bestteam",
+    "result": "survival",
+    "winner_group": "bestteam",
+    "steps": 35,
+    "audit": {
+      "passed": true,
+      "skipped": false,
+      "verified_steps": 36,
+      "failed_steps": []
+    }
+  },
+  "records": [
+    {
+      "payload": {
+        "intent": "declare",
+        "sender": "police",
+        "step": 0
+      },
+      "nonce": "63b071a5728e4e096a711238d119606f",
+      "commit": "ecaec96125597c863fa87942385375e4d3a4f6fcc001d8565c2b056b685700ea"
+    },
+    {
+      "payload": {
+        "barrier_cell": [
+          0,
+          0
+        ],
+        "barrier_placed": [
+          0,
+          0
+        ],
+        "fallback": false,
+        "hint": "In The Bronx, the truth is the only law I enforce.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          0,
+          0
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.8,
+          "0,1": 0.5,
+          "0,2": 0.2,
+          "1,0": 0.5,
+          "1,1": 0.5,
+          "1,2": 0.2,
+          "2,0": 0.2,
+          "2,1": 0.2,
+          "2,2": 0.2
+        },
+        "state": "grid=7x7;self=[0, 0];barriers=[[0, 0]]",
+        "step": 1,
+        "timestamp": "2026-08-24T19:47:07.394520+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "f6584f3fd3e89cd084edd0da66b0e552",
+      "commit": "251bd60ff16f25da8072ca3619059bfdcb0fb6b5ee331c8b8f2576e614c8c8cc"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          1,
+          0
+        ],
+        "fallback": false,
+        "hint": "I found your lie in Times Square.",
+        "intent": "chase",
+        "move": "MOVE:S",
+        "position": [
+          1,
+          0
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.7,
+          "0,1": 0.5,
+          "0,2": 0.2,
+          "1,0": 0.8,
+          "1,1": 0.5,
+          "1,2": 0.2,
+          "2,0": 0.5,
+          "2,1": 0.5,
+          "2,2": 0.2,
+          "3,0": 0.2,
+          "3,1": 0.2,
+          "3,2": 0.2
+        },
+        "state": "grid=7x7;self=[1, 0];barriers=[[0, 0]]",
+        "step": 2,
+        "timestamp": "2026-08-24T19:47:08.775496+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "c047b623f3e8b5d9b8da640fa6ab7230",
+      "commit": "8f34bcb49c97da4ae33898820e1e90edc7a79348e1f39ca499d89668d04225f3"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          1,
+          1
+        ],
+        "fallback": false,
+        "hint": "West is where I found the truth.",
+        "intent": "chase",
+        "move": "MOVE:E",
+        "position": [
+          1,
+          1
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.6,
+          "0,1": 0.5,
+          "0,2": 0.5,
+          "0,3": 0.2,
+          "1,0": 0.7,
+          "1,1": 0.8,
+          "1,2": 0.5,
+          "1,3": 0.2,
+          "2,0": 0.5,
+          "2,1": 0.5,
+          "2,2": 0.5,
+          "2,3": 0.2,
+          "3,0": 0.2,
+          "3,1": 0.2,
+          "3,2": 0.2,
+          "3,3": 0.2
+        },
+        "state": "grid=7x7;self=[1, 1];barriers=[[0, 0]]",
+        "step": 3,
+        "timestamp": "2026-08-24T19:47:09.958724+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "a5eae00516c4090f2e6b31b6fe457cd3",
+      "commit": "fa7728824fa2b54fb5e394b4ffdbe25135637ae59b5c495bba0b3247b2161a5a"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          2,
+          1
+        ],
+        "fallback": false,
+        "hint": "The Bronx is where I enforce the truth, no exceptions.",
+        "intent": "chase",
+        "move": "MOVE:S",
+        "position": [
+          2,
+          1
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.5,
+          "0,1": 0.4,
+          "0,2": 0.4,
+          "0,3": 0.2,
+          "1,0": 0.6,
+          "1,1": 0.7,
+          "1,2": 0.5,
+          "1,3": 0.2,
+          "2,0": 0.5,
+          "2,1": 0.8,
+          "2,2": 0.5,
+          "2,3": 0.2,
+          "3,0": 0.5,
+          "3,1": 0.5,
+          "3,2": 0.5,
+          "3,3": 0.2,
+          "4,0": 0.2,
+          "4,1": 0.2,
+          "4,2": 0.2,
+          "4,3": 0.2
+        },
+        "state": "grid=7x7;self=[2, 1];barriers=[[0, 0]]",
+        "step": 4,
+        "timestamp": "2026-08-24T19:47:11.608054+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "46311c3b6712af26c5393ce215212af7",
+      "commit": "b5e7aa761a8e1ac0ab28cede0d4b2f3cb76fbd716266e651b6b8848339cb556b"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          2,
+          2
+        ],
+        "fallback": false,
+        "hint": "I was in Brooklyn, but I never saw the victim.",
+        "intent": "chase",
+        "move": "MOVE:E",
+        "position": [
+          2,
+          2
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.4,
+          "0,1": 0.3,
+          "0,2": 0.3,
+          "0,3": 0.2,
+          "0,4": 0.2,
+          "1,0": 0.5,
+          "1,1": 0.6,
+          "1,2": 0.5,
+          "1,3": 0.5,
+          "1,4": 0.2,
+          "2,0": 0.4,
+          "2,1": 0.7,
+          "2,2": 0.8,
+          "2,3": 0.5,
+          "2,4": 0.2,
+          "3,0": 0.4,
+          "3,1": 0.5,
+          "3,2": 0.5,
+          "3,3": 0.5,
+          "3,4": 0.2,
+          "4,0": 0.2,
+          "4,1": 0.2,
+          "4,2": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.2
+        },
+        "state": "grid=7x7;self=[2, 2];barriers=[[0, 0]]",
+        "step": 5,
+        "timestamp": "2026-08-24T19:47:12.775991+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "c16a19afaed11f06c1acf5355fef1081",
+      "commit": "77a204759090185df7019d170e5bd69f60be0d144f7cd3c71bb58edf889b4b32"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          3,
+          2
+        ],
+        "fallback": false,
+        "hint": "The truth is at the center of New York.",
+        "intent": "chase",
+        "move": "MOVE:S",
+        "position": [
+          3,
+          2
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.3,
+          "0,1": 0.2,
+          "0,2": 0.2,
+          "0,3": 0.1,
+          "0,4": 0.1,
+          "1,0": 0.4,
+          "1,1": 0.5,
+          "1,2": 0.4,
+          "1,3": 0.4,
+          "1,4": 0.2,
+          "2,0": 0.3,
+          "2,1": 0.6,
+          "2,2": 0.7,
+          "2,3": 0.5,
+          "2,4": 0.2,
+          "3,0": 0.3,
+          "3,1": 0.5,
+          "3,2": 0.8,
+          "3,3": 0.5,
+          "3,4": 0.2,
+          "4,0": 0.2,
+          "4,1": 0.5,
+          "4,2": 0.5,
+          "4,3": 0.5,
+          "4,4": 0.2,
+          "5,0": 0.2,
+          "5,1": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.2,
+          "5,4": 0.2
+        },
+        "state": "grid=7x7;self=[3, 2];barriers=[[0, 0]]",
+        "step": 6,
+        "timestamp": "2026-08-24T19:47:13.730695+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "fa28dd405265bc17cc65e28fe2c6c4a2",
+      "commit": "1740f492e0c04ac44aa3a1bab86f8a12125b5bfc1686dd4f73f09616f72416ad"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          3,
+          3
+        ],
+        "fallback": false,
+        "hint": "The suspect's claim about the south landmark is a lie.",
+        "intent": "chase",
+        "move": "MOVE:E",
+        "position": [
+          3,
+          3
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.2,
+          "0,1": 0.1,
+          "0,2": 0.1,
+          "1,0": 0.3,
+          "1,1": 0.4,
+          "1,2": 0.3,
+          "1,3": 0.3,
+          "1,4": 0.2,
+          "1,5": 0.2,
+          "2,0": 0.2,
+          "2,1": 0.5,
+          "2,2": 0.6,
+          "2,3": 0.5,
+          "2,4": 0.5,
+          "2,5": 0.2,
+          "3,0": 0.2,
+          "3,1": 0.4,
+          "3,2": 0.7,
+          "3,3": 0.8,
+          "3,4": 0.5,
+          "3,5": 0.2,
+          "4,0": 0.1,
+          "4,1": 0.4,
+          "4,2": 0.5,
+          "4,3": 0.5,
+          "4,4": 0.5,
+          "4,5": 0.2,
+          "5,0": 0.1,
+          "5,1": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.2
+        },
+        "state": "grid=7x7;self=[3, 3];barriers=[[0, 0]]",
+        "step": 7,
+        "timestamp": "2026-08-24T19:47:14.959905+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "7538d5dec5cc20efcace3719c776ca9d",
+      "commit": "8092ed23863517f2d912df036ba0993b1594ffcd86dc7ab8619dd1f4c274fa1c"
+    },
+    {
+      "payload": {
+        "barrier_cell": [
+          4,
+          3
+        ],
+        "barrier_placed": [
+          4,
+          3
+        ],
+        "fallback": false,
+        "hint": "Manhattan is the heart of New York, and I deal with its truth daily.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          3,
+          3
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.1,
+          "1,0": 0.2,
+          "1,1": 0.3,
+          "1,2": 0.2,
+          "1,3": 0.2,
+          "1,4": 0.2,
+          "1,5": 0.2,
+          "2,0": 0.1,
+          "2,1": 0.4,
+          "2,2": 0.5,
+          "2,3": 0.5,
+          "2,4": 0.5,
+          "2,5": 0.2,
+          "3,0": 0.1,
+          "3,1": 0.3,
+          "3,2": 0.6,
+          "3,3": 0.8,
+          "3,4": 0.5,
+          "3,5": 0.2,
+          "4,1": 0.3,
+          "4,2": 0.5,
+          "4,3": 0.5,
+          "4,4": 0.5,
+          "4,5": 0.2,
+          "5,1": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.2
+        },
+        "state": "grid=7x7;self=[3, 3];barriers=[[0, 0], [4, 3]]",
+        "step": 8,
+        "timestamp": "2026-08-24T19:47:16.631597+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "0709eb19dc0e3467eb56c4f50d9b8948",
+      "commit": "50302c4b3b9d8e3a2d075ec9cdd6f2296e6f4adc7be1c89d482fcf2a9399d0b2"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          3,
+          4
+        ],
+        "fallback": false,
+        "hint": "The truth is at the center of New York.",
+        "intent": "chase",
+        "move": "MOVE:E",
+        "position": [
+          3,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "1,0": 0.1,
+          "1,1": 0.2,
+          "1,2": 0.2,
+          "1,3": 0.2,
+          "1,4": 0.2,
+          "1,5": 0.2,
+          "1,6": 0.2,
+          "2,1": 0.3,
+          "2,2": 0.4,
+          "2,3": 0.5,
+          "2,4": 0.5,
+          "2,5": 0.5,
+          "2,6": 0.2,
+          "3,1": 0.2,
+          "3,2": 0.5,
+          "3,3": 0.7,
+          "3,4": 0.8,
+          "3,5": 0.5,
+          "3,6": 0.2,
+          "4,1": 0.2,
+          "4,2": 0.4,
+          "4,3": 0.5,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.2,
+          "5,1": 0.1,
+          "5,2": 0.2,
+          "5,3": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.2,
+          "5,6": 0.2
+        },
+        "state": "grid=7x7;self=[3, 4];barriers=[[0, 0], [4, 3]]",
+        "step": 9,
+        "timestamp": "2026-08-24T19:47:17.837578+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "302ff2cf0d56f6498710d7f55b6a3ca6",
+      "commit": "f8186553c8a28ce4efd889104868ae4e265a375c0c8a253baa389089f26b7f30"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          4,
+          4
+        ],
+        "fallback": false,
+        "hint": "I found no evidence of a lie at the West landmark.",
+        "intent": "chase",
+        "move": "MOVE:S",
+        "position": [
+          4,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "1,1": 0.1,
+          "1,2": 0.1,
+          "1,3": 0.1,
+          "1,4": 0.1,
+          "1,5": 0.1,
+          "1,6": 0.1,
+          "2,1": 0.2,
+          "2,2": 0.3,
+          "2,3": 0.4,
+          "2,4": 0.4,
+          "2,5": 0.4,
+          "2,6": 0.2,
+          "3,1": 0.1,
+          "3,2": 0.4,
+          "3,3": 0.6,
+          "3,4": 0.7,
+          "3,5": 0.5,
+          "3,6": 0.2,
+          "4,1": 0.1,
+          "4,2": 0.3,
+          "4,3": 0.5,
+          "4,4": 0.8,
+          "4,5": 0.5,
+          "4,6": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.5,
+          "5,4": 0.5,
+          "5,5": 0.5,
+          "5,6": 0.2,
+          "6,2": 0.2,
+          "6,3": 0.2,
+          "6,4": 0.2,
+          "6,5": 0.2,
+          "6,6": 0.2
+        },
+        "state": "grid=7x7;self=[4, 4];barriers=[[0, 0], [4, 3]]",
+        "step": 10,
+        "timestamp": "2026-08-24T19:47:19.003426+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "1c5d70ab618d074e62fa0c004f674079",
+      "commit": "1fbdc6961436d8df04e0cc5fc182340f52c1cbfb5c31f263f1f217edef74eca6"
+    },
+    {
+      "payload": {
+        "barrier_cell": [
+          5,
+          4
+        ],
+        "barrier_placed": [
+          5,
+          4
+        ],
+        "fallback": false,
+        "hint": "I saw nothing suspicious near the north landmark.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          4,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "2,1": 0.1,
+          "2,2": 0.2,
+          "2,3": 0.3,
+          "2,4": 0.3,
+          "2,5": 0.3,
+          "2,6": 0.2,
+          "3,2": 0.3,
+          "3,3": 0.5,
+          "3,4": 0.6,
+          "3,5": 0.5,
+          "3,6": 0.2,
+          "4,2": 0.2,
+          "4,3": 0.5,
+          "4,4": 0.8,
+          "4,5": 0.5,
+          "4,6": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.5,
+          "5,4": 0.5,
+          "5,5": 0.5,
+          "5,6": 0.2,
+          "6,2": 0.2,
+          "6,3": 0.2,
+          "6,4": 0.2,
+          "6,5": 0.2,
+          "6,6": 0.2
+        },
+        "state": "grid=7x7;self=[4, 4];barriers=[[0, 0], [4, 3], [5, 4]]",
+        "step": 11,
+        "timestamp": "2026-08-24T19:47:19.977215+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "f3b56c095b72831788d8a226b69a4160",
+      "commit": "08b3ba9f6a411b651c800222d5f9b3fb9665ad77fea61f08e24ea173e7374066"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          4,
+          5
+        ],
+        "fallback": false,
+        "hint": "I found your lie in Manhattan, so start talking.",
+        "intent": "chase",
+        "move": "MOVE:E",
+        "position": [
+          4,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "2,2": 0.1,
+          "2,3": 0.2,
+          "2,4": 0.2,
+          "2,5": 0.2,
+          "2,6": 0.2,
+          "3,2": 0.2,
+          "3,3": 0.4,
+          "3,4": 0.5,
+          "3,5": 0.5,
+          "3,6": 0.5,
+          "4,2": 0.1,
+          "4,3": 0.4,
+          "4,4": 0.7,
+          "4,5": 0.8,
+          "4,6": 0.5,
+          "5,2": 0.1,
+          "5,3": 0.4,
+          "5,4": 0.5,
+          "5,5": 0.5,
+          "5,6": 0.5,
+          "6,2": 0.1,
+          "6,3": 0.2,
+          "6,4": 0.2,
+          "6,5": 0.2,
+          "6,6": 0.2
+        },
+        "state": "grid=7x7;self=[4, 5];barriers=[[0, 0], [4, 3], [5, 4]]",
+        "step": 12,
+        "timestamp": "2026-08-24T19:47:20.982085+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "474764c5339c2e92865eca9162cf416b",
+      "commit": "09f986cf5c47df733cfd0ebde88fc5591052c79db5964a2084bab9ca1e5a059f"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "The truth is east of the landmark.",
+        "intent": "chase",
+        "move": "MOVE:S",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "2,3": 0.1,
+          "2,4": 0.1,
+          "2,5": 0.1,
+          "2,6": 0.1,
+          "3,2": 0.1,
+          "3,3": 0.3,
+          "3,4": 0.4,
+          "3,5": 0.4,
+          "3,6": 0.4,
+          "4,3": 0.3,
+          "4,4": 0.6,
+          "4,5": 0.7,
+          "4,6": 0.5,
+          "5,3": 0.3,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4]]",
+        "step": 13,
+        "timestamp": "2026-08-24T19:47:22.044049+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "044b33e1b318de80be3a7120dd72c0ac",
+      "commit": "6ed4aeb5dba267cff761e455e885b5333d10279cccc0673274c546dd81e6aadd"
+    },
+    {
+      "payload": {
+        "barrier_cell": [
+          6,
+          5
+        ],
+        "barrier_placed": [
+          6,
+          5
+        ],
+        "fallback": false,
+        "hint": "The truth is south of the landmark.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.3,
+          "3,5": 0.3,
+          "3,6": 0.3,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.6,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [6, 5]]",
+        "step": 14,
+        "timestamp": "2026-08-24T19:47:23.125400+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "208ffc57d7071d2c6f033e5fbd8a4593",
+      "commit": "dd3cb6b6d38b96453f0f510b47e0b66e794198bb71a2ab549f02297d06a58311"
+    },
+    {
+      "payload": {
+        "barrier_cell": [
+          5,
+          6
+        ],
+        "barrier_placed": [
+          5,
+          6
+        ],
+        "fallback": false,
+        "hint": "The truth is east of the landmark.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 15,
+        "timestamp": "2026-08-24T19:47:24.341069+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "52a12d07525e9e438249d4d84fd220cf",
+      "commit": "b3b754303c9a89988806aa7216fd7def1e3ed49bf4430313a5ba893e3deb6110"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "The truth is east, in New York.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 16,
+        "timestamp": "2026-08-24T19:47:25.283163+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "5d0fe6052d589e909916f7aca6acd84e",
+      "commit": "fc4b84307ada2e2bd65e650a097470c06e2664605dadf0a3516ecffb318009dd"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "I was nowhere near Central Park that night.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 17,
+        "timestamp": "2026-08-24T19:47:26.351486+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "ce6794e79f094d854aa478ae54848196",
+      "commit": "0d230db9e7859aa92b1fe1cf76f96a98b34314878f18215dce97b24fe6b56fa8"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "I patrol Brooklyn to enforce the truth.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 18,
+        "timestamp": "2026-08-24T19:47:27.340060+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "086b113e8caa1b04210b2f0f18f874c2",
+      "commit": "55a9a780ab4efab449694ef3639db24f7a48ce5d5b2dae67769ba0137fcda422"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "I found your lie in Times Square.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 19,
+        "timestamp": "2026-08-24T19:47:29.055312+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "12bca5e5e7e1e1ef356b699faf956ddd",
+      "commit": "f6aff86c893dcdfac54bf5302b5daf785bbd036e1db162cec37a9507db0cea25"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "I found your lie in Manhattan.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 20,
+        "timestamp": "2026-08-24T19:47:31.002439+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "9e3da3443ba64ad845b381265363e12e",
+      "commit": "d5a262c5e8e35e3c999d1d9128bbdadab0a32bacd1d076f4e366966aecf590b1"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "The truth is east of the landmark.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 21,
+        "timestamp": "2026-08-24T19:47:32.443671+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "93aff44313cb998e9347ee50f6747022",
+      "commit": "4c3ee26cc0a1552e47480ebf49f353bbc68792715f65221c7ab7a87483432633"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "I patrol Brooklyn to enforce the truth.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 22,
+        "timestamp": "2026-08-24T19:47:33.393368+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "57b00d441cab5dfaf0b0053bde311a69",
+      "commit": "ddb060520ba74cabfbff475a356d44b9354fabe0a9848fdce9bb3bf4a0589656"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "I found your lie in Times Square.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 23,
+        "timestamp": "2026-08-24T19:47:34.319394+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "c025b3c40c87360c961db53d60b827f5",
+      "commit": "1a537d48bc74a049500f0260679aeaf2a4cfcfa2eacf85c81b1a075c280db68e"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "The truth is east of the landmark.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 24,
+        "timestamp": "2026-08-24T19:47:35.519026+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "f656ada8010183c9526c08a8ea8efc27",
+      "commit": "444008e6d5ee4e91d09ff0b696538dde94e72847248a7c76c101387d3b4496bd"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          5,
+          5
+        ],
+        "fallback": false,
+        "hint": "I patrol Brooklyn to enforce the truth.",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 25,
+        "timestamp": "2026-08-24T19:47:36.474404+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "9a8ccacd34131dfc60ef22372ce6e650",
+      "commit": "a81a4fe48803d1d0575f749b30848d4c35ad97d6aadf241a387c9a9d8d05d338"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          4,
+          5
+        ],
+        "fallback": false,
+        "hint": "I patrol Brooklyn to enforce the truth.",
+        "intent": "chase",
+        "move": "MOVE:N",
+        "position": [
+          4,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "2,3": 0.2,
+          "2,4": 0.2,
+          "2,5": 0.2,
+          "2,6": 0.2,
+          "3,3": 0.2,
+          "3,4": 0.5,
+          "3,5": 0.5,
+          "3,6": 0.5,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.8,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.7,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.4,
+          "6,5": 0.4,
+          "6,6": 0.4
+        },
+        "state": "grid=7x7;self=[4, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 26,
+        "timestamp": "2026-08-24T19:47:37.554344+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "8af0c5b755d59e026ac7fb45cddc78b7",
+      "commit": "dc3aa640d5418453e13af6eccf816480b9d20f926ba72fdc0d1e98ab9cdb28dc"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          3,
+          5
+        ],
+        "fallback": false,
+        "hint": "I was in Brooklyn, but I never saw anything.",
+        "intent": "chase",
+        "move": "MOVE:N",
+        "position": [
+          3,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "1,3": 0.2,
+          "1,4": 0.2,
+          "1,5": 0.2,
+          "1,6": 0.2,
+          "2,3": 0.2,
+          "2,4": 0.5,
+          "2,5": 0.5,
+          "2,6": 0.5,
+          "3,3": 0.2,
+          "3,4": 0.5,
+          "3,5": 0.8,
+          "3,6": 0.5,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.7,
+          "4,6": 0.5,
+          "5,3": 0.2,
+          "5,4": 0.4,
+          "5,5": 0.6,
+          "5,6": 0.4,
+          "6,3": 0.1,
+          "6,4": 0.3,
+          "6,5": 0.3,
+          "6,6": 0.3
+        },
+        "state": "grid=7x7;self=[3, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 27,
+        "timestamp": "2026-08-24T19:47:38.490519+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "ee6847eae9b5165c0f4827f66c19504f",
+      "commit": "da7e1608eccb5e0527aa8a8342432197660d550f6bf5c4c5679b74ed2226cb78"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          3,
+          4
+        ],
+        "fallback": false,
+        "hint": "I found no evidence of a lie at the west landmark.",
+        "intent": "chase",
+        "move": "MOVE:W",
+        "position": [
+          3,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "1,2": 0.2,
+          "1,3": 0.2,
+          "1,4": 0.2,
+          "1,5": 0.2,
+          "1,6": 0.2,
+          "2,2": 0.2,
+          "2,3": 0.5,
+          "2,4": 0.5,
+          "2,5": 0.5,
+          "2,6": 0.4,
+          "3,2": 0.2,
+          "3,3": 0.5,
+          "3,4": 0.8,
+          "3,5": 0.7,
+          "3,6": 0.4,
+          "4,2": 0.2,
+          "4,3": 0.5,
+          "4,4": 0.5,
+          "4,5": 0.6,
+          "4,6": 0.4,
+          "5,2": 0.2,
+          "5,3": 0.2,
+          "5,4": 0.3,
+          "5,5": 0.5,
+          "5,6": 0.3,
+          "6,4": 0.2,
+          "6,5": 0.2,
+          "6,6": 0.2
+        },
+        "state": "grid=7x7;self=[3, 4];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 28,
+        "timestamp": "2026-08-24T19:47:39.576040+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "7734bd05d6e66b1183a8298b2cc0d4db",
+      "commit": "bd42f63f30222d259aece915a0c410ce50598a6a36fac42411336df8dd3c460a"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          3,
+          3
+        ],
+        "fallback": false,
+        "hint": "The truth is at the center of New York.",
+        "intent": "chase",
+        "move": "MOVE:W",
+        "position": [
+          3,
+          3
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "1,1": 0.2,
+          "1,2": 0.2,
+          "1,3": 0.2,
+          "1,4": 0.2,
+          "1,5": 0.2,
+          "1,6": 0.1,
+          "2,1": 0.2,
+          "2,2": 0.5,
+          "2,3": 0.5,
+          "2,4": 0.5,
+          "2,5": 0.4,
+          "2,6": 0.3,
+          "3,1": 0.2,
+          "3,2": 0.5,
+          "3,3": 0.8,
+          "3,4": 0.7,
+          "3,5": 0.6,
+          "3,6": 0.3,
+          "4,1": 0.2,
+          "4,2": 0.5,
+          "4,3": 0.5,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.3,
+          "5,1": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.4,
+          "5,6": 0.2,
+          "6,4": 0.1,
+          "6,5": 0.1,
+          "6,6": 0.1
+        },
+        "state": "grid=7x7;self=[3, 3];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 29,
+        "timestamp": "2026-08-24T19:47:40.854697+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "8b2aab6f4296eba79372a85724d419bf",
+      "commit": "f373ea3c8a0ed4b42483ddf9f348ba6f836f0f5bc996126c99e981be4df23fb1"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          3,
+          2
+        ],
+        "fallback": false,
+        "hint": "I was nowhere near Central Park that night.",
+        "intent": "chase",
+        "move": "MOVE:W",
+        "position": [
+          3,
+          2
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "1,0": 0.2,
+          "1,1": 0.2,
+          "1,2": 0.2,
+          "1,3": 0.2,
+          "1,4": 0.2,
+          "1,5": 0.1,
+          "2,0": 0.2,
+          "2,1": 0.5,
+          "2,2": 0.5,
+          "2,3": 0.5,
+          "2,4": 0.4,
+          "2,5": 0.3,
+          "2,6": 0.2,
+          "3,0": 0.2,
+          "3,1": 0.5,
+          "3,2": 0.8,
+          "3,3": 0.7,
+          "3,4": 0.6,
+          "3,5": 0.5,
+          "3,6": 0.2,
+          "4,0": 0.2,
+          "4,1": 0.5,
+          "4,2": 0.5,
+          "4,3": 0.5,
+          "4,4": 0.4,
+          "4,5": 0.4,
+          "4,6": 0.2,
+          "5,0": 0.2,
+          "5,1": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.3,
+          "5,6": 0.1
+        },
+        "state": "grid=7x7;self=[3, 2];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 30,
+        "timestamp": "2026-08-24T19:47:42.348862+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "519980e76767ccdbcb4fcd9a3cfadd95",
+      "commit": "c8164e87218c1b0db0667fca4b2aa3ca3aafea873c31241a8d6f77a2ee1b625e"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          2,
+          2
+        ],
+        "fallback": false,
+        "hint": "Times Square is the heart of New York, and I deal in truth.",
+        "intent": "chase",
+        "move": "MOVE:N",
+        "position": [
+          2,
+          2
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.2,
+          "0,1": 0.2,
+          "0,2": 0.2,
+          "0,3": 0.2,
+          "0,4": 0.2,
+          "1,0": 0.2,
+          "1,1": 0.5,
+          "1,2": 0.5,
+          "1,3": 0.5,
+          "1,4": 0.2,
+          "2,0": 0.2,
+          "2,1": 0.5,
+          "2,2": 0.8,
+          "2,3": 0.5,
+          "2,4": 0.3,
+          "2,5": 0.2,
+          "2,6": 0.1,
+          "3,0": 0.2,
+          "3,1": 0.5,
+          "3,2": 0.7,
+          "3,3": 0.6,
+          "3,4": 0.5,
+          "3,5": 0.4,
+          "3,6": 0.1,
+          "4,0": 0.2,
+          "4,1": 0.4,
+          "4,2": 0.4,
+          "4,3": 0.4,
+          "4,4": 0.3,
+          "4,5": 0.3,
+          "4,6": 0.1,
+          "5,0": 0.1,
+          "5,1": 0.1,
+          "5,2": 0.1,
+          "5,3": 0.1,
+          "5,4": 0.1,
+          "5,5": 0.2
+        },
+        "state": "grid=7x7;self=[2, 2];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 31,
+        "timestamp": "2026-08-24T19:47:43.606216+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "333c724e370034d8366e49f7c59fb166",
+      "commit": "23d57ae244f445e842873d62c534c9d2dc48f8aa354c7d8d622ec1eef307ebe7"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          2,
+          3
+        ],
+        "fallback": false,
+        "hint": "The truth is at the center of New York.",
+        "intent": "chase",
+        "move": "MOVE:E",
+        "position": [
+          2,
+          3
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,0": 0.1,
+          "0,1": 0.2,
+          "0,2": 0.2,
+          "0,3": 0.2,
+          "0,4": 0.2,
+          "0,5": 0.2,
+          "1,0": 0.1,
+          "1,1": 0.4,
+          "1,2": 0.5,
+          "1,3": 0.5,
+          "1,4": 0.5,
+          "1,5": 0.2,
+          "2,0": 0.1,
+          "2,1": 0.4,
+          "2,2": 0.7,
+          "2,3": 0.8,
+          "2,4": 0.5,
+          "2,5": 0.2,
+          "3,0": 0.1,
+          "3,1": 0.4,
+          "3,2": 0.6,
+          "3,3": 0.5,
+          "3,4": 0.5,
+          "3,5": 0.3,
+          "4,0": 0.1,
+          "4,1": 0.3,
+          "4,2": 0.3,
+          "4,3": 0.3,
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "5,5": 0.1
+        },
+        "state": "grid=7x7;self=[2, 3];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 32,
+        "timestamp": "2026-08-24T19:47:44.828894+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "562c0108f8ef9ebe53fd137939104d4b",
+      "commit": "0cc98e2ed6fcd11b1ae56974fe6cf429fc629cf08af8f65d5553871c0bccffba"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          2,
+          4
+        ],
+        "fallback": false,
+        "hint": "I found your lie in Manhattan, so start talking.",
+        "intent": "chase",
+        "move": "MOVE:E",
+        "position": [
+          2,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,1": 0.1,
+          "0,2": 0.2,
+          "0,3": 0.2,
+          "0,4": 0.2,
+          "0,5": 0.2,
+          "0,6": 0.2,
+          "1,1": 0.3,
+          "1,2": 0.4,
+          "1,3": 0.5,
+          "1,4": 0.5,
+          "1,5": 0.5,
+          "1,6": 0.2,
+          "2,1": 0.3,
+          "2,2": 0.6,
+          "2,3": 0.7,
+          "2,4": 0.8,
+          "2,5": 0.5,
+          "2,6": 0.2,
+          "3,1": 0.3,
+          "3,2": 0.5,
+          "3,3": 0.5,
+          "3,4": 0.5,
+          "3,5": 0.5,
+          "3,6": 0.2,
+          "4,1": 0.2,
+          "4,2": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2
+        },
+        "state": "grid=7x7;self=[2, 4];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 33,
+        "timestamp": "2026-08-24T19:47:45.926888+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "0afc581308fb373d31fa2e24f71313d7",
+      "commit": "4bf9055a69b196e977ae975b2250e9b1b6eb9559f0f1bcafc4568407f227aa16"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "capture_claim": [
+          2,
+          5
+        ],
+        "fallback": false,
+        "hint": "I was in The Bronx when the robbery happened, but I never left my apartment.",
+        "intent": "chase",
+        "move": "MOVE:E",
+        "position": [
+          2,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "police",
+        "smell_grid": {
+          "0,2": 0.1,
+          "0,3": 0.2,
+          "0,4": 0.2,
+          "0,5": 0.2,
+          "0,6": 0.2,
+          "1,1": 0.2,
+          "1,2": 0.3,
+          "1,3": 0.4,
+          "1,4": 0.5,
+          "1,5": 0.5,
+          "1,6": 0.5,
+          "2,1": 0.2,
+          "2,2": 0.5,
+          "2,3": 0.6,
+          "2,4": 0.7,
+          "2,5": 0.8,
+          "2,6": 0.5,
+          "3,1": 0.2,
+          "3,2": 0.4,
+          "3,3": 0.4,
+          "3,4": 0.5,
+          "3,5": 0.5,
+          "3,6": 0.5,
+          "4,1": 0.1,
+          "4,2": 0.1,
+          "4,3": 0.2,
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2
+        },
+        "state": "grid=7x7;self=[2, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 34,
+        "timestamp": "2026-08-24T19:47:47.710094+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "50ac75b285914a4d655f9ede1ad7f704",
+      "commit": "c5883d83a2a0c2eab7ce5f31a7befbe4904a8924c677d9526aa956e4277b4894"
+    },
+    {
+      "payload": {
+        "hint": "",
+        "intent": "chase",
+        "move": "STAY",
+        "position": [
+          2,
+          5
+        ],
+        "sender": "police",
+        "smell_grid": {
+          "0,3": 0.2,
+          "0,4": 0.2,
+          "0,5": 0.2,
+          "0,6": 0.2,
+          "1,1": 0.1,
+          "1,2": 0.2,
+          "1,3": 0.3,
+          "1,4": 0.5,
+          "1,5": 0.5,
+          "1,6": 0.5,
+          "2,1": 0.1,
+          "2,2": 0.4,
+          "2,3": 0.5,
+          "2,4": 0.6,
+          "2,5": 0.8,
+          "2,6": 0.5,
+          "3,1": 0.1,
+          "3,2": 0.3,
+          "3,3": 0.3,
+          "3,4": 0.5,
+          "3,5": 0.5,
+          "3,6": 0.5,
+          "4,3": 0.2,
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2
+        },
+        "state": "grid=7x7;self=[2, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 35,
+        "timestamp": "2026-08-24T19:47:48.006679+00:00"
+      },
+      "nonce": "7ff0341c9d11003c1fd48aedcf35c368",
+      "commit": "c2565d5c0ada22d00ada5bdf6507f584434c691c6676624cb3e664b0275178b4"
+    }
+  ],
+  "opponent_records": [
+    {
+      "payload": {
+        "code_version": "daaedfea22cb3973d95f0c9d1c115ee09f29524e",
+        "group_name": "bestteam",
+        "model": "template",
+        "num_games_declared": 4,
+        "spec": {
+          "cpu_cores": 8,
+          "cpu_type": "AMD Ryzen 7 9700X 8-Core Processor",
+          "gpu_type": "AMD Radeon RX 9070 XT; AMD Radeon(TM) Graphics",
+          "os": "Windows",
+          "ram_gb": 31.2,
+          "vram_gb": 0
+        },
+        "step": 0,
+        "sub_game_number": 1,
+        "type": "system_spec"
+      },
+      "nonce": "eb3e9a69cc4a54dbe6b4010ba8648ade",
+      "commit": "d747291b134ead9aa8ffabee4553f9e598aef25aa45bcad496917e2d75b3f447"
+    },
+    {
+      "payload": {
+        "github_commit": "daaedfea22cb3973d95f0c9d1c115ee09f29524e",
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          3,
+          3
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[3, 3];barriers=[]",
+        "step": 1,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "61f00a7e8c0ab0f1bffef594b12c9593",
+      "commit": "e775afc09b990426e45c7d1074d55876e58b4771d203d41f3fd8358ad02a8415"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          3,
+          3
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[3, 3];barriers=[[0, 0]]",
+        "step": 2,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "bc38c6469b21cc25ce019c5e26e13412",
+      "commit": "d905edf73c1aad844f9a66cd375caf09059749a334970dd2e8407888d802f980"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:S",
+        "position": [
+          4,
+          3
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[4, 3];barriers=[[0, 0]]",
+        "step": 3,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "a5642d260acb1f93e4bb49c3d35b852a",
+      "commit": "0539e859c4ac226d7acb72f317ff1169fda09489cf595c96e6b7dcf718e18d6d"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:S",
+        "position": [
+          5,
+          3
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[5, 3];barriers=[[0, 0]]",
+        "step": 4,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "651f1f73549296bb5e72886a073487e2",
+      "commit": "d7737e3e83927adbfdc8429f8cfaf8f9421337dea7aff82ebddbf67e17c6040f"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:E",
+        "position": [
+          5,
+          4
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[5, 4];barriers=[[0, 0]]",
+        "step": 5,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "341252ef4ff0a5bf599f3833bd8058b8",
+      "commit": "4ab3b30970ef6f77a8b730338f14bb891c54fd60e6ddd3b78efb244f6777be4f"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "MOVE:S",
+        "position": [
+          6,
+          4
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 4];barriers=[[0, 0]]",
+        "step": 6,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "e81fe1edf39c8b12c5b4bd0076c2eb5d",
+      "commit": "b0b8e1ba6eabc818578ed4546cda44b413da6a3f2ebf7fbefe757fafaf8b865a"
+    },
+    {
+      "payload": {
+        "hint": "You are chasing a rumour, not an agent.",
+        "intent": "truth",
+        "move": "MOVE:E",
+        "position": [
+          6,
+          5
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 5];barriers=[[0, 0]]",
+        "step": 7,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "cb8b60079adc380d151dcdb06e70550d",
+      "commit": "25fa821dff2dd196e7e1239d036b425421ce60d8c902d2914855c3c5575ab13d"
+    },
+    {
+      "payload": {
+        "hint": "You are chasing a rumour, not an agent.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          6,
+          5
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 5];barriers=[[0, 0]]",
+        "step": 8,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "59b0dd47bc52ec2730afb89c62f57571",
+      "commit": "7501104ae1f97e417374a76337c7d3c69b4fc0f4d1ab566fb6aa9ac2f0c7f0d1"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          6,
+          5
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 5];barriers=[[0, 0], [4, 3]]",
+        "step": 9,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "4c276009f553e84639bd69b14804e66c",
+      "commit": "d2ab9ee48c304b67423a383bb583f089dc8e1a21f379e39f7c27e0540f769ae9"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          6,
+          5
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 5];barriers=[[0, 0], [4, 3]]",
+        "step": 10,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "1b9878683d2b6d4f9126b7210cf3c564",
+      "commit": "59baddd5182526d6fa91252a4d58087d34850aa84021b7af25119edcace3f2e2"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:E",
+        "position": [
+          6,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 6];barriers=[[0, 0], [4, 3]]",
+        "step": 11,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "337d7e88bfea6b95b07174ea596eaaf6",
+      "commit": "ef4777c45c25af00ad4fed90b75eb663ef716a47969b0d14fe32d9d2d1207d58"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          6,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 6];barriers=[[0, 0], [4, 3], [5, 4]]",
+        "step": 12,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "5b81d72eab65d23faad5201288530c63",
+      "commit": "da169a0e0e1899fd4221c12a0f0262f3567da10f3f16e1eb281caa28285fb2a0"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:W",
+        "position": [
+          6,
+          5
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 5];barriers=[[0, 0], [4, 3], [5, 4]]",
+        "step": 13,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "80e9909cf672f3aa7deb1008078e3abc",
+      "commit": "3b8892c2e16d4181e7a9d3960d376963333ac7b8d19942ca45d5cada1e3d7425"
+    },
+    {
+      "payload": {
+        "hint": "You are chasing a rumour, not an agent.",
+        "intent": "truth",
+        "move": "MOVE:W",
+        "position": [
+          6,
+          4
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 4];barriers=[[0, 0], [4, 3], [5, 4]]",
+        "step": 14,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "ca82d59051669c32ad90ef905bc58751",
+      "commit": "ad34310f1947782482463593f9caa0f5315b82437e9c852a993f2bf152fadb34"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "MOVE:W",
+        "position": [
+          6,
+          3
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 3];barriers=[[0, 0], [4, 3], [5, 4], [6, 5]]",
+        "step": 15,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "4adbbd14c5211979ddc04b74db5cb2ba",
+      "commit": "73df232a6e42d6ebcce98d69723c192957d87fa2aab4384fa4d43aa0070094ff"
+    },
+    {
+      "payload": {
+        "hint": "You are chasing a rumour, not an agent.",
+        "intent": "truth",
+        "move": "MOVE:W",
+        "position": [
+          6,
+          2
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[6, 2];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 16,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "3981f18dd85d80b4486b3f66f82677a6",
+      "commit": "2a52126c0622f24efc2aea390403d70d2f7b803dcf71cc244fc125c6c86e142c"
+    },
+    {
+      "payload": {
+        "hint": "You are chasing a rumour, not an agent.",
+        "intent": "truth",
+        "move": "MOVE:N",
+        "position": [
+          5,
+          2
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[5, 2];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 17,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "07cdc11fabe7d16289561a7e9ee566ff",
+      "commit": "f73fe440b925cc16767370680d17bc0dac1bcf9273aa27af2dd693a7bf6f8a5e"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:N",
+        "position": [
+          4,
+          2
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[4, 2];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 18,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "b5e11e5dbdfb37aa486caf7c1fac4614",
+      "commit": "c1454e94c9b8a3021bc63b1ecc026249f29011bb50eff4cb3ce0c52dd37ed480"
+    },
+    {
+      "payload": {
+        "hint": "You are chasing a rumour, not an agent.",
+        "intent": "truth",
+        "move": "MOVE:N",
+        "position": [
+          3,
+          2
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[3, 2];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 19,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "6d3707a1a53b37371e0c47a2b363ac00",
+      "commit": "f492a92db6fef04b69105b94758cc700ab3ed80c04c4ec1ddc06661882f265bd"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "MOVE:N",
+        "position": [
+          2,
+          2
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[2, 2];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 20,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "6fc9ef695b58fd5ebbd3eb5bb3143eaa",
+      "commit": "ec632f7ab86eea19ca639388d7654fab04eb5109ed747409f2b661ef17da290e"
+    },
+    {
+      "payload": {
+        "hint": "You are chasing a rumour, not an agent.",
+        "intent": "truth",
+        "move": "MOVE:N",
+        "position": [
+          1,
+          2
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[1, 2];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 21,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "de4588cd96c6cf006d76968a6e353c25",
+      "commit": "e2dcd0a617a27337e78b4125203ed6d12bd710ef2a3f00aff9d7d949c58cad5e"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "MOVE:N",
+        "position": [
+          0,
+          2
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 2];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 22,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "5396254f2f333f4776f65aaa619c8b61",
+      "commit": "d891ceffd405213367c93d59aba3b98a5034fffb84b20799fe25fc5466199ce2"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:E",
+        "position": [
+          0,
+          3
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 3];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 23,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "419139fb20274f8b9c8707fcc614364f",
+      "commit": "0553945e20610d4fd3c4caae50c48c6631e967f3ad5b12ab223e1d16b728643d"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:E",
+        "position": [
+          0,
+          4
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 4];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 24,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "2842d5d12c395f2c3405d15ba9fe4e00",
+      "commit": "606c486b685f78c3c02690615d7a401b8ddaab7b30055fda262a5714dc1fae0d"
+    },
+    {
+      "payload": {
+        "hint": "You are chasing a rumour, not an agent.",
+        "intent": "truth",
+        "move": "MOVE:E",
+        "position": [
+          0,
+          5
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 5];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 25,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "33e5f723c158b6e91b279ce37ce0d468",
+      "commit": "1b3732ed7707281f0557328f4997e545f5279a0b32693d0a6ea0eb338d7d17db"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:E",
+        "position": [
+          0,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 26,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "68b997f9fe3eef89f23cdeb4a6d023b6",
+      "commit": "2efca8097ab03d737e8d656cab3bb4e60c44e17b3b99cea2e0358aee4731c73b"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "MOVE:S",
+        "position": [
+          1,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[1, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 27,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "2e15781b328a58d48afd563331f7543f",
+      "commit": "7e6e514c1ecd35f890ba4643350b2b3bfec8f14a8f5ef3611dfef0a7f1a4f048"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:N",
+        "position": [
+          0,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 28,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "fa446da57f3b9a6447902e49ce4f5fbb",
+      "commit": "cc757f6e0ff3246458f1a77450586a1dd09f559e5b07b6febc52a6092cb7bee2"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          0,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 29,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "c6a42ab0ab46f0ee7475bc200da41dcf",
+      "commit": "ec231ccdeafe2d2f3534f8e5a97a31cd97b5fc70ddadf207a7daa4c9624afba7"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          0,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 30,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "24fc4398b573111e9fb50894da849244",
+      "commit": "9bb4177860236822c14fb38f9b5868c9f19a6e36d23c88864c238f049d6214ea"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          0,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 31,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "f6e3735b68d138223a8e16e4048f3d87",
+      "commit": "22bdff17f16f66491cf8e124b201c575d689297d4d91ec3fd12f8b00bbe55ddd"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:S",
+        "position": [
+          1,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[1, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 32,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "7d40267833f5a31b0da007a95f61a6a7",
+      "commit": "445e65291e3e3d6c2c10714db055060fc3d64068845fbe8f116bc6c1c5a21bd8"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "MOVE:N",
+        "position": [
+          0,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 33,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "da7e9d526e5af404b43b074684060986",
+      "commit": "f51c0d2e434b4c1b31c9f4de59c29d2b47352509f439a5dca0394b2fb94e8c47"
+    },
+    {
+      "payload": {
+        "hint": "I am somewhere you have not thought to look.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          0,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 34,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "05b20e4dcaef15b701caf83679670d57",
+      "commit": "86c977481c7f935cf6782701c1d4831d50ba818d6f28bfba28bb216f4b4f4c6e"
+    },
+    {
+      "payload": {
+        "hint": "Nothing you have read this turn was worth reading.",
+        "intent": "truth",
+        "move": "STAY",
+        "position": [
+          0,
+          6
+        ],
+        "role": "thief",
+        "state": "grid=7x7;self=[0, 6];barriers=[[0, 0], [4, 3], [5, 4], [5, 6], [6, 5]]",
+        "step": 35,
+        "sub_game": 1,
+        "verdict": "moved"
+      },
+      "nonce": "e967904c25b917de50b3c17659abb427",
+      "commit": "35899926faeefb88c3df832a63f97c2767899a63fcbb7dd8f8d7486f6c56a1c8"
+    }
+  ],
+  "opponent_committed_steps": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35
+  ],
+  "league": {
+    "counted": true,
+    "reason": "post-game user designation",
+    "original_pre_game_mode": "warmup"
+  }
+}

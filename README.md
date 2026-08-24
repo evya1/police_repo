@@ -4,8 +4,10 @@
 > Commit-Reveal audit, orchestration/recovery, OpenRouter wording provider, Gmail reporting path,
 > league-kit projection, headless Replay verifier, local-truth Live GUI, and Replay GUI are
 > implemented and tested. The Live and Replay screenshots below are from genuine local runs;
-> neither is a counted league result. External matches, confirmed team
-> metadata, official course inputs, and the final `v1.0-submission` tag remain explicit gates in
+> neither screenshot is presented as a counted league result. One real external series against
+> `bestteam` is preserved as user-designated counted evidence; opponent reclassification
+> confirmation and final report completion remain open. Confirmed team metadata, official course
+> inputs, a second opponent, and the final `v1.0-submission` tag remain explicit gates in
 > [`docs/TODO.md`](docs/TODO.md).
 
 This repository implements the autonomous Police side of a two-peer Police/Thief system. It owns only its local truth and communicates with the sibling peer through FastMCP/MCP. The shared intent is in `docs/PRD.md`; the role-specific strategy is in `docs/PLAN.md`; execution state lives in `docs/TODO.md` and individual task files.
@@ -104,6 +106,15 @@ sealed halves before opening the window; `--verify-only` provides the same check
 uv run python scripts/replay_gui.py artifacts/kit/<game_uid> --verify-only
 uv run python scripts/replay_gui.py artifacts/kit/<game_uid>
 ```
+
+### Recorded external match
+
+The complete `ZeroOne0-vs-bestteam` six-sub-game evidence is published under
+[`docs/evidence/games/ZeroOne0-vs-bestteam/`](docs/evidence/games/ZeroOne0-vs-bestteam/README.md).
+It includes the unique match configuration, immutable replay bundle, 14-file reference-kit
+projection, commit evidence, derived 35–75 group result, and the provenance of the team's
+post-game counted designation. All six logs verify cleanly; the evidence page also records the
+outstanding opponent-confirmation, token-total, and report-email gaps.
 
 ## Configuration
 

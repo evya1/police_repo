@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.1",
+  "schema_profile": "league-kit-reference-v3",
+  "game_id": "ZeroOne0-vs-bestteam",
+  "game_uid": "a42b2bb2-2312-c679-5e69-fa3d5ea0aad9",
+  "links": {
+    "_remark": "match-level files are named <kind>_<game_id>.json; per-sub-game files carry _g<NN>. All four share one game_uid, which is what joins them.",
+    "declaration": "declaration_ZeroOne0-vs-bestteam.json",
+    "config": "config_ZeroOne0-vs-bestteam_g<NN>.json",
+    "log": "log_ZeroOne0-vs-bestteam_g<NN>.json",
+    "result": "result_ZeroOne0-vs-bestteam.json",
+    "github": {
+      "ZeroOne0": {
+        "cop": "https://github.com/evya1/police_repo",
+        "thief": "https://github.com/evya1/thief_repo"
+      },
+      "bestteam": {
+        "cop": "https://github.com/Diana-Koroblov/bestteam-cop",
+        "thief": "https://github.com/Diana-Koroblov/bestteam-thief"
+      }
+    }
+  },
+  "declaration_type": "pre_game_declaration",
+  "report_type": "declaration",
+  "num_sub_games": 6,
+  "groups": {
+    "group_1": {
+      "group_id": "ZeroOne0",
+      "repos": {
+        "cop": "https://github.com/evya1/police_repo",
+        "thief": "https://github.com/evya1/thief_repo"
+      },
+      "declared_role_commits": {
+        "cop": "47e588bf5b5eaa0810a1e44e4be30836e094f6c4",
+        "thief": "3e1e884273bcc03193317862db3c4e8cae50f74a"
+      }
+    },
+    "group_2": {
+      "group_id": "bestteam",
+      "repos": {
+        "cop": "https://github.com/Diana-Koroblov/bestteam-cop",
+        "thief": "https://github.com/Diana-Koroblov/bestteam-thief"
+      },
+      "observed_role_commits": {
+        "cop": "bcceebaaf50e5466274a803c36ca0c9709ac7135",
+        "thief": "daaedfea22cb3973d95f0c9d1c115ee09f29524e"
+      }
+    }
+  },
+  "max_tokens_per_game": 200000,
+  "step_zero": {
+    "original_mode": "warmup",
+    "post_game_user_designation": "counted",
+    "ZeroOne0_declared_role_commits": {
+      "cop": "47e588bf5b5eaa0810a1e44e4be30836e094f6c4",
+      "thief": "3e1e884273bcc03193317862db3c4e8cae50f74a"
+    },
+    "bestteam_observed_role_commits": {
+      "cop": "bcceebaaf50e5466274a803c36ca0c9709ac7135",
+      "thief": "daaedfea22cb3973d95f0c9d1c115ee09f29524e"
+    }
+  },
+  "league": {
+    "counted": true,
+    "reason": "post-game user designation",
+    "original_pre_game_mode": "warmup"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "artifact_kind": "match_evidence_provenance",
+  "game_id": "ZeroOne0-vs-bestteam",
+  "game_uid": "a42b2bb2-2312-c679-5e69-fa3d5ea0aad9",
+  "designation": {
+    "current": "counted",
+    "basis": "post_game_user_instruction",
+    "original_pre_game_mode": "warmup",
+    "opponent_reclassification_confirmation_evidenced": false
+  },
+  "source_hashes_sha256": {
+    "source_result_warmup": "43d3bcbd5d7541cc54c3f0a9e0bc94cbc29bdc271a54df87f283b464239ebb3d",
+    "user_designated_result_counted": "ed70d6316cf6add80c38a4ad259fae5ccc816a0140379dd1e477fbdd57f073ce",
+    "pre_game_match_terms": "271e3ece0f1054eefc34487bd0bdd9d381ac5396c20becb5ed9e46dec4668d39",
+    "pre_game_opening_message": "aa97c13ee9f4f451e68a0a6d61732ab53a68608f78136ed1cb03366ec75f4d6b"
+  },
+  "code_revisions": {
+    "ZeroOne0": {
+      "cop_declared": "47e588bf5b5eaa0810a1e44e4be30836e094f6c4",
+      "thief_declared": "3e1e884273bcc03193317862db3c4e8cae50f74a"
+    },
+    "bestteam": {
+      "cop_observed": "bcceebaaf50e5466274a803c36ca0c9709ac7135",
+      "thief_observed": "daaedfea22cb3973d95f0c9d1c115ee09f29524e"
+    }
+  },
+  "verification": {
+    "verdict": "verified_ok",
+    "sub_games_verified": 6,
+    "checked_records": 309,
+    "tampered_logs": 0,
+    "integrity": true,
+    "physics": true,
+    "outcome": true,
+    "bundle_digests": true,
+    "live_binding": false,
+    "external_authenticity": false,
+    "kit_artifact_check": "pass",
+    "kit_replay": "6_verified_0_tampered"
+  },
+  "result": {
+    "group_scores": {
+      "ZeroOne0": 35,
+      "bestteam": 75
+    },
+    "sub_games_won": {
+      "ZeroOne0": 1,
+      "bestteam": 5
+    }
+  },
+  "reporting": {
+    "mutual_result_agreement_confirmed": false,
+    "instructor_email_send_evidenced": false,
+    "token_usage": {
+      "known_ZeroOne0_lower_bound": 4613,
+      "sub_game_5": "unknown",
+      "series_total": "unknown"
+    }
+  }
+}

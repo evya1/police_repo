@@ -1,0 +1,65 @@
+{
+  "group_id": "ZeroOne0",
+  "mode": "counted",
+  "natural_role": "police",
+  "game_id": "ZeroOne0-vs-bestteam",
+  "game_uid": "a42b2bb2-2312-c679-5e69-fa3d5ea0aad9",
+  "settled": true,
+  "settled_outcome": "survival",
+  "ledger": [
+    {
+      "sub_game_number": 1,
+      "role": "police",
+      "outcome": "survival",
+      "steps": 35,
+      "score_police": 5,
+      "score_thief": 10,
+      "audit_ok": true
+    },
+    {
+      "sub_game_number": 2,
+      "role": "thief",
+      "outcome": "capture",
+      "steps": 5,
+      "score_police": 20,
+      "score_thief": 5,
+      "audit_ok": true
+    },
+    {
+      "sub_game_number": 3,
+      "role": "police",
+      "outcome": "survival",
+      "steps": 35,
+      "score_police": 5,
+      "score_thief": 10,
+      "audit_ok": true
+    },
+    {
+      "sub_game_number": 4,
+      "role": "thief",
+      "outcome": "capture",
+      "steps": 5,
+      "score_police": 20,
+      "score_thief": 5,
+      "audit_ok": true
+    },
+    {
+      "sub_game_number": 5,
+      "role": "police",
+      "outcome": "survival",
+      "steps": 35,
+      "score_police": 5,
+      "score_thief": 10,
+      "audit_ok": true
+    },
+    {
+      "sub_game_number": 6,
+      "role": "thief",
+      "outcome": "survival",
+      "steps": 35,
+      "score_police": 5,
+      "score_thief": 10,
+      "audit_ok": true
+    }
+  ]
+}

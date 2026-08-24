@@ -1,12 +1,44 @@
-# Local private configuration example (EXAMPLE — NOT AN OFFICIAL ATTACHED TEMPLATE)
+# Local private configuration example (EXAMPLE -- NOT AN OFFICIAL ATTACHED TEMPLATE)
+#
+# config/game.json is the signed constitution both peers must load byte for byte. This file is
+# its opposite: local, private, never signed, and never on the wire -- except for the small
+# identity subset the greeting carries deliberately.
+#
+# The book's own test decides which file a value belongs in: "would the opponent have to agree
+# to this, or rely on it?" If yes, it goes in the shared JSON. If no, it goes here. The shared
+# JSON wins on every shared key, so nothing written here can weaken a signed condition.
+#
+# NEVER put a secret in this file. credentials.json and token.json are referenced by path, are
+# git-ignored, and their contents are never read into any artifact.
+
 min_center_intensity = 0.5
-group_id = "local-team"
 seed = 42
 
-[network]
-turn_timeout = 30.0
-connect_timeout = 30.0
-poll_interval = 0.01
+[game]
+group_name = "ZeroOne"
+group_id = "zeroone"
+# Publication-intended member identifiers only. Never legal names or government identifiers.
+members = ["id-1001", "id-1002"]
+# BOTH repositories, declared by both peers (App. E rule 49).
+repos = { cop = "https://github.com/evya1/police_repo", thief = "https://github.com/evya1/thief_repo" }
 
-[strategy]
-mode = "baseline"
+[network]
+my_port = 8101                                  # the port MY FastMCP server binds
+opponent_url = "http://127.0.0.1:8102/mcp"      # the only thing I know about the opponent
+# public_url = "https://<your-tunnel>.ngrok-free.app/mcp"   # set for league play (rule 10)
+turn_timeout_seconds = 180
+
+[llm]
+# The move is ALWAYS decided in Python. The language model touches the verbal layer only.
+model = "template"                              # template = zero tokens, the default
+step_deadline_seconds = 30
+
+[email]
+# App. F table 20: the one address the agent's automated reports may target.
+recipient = "rmisegal+uoh26finalgame@gmail.com"
+# "dry-run" composes the message and writes it to the bundle's outbox without sending.
+# A real send additionally requires an explicit human authorisation flag.
+mode = "dry-run"
+
+# [strategy] -- optional: point at YOUR brain subclass (else the shipped heuristic runs)
+# police_class = "my_team.strategy:MyPoliceBrain"

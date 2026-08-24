@@ -64,6 +64,7 @@ def build_kit_bundle(
     our_group: str,
     counted: bool,
     groups: list[dict] | None = None,
+    step_zero: dict | None = None,
     github: dict | None = None,
     league: dict | None = None,
     max_tokens_per_game: int | None = None,
@@ -126,7 +127,8 @@ def build_kit_bundle(
         build_declaration(
             **ids,
             groups=groups or [{"group_id": pair[0]}, {"group_id": pair[1]}],
-            num_sub_games=len(rows), max_tokens_per_game=max_tokens_per_game, **common,
+            num_sub_games=len(rows), max_tokens_per_game=max_tokens_per_game,
+            step_zero=step_zero, **common,
         )
     )
     files[result_name(game_id)] = _document_bytes(

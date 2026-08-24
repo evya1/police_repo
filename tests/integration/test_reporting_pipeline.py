@@ -1,5 +1,6 @@
 import pytest
 
+from common.transport.kit_agreement import AgreementOutcome
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.reporting.artifacts import ReportingArtifactBundle
 from police_peer.reporting.gmail import FileIdempotencyStore, GmailSender
@@ -83,6 +84,10 @@ def _sample_bundle(game_uid: str = "series-test-99"):
     )
 
 
+AGREED = AgreementOutcome(True, "both peers derived one consensus digest", "d" * 64)
+NOT_AGREED = AgreementOutcome(False, "no counter-proposal arrived, so nothing was agreed")
+
+
 def test_reporting_pipeline_success_and_idempotence(tmp_path):
     bundle = _sample_bundle("series-good")
     attachments = bundle.to_attachments()
@@ -98,11 +103,11 @@ def test_reporting_pipeline_success_and_idempotence(tmp_path):
     )
     pipeline = ReportingPipeline(gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent.json"))
 
-    receipt = pipeline.process_and_send(bundle)
+    receipt = pipeline.process_and_send(bundle, agreement=AGREED)
     assert receipt["status"] == "OK"
 
     with pytest.raises(ReportingPipelineError, match="already been processed"):
-        pipeline.process_and_send(bundle)
+        pipeline.process_and_send(bundle, agreement=AGREED)
 
 
 def test_reporting_pipeline_unfinalized_log_refusal(tmp_path):
@@ -120,4 +125,61 @@ def test_reporting_pipeline_unfinalized_log_refusal(tmp_path):
     pipeline = ReportingPipeline(gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent2.json"))
 
     with pytest.raises(ReportingPipelineError, match="Bundle reconciliation failed"):
-        pipeline.process_and_send(bundle)
+        pipeline.process_and_send(bundle, agreement=AGREED)
+
+
+def test_a_counted_series_without_agreement_is_never_transmitted(tmp_path):
+    """Rule 35 zeroes BOTH teams for contradictory reports, so an unconfirmed side stays quiet."""
+    from common.transport.kit_agreement import NotAgreedError
+
+    class RecordingService:
+        """Records every send so "nothing was transmitted" is asserted, not assumed."""
+
+        def __init__(self):
+            self.sent = []
+
+        def users(self):
+            return self
+
+        def messages(self):
+            return self
+
+        def send(self, userId="me", body=None):  # noqa: N803
+            self.sent.append(body)
+            return self
+
+        def execute(self):
+            return {"status": "OK"}
+
+    bundle = _sample_bundle("series-unagreed")
+    service = RecordingService()
+    sender = GmailSender(
+        gatekeeper=ExternalApiGatekeeper(),
+        default_recipient=OFFICIAL_RECIPIENT,
+        scopes=["gmail.send"],
+        service_client=service,
+        idempotency_store=FileIdempotencyStore(tmp_path / "gmail_sent3.json"),
+    )
+    pipeline = ReportingPipeline(
+        gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent3.json")
+    )
+
+    with pytest.raises(NotAgreedError, match="no mutual agreement"):
+        pipeline.process_and_send(bundle, agreement=NOT_AGREED)
+    assert not service.sent, "nothing may leave without an agreement"
+
+
+def test_a_warm_up_owes_no_report_so_the_gate_does_not_block(tmp_path):
+    bundle = _sample_bundle("series-warmup")
+    sender = GmailSender(
+        gatekeeper=ExternalApiGatekeeper(),
+        default_recipient=OFFICIAL_RECIPIENT,
+        scopes=["gmail.send"],
+        service_client=FakeGmailService(),
+        idempotency_store=FileIdempotencyStore(tmp_path / "gmail_sent4.json"),
+    )
+    pipeline = ReportingPipeline(
+        gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent4.json")
+    )
+    receipt = pipeline.process_and_send(bundle, agreement=NOT_AGREED, counted=False)
+    assert receipt["status"] == "OK"

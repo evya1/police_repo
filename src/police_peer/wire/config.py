@@ -18,6 +18,7 @@ from common.config import ConfigError, load_config
 from common.transport.terms import TERMS_KEYS, project_terms
 from police_peer.scent.lock import model_lock_hash
 from police_peer.scent.model import DEFAULT_MODEL, MODELS
+from police_peer.wire import identity_config as idc
 from police_peer.wire.strategy_settings import StrategySettings, load_strategy_settings
 
 
@@ -36,6 +37,12 @@ class PrivateConfig:
     budgets: dict[str, float] = field(default_factory=dict)
     scent_model: str = DEFAULT_MODEL
     strategy: StrategySettings = field(default_factory=StrategySettings)
+    # App. B section 4 sections. All optional: a warm-up must run without a filled-in
+    # declaration. Counted play refuses on what is missing, by name, in the composition root.
+    identity: idc.GameIdentity = field(default_factory=idc.GameIdentity)
+    endpoints: idc.Endpoints = field(default_factory=idc.Endpoints)
+    llm: idc.LlmSettings = field(default_factory=idc.LlmSettings)
+    email: idc.EmailSettings = field(default_factory=idc.EmailSettings)
 
 
 def load_private(path: Path | str) -> PrivateConfig:
@@ -52,11 +59,22 @@ def load_private(path: Path | str) -> PrivateConfig:
         )
     return PrivateConfig(
         min_center_intensity=float(toml_data.get("min_center_intensity", 0.5)),
-        group_id=str(toml_data.get("group_id", "")),
+        group_id=str(toml_data.get("group_id", "")) or str(
+            (toml_data.get("game") or {}).get("group_id", "")
+        ),
         seed=int(toml_data.get("seed", 0)),
-        budgets={k: float(v) for k, v in toml_data.get("network", {}).items()},
+        # [network] now also carries endpoints (App. B section 4), so only the numeric
+        # entries are budgets. Coercing every key here turned an opponent_url into a
+        # ValueError at load time.
+        budgets={
+            k: float(v)
+            for k, v in (toml_data.get("network") or {}).items()
+            if isinstance(v, (int, float)) and not isinstance(v, bool)
+        },
         scent_model=scent_model,
         strategy=load_strategy_settings(toml_data),
+        identity=idc.load_game_identity(toml_data), endpoints=idc.load_endpoints(toml_data),
+        llm=idc.load_llm_settings(toml_data), email=idc.load_email_settings(toml_data),
     )
 
 

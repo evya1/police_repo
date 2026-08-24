@@ -12,8 +12,8 @@ from common.transport.loopback import Inboxes
 from common.transport.mcp_client import McpChannel, edge_answers
 from common.transport.mcp_server import serve_background
 from common.transport.series import SeriesResult
-from police_peer.reporting.kit_bundle import publish_kit_bundle
 from police_peer.reporting.replay_bundle import publish_replay_bundle
+from police_peer.reporting.settlement import publish_kit, settle
 from police_peer.sdk import Budgets, create_peer
 from police_peer.strategy import Strategy
 
@@ -53,21 +53,6 @@ def write_artifacts(
     }
     filename = f"result_{result.game_id}.json" if result.game_id else "result.json"
     (path / filename).write_text(json.dumps(summary, indent=2), encoding="utf-8")
-
-
-def _publish_kit(artifacts_dir, result: SeriesResult, *, group_id: str, mode: str) -> None:
-    """Publish the kit projection beside the internal bundle.
-
-    Deliberately non-fatal: the internal bundle is the evidence of record and is already on
-    disk by the time we get here. A projection that cannot be written is a reporting problem
-    to be seen and fixed, not a reason to lose a settled series.
-    """
-    try:
-        publish_kit_bundle(
-            artifacts_dir, result, our_group=group_id, counted=(mode == "counted")
-        )
-    except Exception as exc:  # noqa: BLE001 - never let a projection fault destroy evidence
-        logger.error("Kit bundle projection failed (internal bundle is intact): %s", exc)
 
 
 def run_one_peer(
@@ -137,14 +122,22 @@ def run_one_peer(
         )
 
         result = facade.run()
+        agreement = settle(channel, result, our_group=group_id, budget=turn_timeout)
 
         if artifacts_dir:
             write_artifacts(artifacts_dir, result, role=role, group_id=group_id, mode=mode)
             if result.settled:
                 publish_replay_bundle(artifacts_dir, result)
                 if emit_kit_bundle:
-                    _publish_kit(artifacts_dir, result, group_id=group_id, mode=mode)
+                    publish_kit(artifacts_dir, result, our_group=group_id, mode=mode,
+                                confirmed=agreement.agreed)
 
+        if mode == "counted" and not agreement.agreed:
+            # The series played and audited cleanly; only the settlement handshake did not
+            # complete. The bundle is on disk recording `confirmed: false`, and no report is
+            # owed or sent -- reporting alone on an unconfirmed result is what zeroes both.
+            logger.error("Counted series is not reportable: %s", agreement.reason)
+            return 6
         return 0 if result.settled else 6
     except Exception as exc:
         logger.exception("Series execution failed: %s", exc)

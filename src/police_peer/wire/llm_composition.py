@@ -47,10 +47,17 @@ def compose_text_provider(
         )
     except ValueError as exc:
         raise ConfigError(str(exc)) from None
-    service_gatekeeper = gatekeeper or ExternalApiGatekeeper(
+    service_gatekeeper = gatekeeper or compose_external_gatekeeper(shared_config)
+    return LanguageModelAdapter(client, service_gatekeeper)
+
+
+def compose_external_gatekeeper(
+    shared_config: Mapping[str, object],
+) -> ExternalApiGatekeeper:
+    """Build the one production Gatekeeper shared by LLM and reporting lanes."""
+    return ExternalApiGatekeeper(
         _gatekeeper_config(shared_config), time_provider=time.monotonic,
     )
-    return LanguageModelAdapter(client, service_gatekeeper)
 
 
 def _gatekeeper_config(shared: Mapping[str, object]) -> GatekeeperConfig:

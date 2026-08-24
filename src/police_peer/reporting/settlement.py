@@ -14,6 +14,7 @@ from pathlib import Path
 
 from common.transport.kit_agreement import AgreementOutcome, build_proposal
 from common.transport.kit_identity import GroupIdentity, group_block
+from common.transport.kit_names import result_name
 from common.transport.kit_settlement import result_row, series_final
 from common.transport.series import SeriesResult
 from police_peer.evidence.token_ledger import TokenLedger
@@ -61,7 +62,7 @@ def publish_kit(
     identity: GroupIdentity | None = None,
     opponent_identity: dict | None = None,
     token_ledger: TokenLedger | None = None,
-) -> None:
+) -> Path | None:
     """Publish the kit projection beside the internal bundle.
 
     Deliberately non-fatal: the internal bundle is the evidence of record and is already on
@@ -100,11 +101,13 @@ def publish_kit(
                     our_group: total.input_tokens + total.output_tokens,
                     result.opponent_group_id: 0,
                 }
-        publish_kit_bundle(
+        bundle = publish_kit_bundle(
             artifacts_dir, result, our_group=our_group, counted=counted,
             confirmed=confirmed, groups=groups, games_played=games_played,
             max_tokens_per_game=max_tokens,
             tokens_by_sub_game=tokens_by_sub_game,
         )
+        return bundle / result_name(result.game_id)
     except Exception as exc:  # noqa: BLE001 - never let a projection fault destroy evidence
         logger.error("Kit bundle projection failed (internal bundle is intact): %s", exc)
+        return None

@@ -24,7 +24,8 @@ from police_peer.reporting.settlement import publish_kit, settle
 from police_peer.sdk import Budgets, __version__, create_peer
 from police_peer.strategy import Strategy
 from police_peer.wire.config import PrivateConfig, load_private
-from police_peer.wire.llm_composition import compose_text_provider
+from police_peer.wire.gmail_composition import compose_gmail_reporter
+from police_peer.wire.llm_composition import compose_external_gatekeeper, compose_text_provider
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +50,29 @@ def run_one_peer(
     emit_kit_bundle: bool = True,
     group_code_confirmed: bool = False,
     public_url: str = "",
+    email_recipient: str | None = None,
+    authorize_email_send: bool = False,
 ) -> int:
     """Run one independent peer process: serve MCP, dial peer, run 6 subgames."""
     try:
         raw_config = load_config(shared_config)
         private = load_private(private_config) if private_config else PrivateConfig()
-        text_provider = compose_text_provider(private.llm, raw_config)
+        email_enabled = mode == "counted" and private.email.mode != "off"
+        gatekeeper = (
+            compose_external_gatekeeper(raw_config)
+            if private.llm.provider == "openrouter" or email_enabled else None
+        )
+        text_provider = compose_text_provider(private.llm, raw_config, gatekeeper=gatekeeper)
+        gmail_reporter = None
+        if email_enabled:
+            if artifacts_dir is None or not emit_kit_bundle:
+                raise ConfigError(
+                    "counted Gmail reporting requires --artifacts-dir and --emit-kit-bundle"
+                )
+            gmail_reporter = compose_gmail_reporter(
+                private.email, artifacts_dir, gatekeeper,
+                recipient=email_recipient, authorize_send=authorize_email_send,
+            )
         runtime = prepare_runtime_evidence(
             private_config=private_config, shared_config=shared_config, group_id=group_id,
             mode=mode, group_code_confirmed=group_code_confirmed, public_url=public_url,
@@ -130,6 +148,7 @@ def run_one_peer(
                 return 2
         agreement = settle(channel, result, our_group=group_id, budget=turn_timeout)
 
+        kit_result_path = None
         if artifacts_dir:
             write_artifacts(
                 artifacts_dir, result, role=role, group_id=group_id, mode=mode,
@@ -137,10 +156,12 @@ def run_one_peer(
             if result.settled:
                 publish_replay_bundle(artifacts_dir, result)
                 if emit_kit_bundle:
-                    publish_kit(artifacts_dir, result, our_group=group_id, mode=mode,
-                                confirmed=agreement.agreed, identity=runtime.identity,
-                                opponent_identity=result.opponent_identity,
-                                token_ledger=runtime.token_ledger)
+                    kit_result_path = publish_kit(
+                        artifacts_dir, result, our_group=group_id, mode=mode,
+                        confirmed=agreement.agreed, identity=runtime.identity,
+                        opponent_identity=result.opponent_identity,
+                        token_ledger=runtime.token_ledger,
+                    )
 
         if mode == "counted" and not agreement.agreed:
             # The series played and audited cleanly; only the settlement handshake did not
@@ -148,6 +169,11 @@ def run_one_peer(
             # owed or sent -- reporting alone on an unconfirmed result is what zeroes both.
             logger.error("Counted series is not reportable: %s", agreement.reason)
             return 6
+        if mode == "counted" and gmail_reporter is not None:
+            if kit_result_path is None:
+                logger.error("Counted series is not reportable: kit projection failed")
+                return 6
+            gmail_reporter.report(kit_result_path)
         return 0 if result.settled else 6
     except Exception as exc:
         logger.exception("Series execution failed: %s", exc)

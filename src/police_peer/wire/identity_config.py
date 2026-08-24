@@ -13,9 +13,8 @@ raised on an unset team name would make local development impossible for no safe
 
 Two defaults are deliberate rather than convenient:
 
-* `email.recipient` defaults to the lecturer's reporting address (App. F table 20), because
-  that is the only address a report may ever go to, and a typo'd override should look wrong
-  rather than silently mail nobody.
+* `email.recipient` defaults to a non-secret placeholder. A live recipient must be supplied
+  in private configuration or as a runtime CLI override.
 * `email.mode` defaults to `dry-run`. Sending is opt-in, twice over (see the reporting root).
 """
 
@@ -137,11 +136,14 @@ def load_llm_settings(toml_data: dict) -> LlmSettings:
 
 
 def load_email_settings(toml_data: dict) -> EmailSettings:
-    """Read `[email]`, tolerating absence."""
+    """Read and validate the local `[email]` delivery mode and recipient."""
     block = toml_data.get("email", {})
     if not isinstance(block, dict):
-        return EmailSettings()
-    return EmailSettings(
-        recipient=str(block.get("recipient", LECTURER_REPORT_ADDRESS)),
-        mode=str(block.get("mode", "dry-run")),
-    )
+        raise ConfigError("[email] must be a TOML table")
+    recipient = str(block.get("recipient", LECTURER_REPORT_ADDRESS)).strip()
+    mode = str(block.get("mode", "dry-run")).strip().lower()
+    if mode not in {"off", "dry-run", "send"}:
+        raise ConfigError("[email].mode must be 'off', 'dry-run', or 'send'")
+    if "\n" in recipient or "\r" in recipient:
+        raise ConfigError("[email].recipient must be a single line")
+    return EmailSettings(recipient=recipient, mode=mode)

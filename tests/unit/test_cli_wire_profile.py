@@ -1,0 +1,91 @@
+"""The `--wire-profile` flag reaches `create_peer`, so the kit lane is selectable in production.
+
+``KitAuditWire`` (``reference-v3``) existed and was proven in isolation, but the only real
+entry point -- ``cli.main`` -> ``runner.run_one_peer`` -> ``sdk.create_peer`` -- never passed
+a profile, so every process built the ``internal`` lane no matter who the opponent was.
+Against a `copthief-league-protocol` peer that ships a flat audit under an internal top
+level: the opponent verifies zero records and settles ``tamper_forfeit``, which App. E
+rule 35 zeroes for BOTH teams. An adapter the runtime cannot select is not wired.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from common.transport.audit_wire import KitAuditWire
+from police_peer import runner
+from police_peer.cli import build_parser, main
+
+
+def test_wire_profile_defaults_to_the_kit_lane() -> None:
+    """The league IS the pinned kit, so an unconfigured peer must already speak its wire."""
+    assert build_parser().parse_args([]).wire_profile == "reference-v3"
+
+
+def test_the_internal_lane_stays_reachable_for_a_non_kit_peer() -> None:
+    assert build_parser().parse_args(["--wire-profile", "internal"]).wire_profile == "internal"
+
+
+def test_unknown_wire_profile_is_refused_at_the_command_line() -> None:
+    """A typo must fail loudly here, not silently fall back to the internal lane."""
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["--wire-profile", "reference-v4"])
+
+
+def test_main_forwards_the_profile_to_the_runner(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(
+        "police_peer.cli.run_one_peer", lambda **kwargs: seen.update(kwargs) or 0
+    )
+    assert main(["--wire-profile", "reference-v3"]) == 0
+    assert seen["wire_profile"] == "reference-v3"
+
+
+def test_runner_forwards_the_profile_to_create_peer(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The seam that was actually missing: runner -> create_peer."""
+    seen: dict[str, object] = {}
+
+    monkeypatch.setattr(runner, "serve_background", lambda *a, **k: None)
+    monkeypatch.setattr(runner, "edge_answers", lambda *a, **k: True)
+    monkeypatch.setattr(runner, "McpChannel", lambda *a, **k: _StubChannel())
+
+    def _fake_create_peer(**kwargs: object) -> object:
+        seen.update(kwargs)
+        return _StubFacade()
+
+    monkeypatch.setattr(runner, "create_peer", _fake_create_peer)
+    runner.run_one_peer(wire_profile="reference-v3")
+    assert seen["wire_profile"] == "reference-v3"
+
+
+def test_the_kit_profile_resolves_to_the_kit_adapter() -> None:
+    """End of the chain: the string the CLI accepts builds the nested-envelope adapter."""
+    from common.transport.audit_wire import resolve_audit_wire
+
+    assert isinstance(resolve_audit_wire("reference-v3"), KitAuditWire)
+
+
+def test_an_unconfigured_peer_resolves_to_the_kit_adapter() -> None:
+    """The flipped default, at the seam that decides it: `None` must mean the kit lane.
+
+    `play_subgame`'s own `audit_wire=None` fallback reads the same constant, so a direct
+    caller that bypasses the CLI cannot drift onto a different default.
+    """
+    from common.transport.audit_wire import default_audit_wire, resolve_audit_wire
+
+    assert isinstance(resolve_audit_wire(None), KitAuditWire)
+    assert isinstance(default_audit_wire(), KitAuditWire)
+
+
+class _StubChannel:
+    def close(self) -> None:
+        return None
+
+
+class _StubResult:
+    settled = True
+
+
+class _StubFacade:
+    def run(self) -> _StubResult:
+        return _StubResult()

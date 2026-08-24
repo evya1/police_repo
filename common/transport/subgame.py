@@ -16,7 +16,7 @@ from collections.abc import Callable
 
 from common.domain.scoring import Outcome, Role, role_for, score_for, settled_outcome
 from common.transport.audit import audit_records
-from common.transport.audit_wire import AuditWireAdapter, IdentityAuditWire
+from common.transport.audit_wire import AuditWireAdapter, default_audit_wire
 from common.transport.inbox import Inbox
 from common.transport.replay_evidence import SubgameReplayEvidence, capture_subgame_evidence
 from common.transport.series import PeerConfig, SeriesRow, TurnEngine
@@ -40,7 +40,7 @@ def play_subgame(
 ) -> SeriesRow:
     """Play one sub-game: strict thief-first alternation, mutual audit."""
     terms = config.terms or {}
-    wire = audit_wire if audit_wire is not None else IdentityAuditWire()
+    wire = audit_wire if audit_wire is not None else default_audit_wire()
     max_steps = int(terms.get("max_steps", 35))
     survival_threshold = int(terms.get("survival_threshold", max_steps))
     max_moves = int(terms.get("max_moves", max_steps))
@@ -90,8 +90,7 @@ def play_subgame(
         # ``terminal_message`` is nil without a concession/answer/survival). Waiting
         # for an orphaned next opponent turn deadlocks a sub-game the thief already
         # won, so settle here on our own knowledge, before the wait.
-        terminal = engine.terminal() if is_thief else None
-        if terminal is not None:
+        if is_thief and (terminal := engine.terminal()) is not None:
             settle_final(channel, machine, engine, role, is_thief, lap + 1, our_records, flush)
             break
 

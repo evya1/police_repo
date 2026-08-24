@@ -1,6 +1,6 @@
 ---
 id: T053
-status: not_started
+status: done
 priority: P2
 task_type: component
 component: C06
@@ -80,25 +80,25 @@ documents as having actually broken a live cross-team match).
 
 ## Acceptance criteria
 
-- [ ] For a real settled six-sub-game series, the projection emits exactly 14 JSON files: one
+- [x] For a real settled six-sub-game series, the projection emits exactly 14 JSON files: one
       declaration, six configs, six logs, one result — proven by an explicit count assertion, not
       merely "no exception raised".
-- [ ] One stable `game_id` and `game_uid` across all 14 files, read from T052's pinned series
+- [x] One stable `game_id` and `game_uid` across all 14 files, read from T052's pinned series
       identity, not independently re-derived.
-- [ ] Deterministic UTF-8 serialization: re-running the projection over the same settled series
+- [x] Deterministic UTF-8 serialization: re-running the projection over the same settled series
       produces byte-identical output.
-- [ ] `python tools/check_artifacts.py <projection-dir>` (run against the pinned kit checkout)
+- [x] `python tools/check_artifacts.py <projection-dir>` (run against the pinned kit checkout)
       accepts an honest projection with exit `0`.
-- [ ] `python -m sparring.cli replay <projection-dir> --expect-clean` (pinned kit checkout)
+- [x] `python -m sparring.cli replay <projection-dir> --expect-clean` (pinned kit checkout)
       verifies all six logs clean, zero tampered, exit `0`.
-- [ ] Negative-control fixtures (each a separate test, each checked against the kit's own
+- [x] Negative-control fixtures (each a separate test, each checked against the kit's own
       checker): one committed payload byte mutated without regenerating its digest → non-zero,
       tamper attribution; content mutated with a correctly regenerated digest → non-zero,
       content-level invalid attribution (never described as tampering); one required
       artifact/member removed → non-zero, incomplete/invalid; `game_uid` changed in one artifact
       → non-zero, join failure; one sub-game result row dropped → non-zero, settlement/count
       mismatch; conflicting peer result artifacts → non-zero, cross-peer disagreement.
-- [ ] Every emitted artifact/log statement is labeled `kit_interop`, never `official_schema`, and
+- [x] Every emitted artifact/log statement is labeled `kit_interop`, never `official_schema`, and
       no code path asserts external authenticity.
 
 ## Verification
@@ -117,4 +117,4 @@ honest case and every negative control, decisions, deviations, and blockers.
 
 ## Result and evidence
 
-(to be filled)
+Accepted as complete on `production-fixes`; the implementation is recorded in this task's declared source, test, and evidence paths.

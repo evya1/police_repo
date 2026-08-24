@@ -1,6 +1,6 @@
 ---
 id: T055
-status: not_started
+status: done
 priority: P2
 task_type: component
 component: C06
@@ -98,44 +98,44 @@ Keep four labels distinct everywhere this task touches: `internal_interop` (T046
 
 ## Acceptance criteria
 
-- [ ] `declaration.schema.json`, `config.schema.json`, `log.schema.json`, `result.schema.json`
+- [x] `declaration.schema.json`, `config.schema.json`, `log.schema.json`, `result.schema.json`
       exist under `docs/schema/project_profile/v1/`, each with `$schema`, `$id`, `title`, `type`,
       `required`, `additionalProperties`, and numeric/string constraints.
-- [ ] `config.schema.json` requires `schema_version: "1.2"`, `agreed_between`, and the six sections
+- [x] `config.schema.json` requires `schema_version: "1.2"`, `agreed_between`, and the six sections
       `board_and_agents`, `world`, `movement_and_barriers`, `scoring`, `pheromones`,
       `network_and_league`, `rate_limiter_gatekeeper`.
-- [ ] `declaration.schema.json` requires stable peer/team identity and role, repository/MCP
+- [x] `declaration.schema.json` requires stable peer/team identity and role, repository/MCP
       endpoint declarations, hardware/runtime summary without secrets or machine-private paths,
       LLM mode/model/token cap, start/end lifecycle, `game_id`/`game_uid`, sub-game number, config
       digest, code revision, counted/warm-up status, and signing/key identifier or explicit
       unsigned status.
-- [ ] `log.schema.json` requires game/sub-game identity, sender/role, ordered step records,
+- [x] `log.schema.json` requires game/sub-game identity, sender/role, ordered step records,
       commit/reveal payload/nonce/commitment, move, redacted hint/discussion, fallback metadata,
       honest token usage, terminal/capture/concession claims, and verdict/coverage kept separate
       from authenticity; forbids secret, raw hidden opponent state, credential, or
       machine-private-path fields.
-- [ ] `result.schema.json` requires all six rows in deterministic order, per-row role/outcome/
+- [x] `result.schema.json` requires all six rows in deterministic order, per-row role/outcome/
       score/steps/audit verdict/coverage/code revision, aggregate score and settlement status,
       known-vs-unknown token totals, stable `game_id`/`game_uid`, repository links, evidence member
       references, and a disputed/unsettled representation with no invented winner or sanction.
-- [ ] Every example under `examples/` validates against its schema in a test, including one
+- [x] Every example under `examples/` validates against its schema in a test, including one
       Hebrew-plus-emoji field.
-- [ ] For a real settled six-sub-game series, `project_schema_projection.py` emits one declaration,
+- [x] For a real settled six-sub-game series, `project_schema_projection.py` emits one declaration,
       six configs, six logs, one result (14 files) — proven by an explicit count assertion.
-- [ ] One stable `game_id`/`game_uid` across all 14 files, read from the same pinned series
+- [x] One stable `game_id`/`game_uid` across all 14 files, read from the same pinned series
       identity T053 reads, not re-derived independently.
-- [ ] Deterministic serialization: re-running the projection over the same settled series produces
+- [x] Deterministic serialization: re-running the projection over the same settled series produces
       byte-identical output; golden vectors cover key ordering, floats permitted by the game
       config, Unicode, nonces, and IDs.
-- [ ] `docs/inputs/INPUT_REGISTER.md` (or the existing open-question register if no separate file
+- [x] `docs/inputs/INPUT_REGISTER.md` (or the existing open-question register if no separate file
       exists yet) records INPUT-001..006 on the two-axis table from
       `02_SCHEMA_AND_INPUT_RESOLUTION.md`: `official_status` stays `MISSING_ORIGINAL_ATTACHMENT` /
       `NO_COURSE_CREDENTIAL_OBSERVED` / `NO_WRITTEN_CLARIFICATION` / `NO_ORIGINAL_TEMPLATE` as
       applicable; `implementation_status` is `RESOLVED_PROJECT_PROFILE`,
       `EXTERNAL_SUBMISSION_ONLY`, or `RESOLVED_CONSERVATIVE`/`RESOLVED_LOCALLY` as applicable.
-  - [ ] No code path after this task has a start-blocking dependency on the unresolved schema
+  - [x] No code path after this task has a start-blocking dependency on the unresolved schema
         inputs.
-- [ ] No artifact, schema `$id`, docstring, or log line claims `official_schema`.
+- [x] No artifact, schema `$id`, docstring, or log line claims `official_schema`.
 
 ## Verification
 
@@ -152,4 +152,4 @@ deviations, and blockers.
 
 ## Result and evidence
 
-(to be filled)
+Accepted as complete on `production-fixes`; the implementation is recorded in this task's declared source, test, and evidence paths.

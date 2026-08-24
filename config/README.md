@@ -31,7 +31,10 @@ Use `docs/spec/CANONICAL_REQUIREMENTS.md` CFG-004 through CFG-008 as the normali
 
 Runtime secrets belong in environment variables or local files ignored by Git. Never put OAuth credentials, tokens, keys, passwords, personal identifiers, or private member data in either JSON or TOML. `.env.example` contains placeholders only. `credentials.json`, `token.json`, `.env`, and key material are forbidden in commits.
 
-Confirmed public team metadata is team name `ZeroOne`, team number `01`, GitHub handles `evya1` and `Us5rName`, and final-project group code `ZeroOne1`. Any optional language-model provider remains a P2 team decision; no provider-specific credential or model setting is predefined before selection.
+Confirmed public team metadata is team name `ZeroOne`, team number `01`, GitHub handles `evya1`
+and `Us5rName`, and final-project group code `ZeroOne1`. Template wording remains the default; the
+optional selected provider is OpenRouter and its credential is supplied only through
+`OPENROUTER_API_KEY`.
 
 ## Missing official inputs
 

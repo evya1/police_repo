@@ -3,6 +3,9 @@ artifact: task
 id: T058
 title: Exchange and record a mutual result agreement before reporting
 status: done
+priority: P0
+task_type: integration
+optional: false
 owner: orchestrator
 component: C06
 depends_on: [T057]

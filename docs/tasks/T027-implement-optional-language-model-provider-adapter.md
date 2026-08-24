@@ -1,6 +1,6 @@
 ---
 id: T027
-status: not_started
+status: done
 priority: P2
 task_type: component
 component: C02
@@ -88,33 +88,33 @@ REVIEW_FINDINGS this task must close:
 
 ## Acceptance criteria
 
-- [ ] `hint_types.py` defines frozen `HintPlan`, `HintRenderRequest`, `TokenUsage`, `ProviderReply`,
+- [x] `hint_types.py` defines frozen `HintPlan`, `HintRenderRequest`, `TokenUsage`, `ProviderReply`,
       `HintResult`, and `FallbackReason`.
-- [ ] After the action is immutable, local code creates `HintPlan(claim, target_landmark,
+- [x] After the action is immutable, local code creates `HintPlan(claim, target_landmark,
       fallback_text)`; truth/lie/non-claim and landmark are local deterministic facts.
-- [ ] `claim=NON_CLAIM` has `target_landmark=None`, is rendered by a local deterministic line, and
+- [x] `claim=NON_CLAIM` has `target_landmark=None`, is rendered by a local deterministic line, and
       **never calls the provider**. No landmark is fabricated when the position belongs to no
       truth-compatible region.
-- [ ] `TextProvider.render(request, *, deadline)` receives only role, arena name, planned landmark,
+- [x] `TextProvider.render(request, *, deadline)` receives only role, arena name, planned landmark,
       truth/lie label, style, and word cap. Exact cells, belief grid, scent field, opponent state,
       legal-move set, and movement reasoning are absent from the captured request.
       `{#provider_scope}`
-- [ ] The reply carries text plus usage/provider/model only; it can return no verdict, action,
+- [x] The reply carries text plus usage/provider/model only; it can return no verdict, action,
       barrier, target, score, or legality.
-- [ ] Provider text is normalized once to Unicode **NFC** before validation and sealing.
-- [ ] Validation accepts only non-empty single-line text within the **configured** `self.max_words`
+- [x] Provider text is normalized once to Unicode **NFC** before validation and sealing.
+- [x] Validation accepts only non-empty single-line text within the **configured** `self.max_words`
       (including values below 15), containing exactly the planned landmark, no other known landmark,
       no coordinate-like pattern, no control characters, and no JSON or code fencing.
-- [ ] Every typed and unexpected provider failure produces the plan's deterministic template and a
+- [x] Every typed and unexpected provider failure produces the plan's deterministic template and a
       recorded typed `FallbackReason`; no blanket silent `except`.
-- [ ] `resolve_brain` builds and passes a typed provider into `HintWriter`; the parameter is used or
+- [x] `resolve_brain` builds and passes a typed provider into `HintWriter`; the parameter is used or
       removed, never ignored.
-- [ ] Property tests prove action, barrier, verdict, **and target landmark** equality across
+- [x] Property tests prove action, barrier, verdict, **and target landmark** equality across
       template, provider success, timeout, malformed, and exception paths for an identical seed and
       state.
-- [ ] A post-move test proves the action and barrier are locked before the request is built and that
+- [x] A post-move test proves the action and barrier are locked before the request is built and that
       the planned landmark describes the **destination** cell rather than the pre-move cell.
-- [ ] Text metadata is sealed for audit without being exposed on the public turn message.
+- [x] Text metadata is sealed for audit without being exposed on the public turn message.
 
 ## Verification
 
@@ -124,4 +124,7 @@ REVIEW_FINDINGS this task must close:
 
 ## Result and evidence
 
-(to be filled)
+Validated on `production-fixes`. The typed provider-neutral hint boundary, immutable-action
+invariance, redacted request, deterministic fallback, Unicode validation, sealed usage metadata,
+and composition wiring are covered by the task's unit and property tests. The combined completion
+audit for T027/T033/T034/T046/T047/T048 passed 209 tests with no failures on 2026-08-24.

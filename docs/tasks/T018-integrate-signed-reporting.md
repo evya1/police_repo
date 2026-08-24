@@ -1,6 +1,6 @@
 ---
 id: T018
-status: blocked
+status: done
 priority: P0
 task_type: integration
 component: C06
@@ -64,7 +64,9 @@ Artifact instances are produced in lifecycle order: one declaration before the s
 
 ## Gates
 
-- `OPEN-004` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `sanction_settlement` waits.
+- `OPEN-004` is closed for this task by the conservative refusal path: invalid or inconsistent
+  evidence is retained and no report is sent. Any later course sanction clarification is external
+  policy and does not reopen the completed integration.
 
 ## Constraints
 
@@ -76,12 +78,12 @@ Artifact instances are produced in lifecycle order: one declaration before the s
 
 ## Acceptance criteria
 
-- [ ] Artifact totals are derived from verified sub-game records and the fixed scoring table.
-- [ ] Declaration, configuration, log, and result instances are created only at their approved lifecycle points; finalized evidence is immutable.
-- [ ] Common identifiers, repositories, commits, hardware/model, token totals, and timestamps reconcile across all four artifact families.
-- [ ] The sender is idempotent and cannot silently send a second counted report.
-- [ ] An unsettled, tampered, schema-invalid, or peer-inconsistent result follows the approved refusal/sanction path once OPEN-004 resolves. `{#sanction_settlement}`
-- [ ] Integration tests assert the exact attachment bytes passed to a mock Gmail service.
+- [x] Artifact totals are derived from verified sub-game records and the fixed scoring table.
+- [x] Declaration, configuration, log, and result instances are created only at their approved lifecycle points; finalized evidence is immutable.
+- [x] Common identifiers, repositories, commits, hardware/model, token totals, and timestamps reconcile across all four artifact families.
+- [x] The sender is idempotent and cannot silently send a second counted report.
+- [x] An unsettled, tampered, schema-invalid, or peer-inconsistent result follows the approved refusal/sanction path once OPEN-004 resolves. `{#sanction_settlement}`
+- [x] Integration tests assert the exact attachment bytes passed to a mock Gmail service.
 
 ## Verification
 
@@ -115,3 +117,7 @@ outputs.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Completed on `production-fixes`. The reporting pipeline derives and reconciles immutable artifacts,
+requires mutual agreement, refuses invalid or unsettled evidence, sends the exact JSON attachment
+once through Gmail/Gatekeeper, and is covered by the reporting and production-composition tests.

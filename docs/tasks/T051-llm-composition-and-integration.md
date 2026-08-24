@@ -1,6 +1,6 @@
 ---
 id: T051
-status: not_started
+status: done
 priority: P2
 task_type: integration
 component: C06
@@ -75,8 +75,8 @@ serializes those shared paths; the three tasks must never run in the same wave.
 
 ## Gates
 
-- `PLANQ-003` (`decision`, `blocks: criterion`) — the disabled/template and fake-provider matrix is
-  implemented and verified now; only the real-vendor configuration criterion waits.
+- `PLANQ-003` is resolved. Disabled/template, fake-provider, and production OpenRouter composition
+  are implemented and verified; normal CI remains offline.
   `{#real_vendor_configuration}`
 
 ## Constraints
@@ -90,25 +90,25 @@ serializes those shared paths; the three tasks must never run in the same wave.
 
 ## Acceptance criteria
 
-- [ ] Private configuration is parsed once into frozen `LanguageModelSettings` defaulting to
+- [x] Private configuration is parsed once into frozen `LanguageModelSettings` defaulting to
       disabled/template mode.
-- [ ] Enabled mode without a registered adapter and model fails fast at startup; disabled mode builds
+- [x] Enabled mode without a registered adapter and model fails fast at startup; disabled mode builds
       no client at all.
-- [ ] Exactly one Gatekeeper is constructed and the reporting lane capacity is reserved.
-- [ ] The integration matrix covers disabled template mode, non-claim, fake provider success, every
+- [x] Exactly one Gatekeeper is constructed and the reporting lane capacity is reserved.
+- [x] The integration matrix covers disabled template mode, non-claim, fake provider success, every
       fallback class, post-move destination semantics, deadline expiry, counted-versus-warmup token
       reconciliation, and a saturated LLM lane while reporting still succeeds.
-- [ ] `scripts/smoke_llm_integration.py` runs the scripted-fake scenarios through the public
+- [x] `scripts/smoke_llm_integration.py` runs the scripted-fake scenarios through the public
       composition path and never accepts credentials or contacts a live service.
-- [ ] `scripts/benchmark_hint_path.py` measures template and fake-provider/Gatekeeper overhead in a
+- [x] `scripts/benchmark_hint_path.py` measures template and fake-provider/Gatekeeper overhead in a
       fresh **uninstrumented** subprocess with `perf_counter_ns`, reporting environment, sample
       count, p50, p95, and p99. It is informational, not a correctness gate, and never measures a
       real provider round trip.
-- [ ] The cross-repo contract test uses the same request fixture in both repositories and expects
+- [x] The cross-repo contract test uses the same request fixture in both repositories and expects
       semantically identical reply validation, with only package and role names differing.
-- [ ] Template and non-claim modes report exactly zero tokens; unknown provider usage stays unknown
+- [x] Template and non-claim modes report exactly zero tokens; unknown provider usage stays unknown
       and makes counted play ineligible while remaining explicit in warmup.
-- [ ] Real-vendor configuration is verified only after `PLANQ-003` resolves.
+- [x] Real-vendor configuration is verified only after `PLANQ-003` resolves.
       `{#real_vendor_configuration}`
 
 ## Verification
@@ -122,4 +122,4 @@ serializes those shared paths; the three tasks must never run in the same wave.
 
 ## Result and evidence
 
-(to be filled)
+Accepted as complete on `production-fixes`; the implementation is recorded in this task's declared source, test, and evidence paths.

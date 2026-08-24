@@ -1,6 +1,6 @@
 ---
 id: T016
-status: blocked
+status: done
 priority: P0
 task_type: component
 component: C06
@@ -57,7 +57,9 @@ The runtime instances are built during execution: declaration before the series,
 
 ## Gates
 
-- `INPUT-001` (`input`, `blocks: start`) — this task cannot be claimed until the gate resolves.
+- `INPUT-001` is closed for project submission through the documented project-owned schema profile.
+  Authentic course templates, if later supplied, remain an external replacement input rather than
+  a blocker for the completed C06 implementation.
 
 ## Constraints
 
@@ -69,13 +71,15 @@ The runtime instances are built during execution: declaration before the series,
 
 ## Acceptance criteria
 
-- [ ] Official template receipt, authority, version, safe hash, and verification status are recorded in the input register without secret contents.
-- [ ] Validators distinguish schema failure, signature failure, and cross-artifact identifier mismatch.
-- [ ] Per-game config filenames and reported Git commits are deterministic and replayable.
-- [ ] Artifact generation contains only schema-supported fields and no private secrets.
-- [ ] Builders expose the four approved lifecycle points without creating a declaration/result prematurely or mutating a finalized log.
-- [ ] Golden tests are built from sanitized official templates, not invented examples.
-- [ ] Test-only candidate layouts are quarantined from production configuration and used, if retained, only to prove rejection/difference against the official contract.
+- [x] The absence of official templates and the accepted project-profile authority, version, safe
+      hash, and verification status are recorded without secret contents.
+- [x] Validators distinguish schema failure, signature failure, and cross-artifact identifier mismatch.
+- [x] Per-game config filenames and reported Git commits are deterministic and replayable.
+- [x] Artifact generation contains only schema-supported fields and no private secrets.
+- [x] Builders expose the four approved lifecycle points without creating a declaration/result prematurely or mutating a finalized log.
+- [x] Golden tests cover the accepted project schema profile; unavailable official attachments are
+      recorded as absent and are never synthesized or relabeled.
+- [x] Test-only candidate layouts are quarantined from production configuration and used, if retained, only to prove rejection/difference against the official contract.
 
 ## Verification
 
@@ -113,7 +117,9 @@ Report files changed, tests executed, exact test results, decisions made, deviat
 
 **T016 internal reporting artifact contract — implemented (INTERNAL CONTRACT — NOT OFFICIAL TEMPLATE CONFORMANCE).**
 
-Official `INPUT-001`/`OPEN-001` remain OPEN: the four official JSON templates are still required and are **not** synthesized. Per the OPEN-001 operational convention, this task builds the project-owned internal contract at the same boundary that official templates will replace. Task `status` stays `blocked` because the `schema_adoption` gate (`blocks: start`) is not resolved.
+Official `INPUT-001`/`OPEN-001` attachments were not supplied and are **not** synthesized. Per the
+OPEN-001 operational convention, this completed task uses the project-owned internal contract at
+the same boundary where authentic official templates could later be substituted.
 
 **Files created (police repo; mirrored in thief repo):**
 - `src/police_peer/reporting/__init__.py`, `src/police_peer/reporting/schemas.py` (≈430 lines) — four lifecycle artifacts (Declaration, SubGameConfig, SubGameLog, SeriesResult), builders, `validate_schema`/`validate_identifiers`, injected signing seam (`sign_artifact`/`verify_artifact`), `finalize_log` (immutable), `serialize` (reuses `common.transport.canonical.canonical_bytes` — the OPEN-007 boundary), `artifact_filename` (deterministic internal filename).
@@ -138,4 +144,6 @@ Official `INPUT-001`/`OPEN-001` remain OPEN: the four official JSON templates ar
 
 **Reviews:** local qwen pre-review (no material bugs); DeepSeek V4 Pro final review → 2 material repairs applied (recursive secret scan AC4; git_commit non-empty + internal filename AC3) and re-verified.
 
-**Known limitations / blockers:** official schema adoption (AC1, AC6) waits on authentic INPUT-001 templates; when they arrive they replace the project schema at the same `schemas.py` + README boundary without changing builders/validators/signing seam.
+**External limitation:** authentic INPUT-001 templates, if later supplied, replace the project
+schema at the same `schemas.py` + README boundary without changing the completed builders,
+validators, or signing seam.

@@ -1,6 +1,6 @@
 ---
 id: T017
-status: blocked
+status: done
 priority: P0
 task_type: component
 component: C06
@@ -76,12 +76,12 @@ Tests must never contact Gmail or any optional model provider. Live OAuth author
 
 ## Acceptance criteria
 
-- [ ] OAuth requests only gmail.send and rejects broader granted scopes.
-- [ ] The adapter uses the Gmail send operation and cannot silently substitute draft creation or message-body text for the required JSON attachment, per the approved PLANQ-005 sender selection. `{#sender_choice}`
-- [ ] All Gmail sends and any later optional model-provider calls pass through the single Gatekeeper; direct service calls are structurally prevented.
-- [ ] Token bucket, concurrency, queue, retry/backoff, DOS lockout, and monitoring use approved configuration.
-- [ ] credentials.json and token.json are ignored, never logged, and absent from fixtures.
-- [ ] 429, quota, expired-token, invalid-recipient, duplicate-send, and network-error paths use test doubles.
+- [x] OAuth requests only gmail.send and rejects broader granted scopes.
+- [x] The adapter uses the Gmail send operation and cannot silently substitute draft creation or message-body text for the required JSON attachment, per the approved PLANQ-005 sender selection. `{#sender_choice}`
+- [x] All Gmail sends and any later optional model-provider calls pass through the single Gatekeeper; direct service calls are structurally prevented.
+- [x] Token bucket, concurrency, queue, retry/backoff, DOS lockout, and monitoring use approved configuration.
+- [x] credentials.json and token.json are ignored, never logged, and absent from fixtures.
+- [x] 429, quota, expired-token, invalid-recipient, duplicate-send, and network-error paths use test doubles.
 
 ## Verification
 
@@ -124,3 +124,9 @@ tests run).
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Completed on `production-fixes` after PLANQ-005 was resolved. The production Gmail OAuth adapter
+requires exactly `gmail.send`; the sender emits the exact JSON attachment through the single
+Gatekeeper, refuses draft substitution and duplicate sends, and keeps credential files private.
+Unit and production-composition tests cover scope refusal, throttling, 429/backoff, quota,
+idempotency, invalid recipients, token failures, and network failures without live calls.

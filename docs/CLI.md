@@ -93,6 +93,47 @@ series and settlement flow.
 Only `counted` activates counted safeguards. The other mode strings are still passed through to
 the SDK and recorded in the summary artifact when artifacts are enabled.
 
+## Post-series settlement
+
+In every mode the runner settles the series after the six sub-games. When the series never
+settled there is nothing to agree and the step returns immediately. Otherwise the runner sends
+this peer's proposal once over the control lane and then waits up to `--turn-timeout` for the
+opponent's proposal. The wait never raises: a played, audited series is not lost to a quiet
+opponent.
+
+Two consequences for an operator:
+
+- The process stays alive for up to one full `--turn-timeout` after the last sub-game. Against
+  a peer that never answers the control lane (the reference kit is one such peer), the wait
+  always runs to the deadline.
+- When the opponent's proposal never arrives, the emitted kit bundle records
+  `mutual_agreement.confirmed: false` — `confirmed` is never assumed. In uncounted modes this
+  does not change the exit code; only `counted` turns a missing agreement into exit code `6`.
+
+## Running against the reference kit
+
+The pinned `copthief-league-protocol` kit speaks the `reference-v3` wire lane, which is already
+this CLI's default, so no special flags are needed for kit interop. When you want the invocation
+to say what it means, the kit-compatibility combination is:
+
+```sh
+uv run police_peer \
+  --mode warmup \
+  --wire-profile reference-v3 \
+  --emit-kit-bundle \
+  --artifacts-dir artifacts/police-kit
+```
+
+- `--mode warmup` — the kit is an uncounted sparring peer. `counted` would add the readiness
+  gate and the agreement exit-code check against a peer that never confirms settlement.
+- `--wire-profile reference-v3` — the kit's nested audit envelope. Pass `internal` only for a
+  peer that speaks this project's own flat audit shape.
+- `--emit-kit-bundle` — emit the league-kit projection beside the internal replay bundle.
+
+Expected honest outcomes against the kit: the six sub-games play clean, the settlement wait
+runs the full `--turn-timeout`, the kit bundle records `confirmed: false`, and the process
+still exits `0` in warmup.
+
 ## Configuration precedence
 
 OpenRouter's configuration, Python API, request/response fields, fallback behavior, token
@@ -114,20 +155,22 @@ accounting, and safe test commands are documented in [OpenRouter hint-wording AP
 
 ## Counted-mode prerequisites
 
-Before starting any transport, `--mode counted` requires:
+Config loading happens in every mode, before the counted gate: a missing or invalid
+`--shared-config`, or a `--private-config` that cannot be loaded, raises an uncaught startup
+error — a traceback and the normal Python process failure code — before the MCP server starts.
 
-- `--group-code-confirmed`;
-- a valid shared config from `--shared-config`;
-- a private declaration with a matching `[game].group_id`, nonempty group name and members, both
-  `cop` and `thief` repository URLs, a nonempty LLM model, and a public MCP URL from
-  `--public-url` or `[network].public_url`;
-- a resolvable 40-character Git commit at this repository's `HEAD`;
-- runtime hardware metadata and a pairing-history count that can form the identity declaration;
-- negotiated terms from which a configuration digest can be computed; and
-- an attached token ledger with no unknown counted usage.
+Once loading succeeds, `--mode counted` refuses before any transport starts and returns `2`,
+naming the missing item, when:
 
-A missing prerequisite is reported as a counted-readiness refusal and the runner returns `2`
-without starting the MCP server.
+- `--group-code-confirmed` is not passed;
+- the private declaration is incomplete: `[game].group_id` missing or different from
+  `--group-id`, empty group name or members, missing `cop` or `thief` repository URLs, an empty
+  LLM model, or no public MCP URL from `--public-url` or `[network].public_url`;
+- the 40-character commit at this repository's `HEAD` cannot be resolved (read straight from
+  `.git`, so an exported tarball refuses);
+- runtime hardware metadata or the pairing-history count cannot form the identity declaration;
+- the negotiated terms are empty, so no configuration digest can be computed; or
+- the attached token ledger records unknown counted usage.
 
 ## Runner exit codes
 
@@ -144,11 +187,13 @@ without starting the MCP server.
 ## Artifacts and Gmail
 
 Artifact writing is disabled unless `--artifacts-dir` is provided. When enabled, the runner
-writes a JSON series summary. For a settled result it also publishes the internal replay bundle;
-with the default `--emit-kit-bundle`, it additionally attempts the league-kit projection under
+writes the JSON series summary to `<artifacts-dir>/result_<game_id>.json`. For a settled result
+it also publishes the internal replay bundle under `<artifacts-dir>/replay/<game_uid>/`; with
+the default `--emit-kit-bundle`, it additionally attempts the league-kit projection under
 `<artifacts-dir>/kit/<game_uid>/`. `--no-emit-kit-bundle` disables only that projection. A kit
 projection failure is logged and is nonfatal; summary or internal-bundle write failures are not
-given that exception boundary.
+given that nonfatal boundary — they raise into the runner's execution boundary and produce exit
+code `1`.
 
 The CLI does not send Gmail, in any mode. It only runs the peer and optionally writes local
 artifacts. Gmail sending belongs to a separate reporting pipeline and is not invoked by

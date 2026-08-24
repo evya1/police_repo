@@ -154,6 +154,18 @@ def test_declaration_and_result_agree_on_the_series_length(bundle):
     assert declaration["num_sub_games"] == result["num_sub_games"] == 6
 
 
+def test_step_zero_reaches_the_declaration(series, tmp_path):
+    step_zero = {"group_id": POLICE, "github_commit": "a" * 40, "signature": "sealed"}
+    emitted = publish_kit_bundle(
+        tmp_path, series, our_group=POLICE, counted=False, step_zero=step_zero,
+    )
+    declaration = next(
+        document for name, document in docs(emitted).items()
+        if name.startswith("declaration_")
+    )
+    assert declaration["step_zero"] == step_zero
+
+
 def test_every_logged_sub_game_appears_in_the_result(bundle):
     every = docs(bundle)
     logged = {d["sub_game_number"] for n, d in every.items() if n.startswith("log_")}

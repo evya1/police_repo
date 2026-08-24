@@ -219,4 +219,4 @@ Unchanged in substance from v0.1 (byte-level integrity mismatch, local-truth lea
 
 ## Unresolved decisions
 
-OPEN-001, 002, 004, 006, 007, 008, 009, 011 remain `official_status: OPEN`. OPEN-001, 004, 006, 007, 008, and 009 carry recorded operational conventions and so do not block implementation; OPEN-011 stays differential-tests-only; OPEN-005 is `RESOLVED_LOCALLY`; OPEN-002, 003, and 010 are late runtime inputs. PLANQ-002 and PLANQ-004 are resolved, PLANQ-001, 003, and 006 partially; PLANQ-005, 007, and 008 remain team-owned and open. Full detail in `docs/spec/OPEN_QUESTIONS.md`.
+OPEN-001, 004, 006, 007, 008, 009, and 011 remain `official_status: OPEN`. OPEN-001, 004, 006, 007, 008, and 009 carry recorded operational conventions and so do not block implementation; OPEN-011 stays differential-tests-only; OPEN-005 is `RESOLVED_LOCALLY`; OPEN-003 and OPEN-010 are late runtime inputs. PLANQ-002 and PLANQ-004 are resolved, PLANQ-001, 003, and 006 partially; PLANQ-005, 007, and 008 remain team-owned and open. Full detail in `docs/spec/OPEN_QUESTIONS.md`.

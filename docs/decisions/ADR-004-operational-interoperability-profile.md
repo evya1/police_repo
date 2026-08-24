@@ -19,7 +19,7 @@ Accepted.
 
 ## Context
 
-Independent Police and Thief peers must compute byte-identical scent arithmetic and speak an identical wire shape, or they diverge silently with no error either side can detect alone. The canonical requirements fix the scent parameters (`CFG-006`: centre `0.9`, decay `0.10`, 5×5 field) and the recurrence (`STRAT-003`), but leave the repeated-emission/saturation, merge, and update-order behaviour unstated — that is `OPEN-009`, and no official Moodle artifact or written lecturer clarification has answered it.
+Independent Police and Thief peers must compute byte-identical scent arithmetic and speak an identical wire shape, or they diverge silently with no error either side can detect alone. The canonical requirements fix the scent parameters (`CFG-006`: centre `0.9`, decay `0.10`, 5×5 field) and the recurrence (`STRAT-003`), but leave the repeated-emission/saturation, merge, and update-order behaviour unstated — that is `OPEN-009`, and no official artifact or written lecturer clarification has answered it.
 
 Waiting for an official answer before selecting any implementation behavior blocks development indefinitely on an input the project does not control. The project needs one concrete, deterministic profile that both peers can implement and test against now, while keeping the official question open and revisable.
 
@@ -50,7 +50,7 @@ The full arithmetic of both profiles is recorded once, in `docs/mechanisms/M-01-
 Every value in the Decision section above is an **operational convention**: a project decision for deterministic execution, not an official requirement.
 
 - This decision does **not** close `OPEN-009`. `official_status` for `OPEN-009` remains `OPEN`.
-- It is **not** a lecturer clarification, not a Moodle artifact, and not an official resolution of section 4.3. No project artifact may state that this decision resolves OPEN-009, that a lecturer clarified it, or that the official model is subtractive.
+- It is **not** a lecturer clarification or an official resolution of section 4.3. No project artifact may state that this decision resolves OPEN-009, that a lecturer clarified it, or that the official model is subtractive.
 - It does **not** override the project book or the official software-quality guide. The source authority order is unchanged: official sources first, canonical requirements second, this operational convention third.
 - Neither profile in `M-01` §B may be described as the officially correct reading. `multiplicative_book_v1` is the closest reading of the printed figure, but its upper clamp, evaluation order, and no-rounding policy are still interpretation.
 - A future official clarification can require a profile change. That is expected and inexpensive by construction, which is the point of keeping the selection behind an interface.
@@ -84,7 +84,7 @@ The same principle applies generally: where an operational convention supplies e
 Revisit this decision if any of the following occurs:
 
 - The lecturer supplies an official clarification of the section 4.3 saturation/merge/update-order question.
-- An official Moodle artifact pins bytes or semantics incompatible with the adopted profile.
+- An official artifact pins bytes or semantics incompatible with the adopted profile.
 - A counted opponent requires a mutually agreed alternative profile.
 
 In each case the profile changes; the canonical requirements do not.

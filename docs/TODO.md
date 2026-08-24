@@ -29,7 +29,7 @@ A task is never marked `done` because code exists. `implementation_present` and 
 
 | ID | Component | Type | Status | Impl state | Priority | Requirement | Depends on | Parallel | Claimed by | Task |
 |---|---|---|---|---|---|---|---|---|---|---|
-| T001 | system | governance | ready | not_started | P0 | CFG-001, CFG-004, CFG-005, REPORT-006, REPORT-009, SUB-009, SUB-010 | — | yes | — | [task](tasks/T001-resolve-official-inputs-and-match-profile.md) |
+| T001 | system | governance | ready | not_started | P0 | CFG-001, CFG-004, CFG-005, REPORT-006, REPORT-009, SUB-009 | — | yes | — | [task](tasks/T001-resolve-official-inputs-and-match-profile.md) |
 | T002 | system | foundation | ready | partial | P0 | NET-001, QR-014 | — | yes | — | [task](tasks/T002-select-runtime-dependencies-and-lock.md) |
 | T003 | C01 | foundation | blocked | partial | P0 | ARCH-001, ARCH-002, ARCH-003, ARCH-009, CFG-002, CFG-003, CFG-006, CFG-007, CFG-008, QR-004, QR-006, QR-012, QR-013 | T002 | no | — | [task](tasks/T003-create-package-and-configuration-boundary.md) |
 | T004 | C01 | component | blocked | implementation_present | P0 | GAME-001..GAME-014 | T003 | yes | — | [task](tasks/T004-implement-domain-rules.md) |
@@ -54,7 +54,7 @@ A task is never marked `done` because code exists. `implementation_present` and 
 | T023 | system | governance | blocked | not_started | P1 | OBS-007, SUB-003, SUB-004, SUB-005, SUB-012, QR-002, QR-015, QR-017 | T014, T015, T020, T022 | no | — | [task](tasks/T023-complete-documentation-and-real-evidence.md) |
 | T024 | system | verification | blocked | not_started | P1 | QR-001, QR-003, QR-004, QR-005, QR-006, QR-007, QR-010, QR-011, QR-012, QR-013, QR-014, QR-019 | T021, T022, T023 | no | — | [task](tasks/T024-run-repository-compliance-audit.md) |
 | T025 | system | verification | blocked | not_started | P2 | QR-016 | T022 | yes | — | [task](tasks/T025-run-optional-excellence-study.md) |
-| T026 | system | release | blocked | not_started | P0 | SUB-001, SUB-002, SUB-003, SUB-004, SUB-005, SUB-006, SUB-007, SUB-008, SUB-009, SUB-010, SUB-011 | T020, T024 | no | — | [task](tasks/T026-prepare-release-and-submission.md) |
+| T026 | system | release | blocked | not_started | P0 | SUB-001, SUB-002, SUB-003, SUB-004, SUB-005, SUB-006, SUB-007, SUB-009, SUB-011 | T020, T024 | no | — | [task](tasks/T026-prepare-release-and-submission.md) |
 | T027 | C02 | component | done | complete | P2 | STRAT-008, SEC-009 | T002, T007, T045 | yes | — | [task](tasks/T027-implement-optional-language-model-provider-adapter.md) |
 | T028 | C01 | component | blocked | not_started | P0 | CFG-001, CFG-009 | T003 | yes | — | [task](tasks/T028-author-shared-game-contract.md) |
 | T029 | C01 | verification | blocked | not_started | P1 | GAME-013, GAME-014 | T004, T028 | yes | — | [task](tasks/T029-run-stage-one-gate.md) |

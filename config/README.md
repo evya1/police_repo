@@ -36,9 +36,8 @@ Confirmed public team metadata is team name `ZeroOne`, team number `01`, GitHub 
 ## Missing official inputs
 
 - Four official JSON templates/schemas and their exact canonical signing rules.
-- Official Moodle Word form.
 - Exact signing-key generation/distribution/rotation procedure.
-- Valid eight-character final-project group code, repository URLs, public MCP URLs, opponent identifiers, match times, and any private identity fields required only by the official form.
+- Valid eight-character final-project group code, repository URLs, public MCP URLs, opponent identifiers, and match times.
 - Lecturer/team resolution for OPEN-004, OPEN-005, OPEN-007, OPEN-008, and OPEN-009, including scent saturation/merge, role scheduling, and tie aggregation.
 
 T001 records arrival and verification in `docs/inputs/INPUT_REGISTER.md`, then updates affected entries in `docs/spec/OPEN_QUESTIONS.md`. An example may be added only after approval and must be labeled `EXAMPLE — NOT AN OFFICIAL ATTACHED TEMPLATE`. Input receipt creates a Change Request only if an approved canonical product requirement must materially change.

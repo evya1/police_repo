@@ -67,7 +67,7 @@ def settle_series(
 class KitInteropAdapter:
     """Adapter converting internal T032 artifacts to kit-compatible filenames/IDs.
 
-    INTERNAL/INTEROP — NOT OFFICIAL. T016 (official Moodle templates) remains
+    INTERNAL/INTEROP — NOT OFFICIAL. T016 (official course templates) remains
     OPEN. This adapter maps internal-1 schema artifacts to the kit profile at
     a single boundary, distinct from the internal T032 schemas. The official
     templates replace this adapter when they arrive.

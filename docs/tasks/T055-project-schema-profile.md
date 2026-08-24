@@ -68,7 +68,7 @@ labeled `official_schema`.
 
 ## Relevant context
 
-The project PDF states four example JSON files accompany the book, but their original Moodle
+The project PDF states four example JSON files accompany the book, but their original
 attachment bytes were not part of the supplied PDF (`INPUT-001`, `official_status:
 MISSING_ORIGINAL_ATTACHMENT`). The user has authorized a project-owned schema for this case. This
 task creates that schema from the book's own binding text and the pinned kit contract only where
@@ -133,8 +133,8 @@ Keep four labels distinct everywhere this task touches: `internal_interop` (T046
       `NO_COURSE_CREDENTIAL_OBSERVED` / `NO_WRITTEN_CLARIFICATION` / `NO_ORIGINAL_TEMPLATE` as
       applicable; `implementation_status` is `RESOLVED_PROJECT_PROFILE`,
       `EXTERNAL_SUBMISSION_ONLY`, or `RESOLVED_CONSERVATIVE`/`RESOLVED_LOCALLY` as applicable.
-  - [ ] No code path after this task has a start-blocking dependency on INPUT-001..006, except
-        the explicitly external Moodle submission-upload action (INPUT-002).
+  - [ ] No code path after this task has a start-blocking dependency on the unresolved schema
+        inputs.
 - [ ] No artifact, schema `$id`, docstring, or log line claims `official_schema`.
 
 ## Verification

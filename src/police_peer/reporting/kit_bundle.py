@@ -72,8 +72,16 @@ def build_kit_bundle(
     games_played: dict[str, int | None] | None = None,
     first_meeting: bool = True,
     confirmed: bool = False,
+    include_tokens: bool = True,
 ) -> dict[str, bytes]:
-    """Build the 14 kit documents for one settled series. Pure: no I/O, no clock."""
+    """Build the 14 kit documents for one settled series. Pure: no I/O, no clock.
+
+    ``include_tokens`` controls whether the optional per-row ``tokens``` and
+    ``final_result.tokens_total_series`` are projected. The kit's checker treats those as
+    optional (it skips their sum gate when they are absent), so ``include_tokens=False``
+    keeps the kit to only its mandatory fields. The signed aggregate/mutual-agreement are
+    computed over the same written rows/final for consistency.
+    """
     ours, theirs = our_group, result.opponent_group_id
     if not ours or not theirs:
         raise SelfVerifyError(
@@ -98,7 +106,8 @@ def build_kit_bundle(
         )
         entry = result_row(
             row=row, our_group=ours, opponent_group=theirs,
-            tokens=(tokens_by_sub_game or {}).get(number, {ours: 0, theirs: 0}),
+            tokens=(tokens_by_sub_game or {}).get(number, {ours: 0, theirs: 0})
+            if include_tokens else {ours: 0, theirs: 0},
             log_file=log_name(game_id, number),
         )
         rows.append(entry)
@@ -123,6 +132,16 @@ def build_kit_bundle(
     final = series_final(
         rows, pair, counted=counted, games_played=games_played, first_meeting=first_meeting
     )
+    written_rows = rows
+    written_final = final
+    if not include_tokens:
+        # Keep the kit to only its mandatory fields: the per-row `tokens` and the
+        # aggregate `tokens_total_series` are optional to the kit and dropped here.
+        # The consensus digest ignores tokens, so the mutual-agreement is unchanged.
+        written_rows = [
+            {k: v for k, v in row.items() if k != "tokens"} for row in rows
+        ]
+        written_final = {k: v for k, v in final.items() if k != "tokens_total_series"}
     files[declaration_name(game_id)] = _document_bytes(
         build_declaration(
             **ids,
@@ -133,8 +152,9 @@ def build_kit_bundle(
     )
     files[result_name(game_id)] = _document_bytes(
         build_result(
-            **ids, groups=list(pair), sub_games=rows, final_result=final,
-            mutual_agreement=mutual_agreement(game_id, final, rows, confirmed=confirmed),
+            **ids, groups=list(pair), sub_games=written_rows,
+            final_result=written_final,
+            mutual_agreement=mutual_agreement(game_id, written_final, written_rows, confirmed=confirmed),
             **common,
         )
     )
@@ -160,10 +180,15 @@ def publish_kit_bundle(
     result: SeriesResult,
     *,
     on_checkpoint: Checkpoint | None = None,
+    include_tokens: bool = True,
     **kwargs,
 ) -> Path:
-    """Publish the kit bundle at ``<root>/kit/<game_uid>/``, atomically or not at all."""
-    files = build_kit_bundle(result, **kwargs)
+    """Publish the kit bundle at ``<root>/kit/<game_uid>/``, atomically or not at all.
+
+    ``include_tokens`` is forwarded to :func:`build_kit_bundle`; when False the kit
+    carries only its mandatory fields (no optional token metadata).
+    """
+    files = build_kit_bundle(result, include_tokens=include_tokens, **kwargs)
     return publish_atomic(
         Path(artifact_root) / KIT_SUBDIR, result.game_uid, files, _self_verify,
         on_checkpoint=on_checkpoint,

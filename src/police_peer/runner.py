@@ -148,7 +148,6 @@ def run_one_peer(
                         artifacts_dir, result, our_group=group_id, mode=mode,
                         confirmed=agreement.agreed, identity=runtime.identity,
                         opponent_identity=result.opponent_identity,
-                        token_ledger=runtime.token_ledger,
                     )
 
         if mode == "counted" and not agreement.agreed:

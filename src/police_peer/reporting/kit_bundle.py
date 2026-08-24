@@ -64,6 +64,7 @@ def build_kit_bundle(
     our_group: str,
     counted: bool,
     groups: list[dict] | None = None,
+    step_zero: dict | None = None,
     github: dict | None = None,
     league: dict | None = None,
     max_tokens_per_game: int | None = None,

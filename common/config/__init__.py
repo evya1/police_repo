@@ -9,8 +9,16 @@ absent.
 from __future__ import annotations
 
 import json
+import tomllib
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+#: The league's report recipient. Every counted result is mailed here (book section 9.3.3).
+DEFAULT_REPORT_RECIPIENT = "rmisegal+uoh26finalgame@gmail.com"
+
+#: Sending is opt-in. A run that has not been told to transmit prints instead.
+DEFAULT_EMAIL_MODE = "dry-run"
 
 
 class ConfigError(Exception):
@@ -283,6 +291,73 @@ def _validate_axis_and_starts(data: dict[str, Any]) -> None:
         raise FieldError(
             "board_and_agents.thief_start and board_and_agents.cop_start must be different"
         )
+
+
+@dataclass(frozen=True, slots=True)
+class PrivateConfig:
+    """The private, per-group TOML sections (App. B §4). Every field is optional.
+
+    Nothing here may weaken a signed shared term: :func:`overlay_toml` already enforces that
+    the shared ``config/game.json`` wins on any key it also declares, and these sections live
+    outside that shared schema entirely (``[game]``, ``[network]``, ``[llm]``, ``[email]``,
+    ``[strategy]``, ``[trash_talk]``). Credential file *paths* may be named here; their
+    contents are never read or logged by this module.
+    """
+
+    group_name: str | None = None
+    group_id: str | None = None
+    opponent_group_id: str | None = None
+    members: tuple[str, ...] = ()
+    repos: dict[str, str] = field(default_factory=dict)
+    sub_game_number: int | None = None
+    my_port: int | None = None
+    opponent_url: str | None = None
+    turn_timeout_seconds: float | None = None
+    mcp_servers: dict[str, str] = field(default_factory=dict)
+    llm_model: str | None = None
+    step_deadline_seconds: float | None = None
+    email_recipient: str = DEFAULT_REPORT_RECIPIENT
+    email_mode: str = DEFAULT_EMAIL_MODE
+    thief_class: str | None = None
+    police_class: str | None = None
+    trash_talk_provider: str | None = None
+
+
+def load_private(path: Path | str) -> PrivateConfig:
+    """Load the private per-group TOML sections. A missing file yields all defaults."""
+    path = Path(path)
+    if not path.is_file():
+        return PrivateConfig()
+
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+
+    game = data.get("game", {})
+    network = data.get("network", {})
+    llm = data.get("llm", {})
+    email = data.get("email", {})
+    strategy = data.get("strategy", {})
+    trash_talk = data.get("trash_talk", {})
+
+    return PrivateConfig(
+        group_name=game.get("group_name"),
+        group_id=game.get("group_id"),
+        opponent_group_id=game.get("opponent_group_id"),
+        members=tuple(game.get("members", ())),
+        repos=dict(game.get("repos", {})),
+        sub_game_number=game.get("sub_game_number"),
+        my_port=network.get("my_port"),
+        opponent_url=network.get("opponent_url"),
+        turn_timeout_seconds=network.get("turn_timeout_seconds"),
+        mcp_servers=dict(network.get("mcp_servers", {})),
+        llm_model=llm.get("model"),
+        step_deadline_seconds=llm.get("step_deadline_seconds"),
+        email_recipient=email.get("recipient", DEFAULT_REPORT_RECIPIENT),
+        email_mode=email.get("mode", DEFAULT_EMAIL_MODE),
+        thief_class=strategy.get("thief_class"),
+        police_class=strategy.get("police_class"),
+        trash_talk_provider=trash_talk.get("provider"),
+    )
 
 
 def overlay_toml(json_path: Path | str, toml_path: Path | str) -> dict[str, Any]:

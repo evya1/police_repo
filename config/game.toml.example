@@ -3,10 +3,47 @@ min_center_intensity = 0.5
 group_id = "local-team"
 seed = 42
 
+# --- Private per-group declaration sections (App. B §4) ---------------------
+# Everything below is optional and safe-defaulted; the shared config/game.json
+# always wins on any key it also declares (common.config.overlay_toml).
+# Credential FILE PATHS may be named here (e.g. credentials.json, token.json);
+# their contents are never read or logged by this project's config loader.
+
 [network]
 turn_timeout = 30.0
 connect_timeout = 30.0
 poll_interval = 0.01
+my_port = 8101
+opponent_url = "http://127.0.0.1:8102/mcp"
+turn_timeout_seconds = 30.0
+
+[network.mcp_servers]
+cop = "https://cop.local-team.example/mcp"
+thief = "https://thief.local-team.example/mcp"
 
 [strategy]
 mode = "baseline"
+thief_class = "baseline"
+police_class = "baseline"
+
+[game]
+group_name = "Local Team"
+group_id = "local-team"
+opponent_group_id = "opposing-team"
+members = ["Member One", "Member Two"]
+sub_game_number = 1
+
+[game.repos]
+cop = "https://github.com/example-org/example-police"
+thief = "https://github.com/example-org/example-thief"
+
+[llm]
+model = "template"
+step_deadline_seconds = 30.0
+
+[email]
+recipient = "rmisegal+uoh26finalgame@gmail.com"
+mode = "dry-run"
+
+[trash_talk]
+provider = "none"

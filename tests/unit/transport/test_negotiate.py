@@ -135,3 +135,36 @@ class TestOurGreeting:
         assert greeting["scent_model_sha256"] == "abc"
         assert greeting["wire_shape_sha256"] == "def"
         assert "info_mode_sha256" not in greeting
+
+    def test_identity_defaults_to_the_pre_existing_two_key_block(self) -> None:
+        """Omitting identity_block reproduces the previous bytes exactly."""
+        greeting = our_greeting(
+            terms=self._terms(), nonce="n", group_id="a", role="police", sub_game_number=1,
+        )
+        assert greeting["identity"] == {"group_id": "a", "role": "police"}
+
+    def test_identity_block_extends_without_displacing_group_id_or_role(self) -> None:
+        """W2-P1: the extension is purely additive, and cannot be used to lie about who sent it."""
+        greeting = our_greeting(
+            terms=self._terms(), nonce="n", group_id="a", role="police", sub_game_number=1,
+            identity_block={
+                "group_id": "someone-else",  # an attempted override
+                "role": "thief",  # an attempted override
+                "group_name": "Team A",
+                "llm_model": "template",
+            },
+        )
+        assert greeting["identity"]["group_id"] == "a"
+        assert greeting["identity"]["role"] == "police"
+        assert greeting["identity"]["group_name"] == "Team A"
+        assert greeting["identity"]["llm_model"] == "template"
+
+    def test_identity_block_none_is_the_same_as_omitting_it(self) -> None:
+        with_none = our_greeting(
+            terms=self._terms(), nonce="n", group_id="a", role="police", sub_game_number=1,
+            identity_block=None,
+        )
+        without = our_greeting(
+            terms=self._terms(), nonce="n", group_id="a", role="police", sub_game_number=1,
+        )
+        assert with_none == without

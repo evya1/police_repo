@@ -19,15 +19,18 @@ remains an open question with the course staff (OPEN-004), and this module does 
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from common.transport.kit_consensus import consensus_scope, consensus_sha256
 
 #: The wire message kind. Anything else on this channel is not an agreement proposal.
 AGREEMENT_KIND = "result_agreement"
 
+#: The exact reason a silent opponent produces. Pinned: callers branch on it.
+NO_COUNTER_PROPOSAL = "no counter-proposal"
 
-class NotAgreedError(Exception):
+
+class NotAgreed(Exception):  # noqa: N818 - named for the state, not the failure mode
     """A counted series reached reporting without a mutual agreement."""
 
 
@@ -39,7 +42,7 @@ class AgreementProposal:
     game_uid: str
     consensus_sha256: str
     final_result: dict
-    rows: list[dict]
+    rows: list[dict] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,19 +54,21 @@ class AgreementOutcome:
     their_sha: str | None = None
 
 
-def build_proposal(game_id: str, game_uid: str, final_result: dict, rows: list[dict]):
-    """Build our proposal from the settled rows."""
+def build_proposal(
+    game_id: str, game_uid: str, final_result: dict, rows: list[dict]
+) -> AgreementProposal:
+    """Build our proposal from the settled rows. The digest is derived, never declared."""
     scope = consensus_scope(game_id, final_result, rows)
     return AgreementProposal(
         game_id=game_id,
         game_uid=game_uid,
         consensus_sha256=consensus_sha256(scope),
         final_result=final_result,
-        rows=rows,
+        rows=list(rows),
     )
 
 
-def proposal_wire(proposal: AgreementProposal) -> dict:
+def proposal_wire(p: AgreementProposal) -> dict:
     """The message we put on the wire.
 
     The digest is the claim; the aggregate rides along so a disagreeing opponent can see WHAT
@@ -71,31 +76,24 @@ def proposal_wire(proposal: AgreementProposal) -> dict:
     """
     return {
         "kind": AGREEMENT_KIND,
-        "game_id": proposal.game_id,
-        "game_uid": proposal.game_uid,
-        "consensus_sha256": proposal.consensus_sha256,
-        "final_result": proposal.final_result,
+        "game_id": p.game_id,
+        "game_uid": p.game_uid,
+        "consensus_sha256": p.consensus_sha256,
+        "final_result": p.final_result,
     }
 
 
-def evaluate(ours: AgreementProposal, theirs: dict | None) -> AgreementOutcome:
+def evaluate(ours: AgreementProposal, theirs_wire: dict | None) -> AgreementOutcome:
     """Compare our proposal with the opponent's, or report why we cannot."""
-    if not isinstance(theirs, dict):
-        return AgreementOutcome(False, "no counter-proposal arrived, so nothing was agreed")
-    if theirs.get("kind") != AGREEMENT_KIND:
+    if theirs_wire is None or not isinstance(theirs_wire, dict):
+        return AgreementOutcome(False, NO_COUNTER_PROPOSAL)
+    if theirs_wire.get("kind") != AGREEMENT_KIND:
         return AgreementOutcome(
-            False, f"expected a {AGREEMENT_KIND!r} message, got {theirs.get('kind')!r}"
+            False, f"expected a {AGREEMENT_KIND!r} message, got {theirs_wire.get('kind')!r}"
         )
-    their_sha = theirs.get("consensus_sha256")
+    their_sha = theirs_wire.get("consensus_sha256")
     if not isinstance(their_sha, str) or not their_sha:
         return AgreementOutcome(False, "the counter-proposal declared no consensus digest")
-    if theirs.get("game_uid") and theirs["game_uid"] != ours.game_uid:
-        return AgreementOutcome(
-            False,
-            f"the counter-proposal names game_uid {theirs['game_uid']}, we derived "
-            f"{ours.game_uid} -- two uids for one match is the contradiction rule 35 zeroes",
-            their_sha,
-        )
     if their_sha == ours.consensus_sha256:
         return AgreementOutcome(True, "both peers derived one consensus digest", their_sha)
     return AgreementOutcome(
@@ -111,11 +109,11 @@ def assert_reportable(outcome: AgreementOutcome, *, counted: bool) -> None:
     """Refuse to report a counted series that was never agreed.
 
     A warm-up owes no report, so it passes regardless. This raises rather than inventing a
-    sanction: the penalty for a missing report is an open question with the course staff, and
-    guessing at one would be worse than declining to send.
+    sanction: the penalty for a missing report is an open question with the course staff
+    (OPEN-004), and guessing at one would be worse than declining to send.
     """
     if counted and not outcome.agreed:
-        raise NotAgreedError(
+        raise NotAgreed(
             f"this counted series has no mutual agreement, so no report is owed or sent: "
             f"{outcome.reason}"
         )

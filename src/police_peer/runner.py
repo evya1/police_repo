@@ -7,11 +7,19 @@ import logging
 import time
 from pathlib import Path
 
+from common.config import PrivateConfig as DeclaredPrivateConfig
 from common.domain.scoring import Role
 from common.transport.loopback import Inboxes
 from common.transport.mcp_client import McpChannel, edge_answers
 from common.transport.mcp_server import serve_background
 from common.transport.series import SeriesResult
+from police_peer.evidence.identity_source import CountedPlayRefusedError
+from police_peer.league.preflight import FilePairingHistoryStore, LeaguePairingGuard
+from police_peer.reporting.declaration import (
+    agree_on_result,
+    declared_private,
+    our_identity_block,
+)
 from police_peer.reporting.kit_bundle import publish_kit_bundle
 from police_peer.reporting.replay_bundle import publish_replay_bundle
 from police_peer.sdk import Budgets, create_peer
@@ -55,16 +63,31 @@ def write_artifacts(
     (path / filename).write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
 
-def _publish_kit(artifacts_dir, result: SeriesResult, *, group_id: str, mode: str) -> None:
+def _publish_kit(
+    artifacts_dir, result: SeriesResult, *, group_id: str, mode: str,
+    declared_private: DeclaredPrivateConfig | None = None,
+    confirmed: bool = False,
+) -> None:
     """Publish the kit projection beside the internal bundle.
 
     Deliberately non-fatal: the internal bundle is the evidence of record and is already on
     disk by the time we get here. A projection that cannot be written is a reporting problem
     to be seen and fixed, not a reason to lose a settled series.
     """
+    kwargs: dict = {"confirmed": confirmed}
+    declared_private = declared_private or DeclaredPrivateConfig()
+    guard = LeaguePairingGuard(history_store=FilePairingHistoryStore())
+    ours = our_identity_block(
+        declared_private, group_id=group_id,
+        counted_games_played=len(guard.get_counted_matches()),
+    )
+    if ours is not None:
+        theirs = {"group_id": result.opponent_group_id}
+        pair_sorted = sorted([ours, theirs], key=lambda b: b["group_id"])
+        kwargs["groups"] = pair_sorted
     try:
         publish_kit_bundle(
-            artifacts_dir, result, our_group=group_id, counted=(mode == "counted")
+            artifacts_dir, result, our_group=group_id, counted=(mode == "counted"), **kwargs
         )
     except Exception as exc:  # noqa: BLE001 - never let a projection fault destroy evidence
         logger.error("Kit bundle projection failed (internal bundle is intact): %s", exc)
@@ -88,6 +111,7 @@ def run_one_peer(
     poll_interval: float = 0.01,
     wire_profile: str | None = None,
     emit_kit_bundle: bool = True,
+    declared_private_overrides: dict | None = None,
 ) -> int:
     """Run one independent peer process: serve MCP, dial peer, run 6 subgames."""
     inboxes = Inboxes()
@@ -119,6 +143,8 @@ def run_one_peer(
         )
         channel = McpChannel(peer_url, inboxes, timeout=turn_timeout)
 
+        our_private = declared_private(private_config, declared_private_overrides)
+
         facade = create_peer(
             config_path=shared_config,
             private_config_path=private_config,
@@ -134,18 +160,41 @@ def run_one_peer(
             budgets=budgets,
             mode=mode,
             wire_profile=wire_profile,
+            declared_private=our_private,
         )
 
         result = facade.run()
+
+        agreed = True
+        if result.settled and emit_kit_bundle:
+            # The mutual audit the series engine already performed is a precondition of
+            # agreeing (App. E rule 36); agreement is exchanged AFTER settlement, never before.
+            outcome = agree_on_result(
+                channel, result, our_group=group_id, budget=turn_timeout
+            )
+            agreed = outcome.agreed
+            if not agreed:
+                logger.warning("No mutual result agreement: %s", outcome.reason)
 
         if artifacts_dir:
             write_artifacts(artifacts_dir, result, role=role, group_id=group_id, mode=mode)
             if result.settled:
                 publish_replay_bundle(artifacts_dir, result)
                 if emit_kit_bundle:
-                    _publish_kit(artifacts_dir, result, group_id=group_id, mode=mode)
+                    _publish_kit(
+                        artifacts_dir, result, group_id=group_id, mode=mode,
+                        declared_private=our_private, confirmed=agreed,
+                    )
+
+        if mode == "counted" and not agreed:
+            # Never claim an agreement that did not happen (DEC-10): the bundle above was
+            # already published with confirmed=False before this refusal.
+            return 6
 
         return 0 if result.settled else 6
+    except CountedPlayRefusedError as exc:
+        logger.error("Counted play refused before any game started: %s", exc)
+        return 6
     except Exception as exc:
         logger.exception("Series execution failed: %s", exc)
         return 1

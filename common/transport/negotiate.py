@@ -47,6 +47,7 @@ def our_greeting(
     sub_game_number: int,
     opponent_group: str | None = None,
     locks: dict[str, str] | None = None,
+    identity_block: dict | None = None,
 ) -> dict:
     """Build our outgoing negotiation greeting.
 
@@ -54,12 +55,27 @@ def our_greeting(
     wire dict (not emitted as null). The ``game_uid`` is omitted on the first
     sub-game (we don't yet know the opponent), and locks are omitted when not
     declared.
+
+    ``identity_block`` is the greeting subset from
+    :func:`common.transport.kit_identity.identity_greeting_block` and is purely
+    ADDITIVE: it is merged into the existing ``identity`` key beside the
+    ``group_id``/``role`` pair that has always been there, and omitting it
+    reproduces the previous bytes exactly. ``verify_greeting`` never refuses on
+    a missing, partial, or unknown identity field — an opponent that declares
+    less than we do is not a fault (SPEC section 7).
     """
     locks = locks or {}
     # Derive the uid only when we know the opponent (sub-game 2 onward, or a
     # configured pairing). Omission never refuses (SPEC section 7.3).
     uid = (game_uid(terms, group_id, opponent_group)
            if opponent_group else None)
+
+    # The handshake's own two identity keys stay first; a declared block extends them
+    # without displacing either, so ``verify_greeting``'s group_id lookup is unchanged.
+    identity: dict = {"group_id": group_id, "role": role}
+    if identity_block:
+        identity.update(identity_block)
+        identity["group_id"], identity["role"] = group_id, role
 
     # FR-20: omit None fields — they are silence, not explicit nulls.
     greeting: dict = {
@@ -69,7 +85,7 @@ def our_greeting(
         "group_id": group_id,
         "role": role,
         "sub_game_number": sub_game_number,
-        "identity": {"group_id": group_id, "role": role},
+        "identity": identity,
     }
     if uid is not None:
         greeting["game_uid"] = uid

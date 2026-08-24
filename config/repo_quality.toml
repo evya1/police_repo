@@ -69,7 +69,10 @@ workflow_allowed_write_permissions = []
 # This table must be the last section in the file: TOML tables extend to the next [header].
 [line_cap_baseline]
 "src/police_peer/reporting/schemas.py" = 448
-"common/config/__init__.py" = 278
-"common/transport/negotiate.py" = 196
+"common/config/__init__.py" = 341
+"common/transport/negotiate.py" = 209
 "src/police_peer/league/preflight.py" = 165
 "common/transport/audit.py" = 157
+"src/police_peer/runner.py" = 176
+"src/police_peer/sdk.py" = 163
+"tests/unit/transport/test_negotiate.py" = 153

@@ -6,11 +6,16 @@ from pathlib import Path
 from typing import Any
 
 from common.config import ConfigError, load_config
+from common.config import PrivateConfig as DeclaredPrivateConfig
 from common.domain.scoring import Role
 from common.transport.audit_wire import resolve_audit_wire
+from common.transport.kit_identity import config_digest
 from common.transport.loopback import pair
 from common.transport.opponent_pin import OpponentPin
 from common.transport.series import PeerConfig, PeerFacade, SeriesResult
+from police_peer.evidence.identity_source import assert_counted_ready
+from police_peer.evidence.token_ledger import TokenLedger
+from police_peer.league.preflight import FilePairingHistoryStore, LeaguePairingGuard
 from police_peer.replay_service import BundleReplayReport
 from police_peer.replay_service import verify_bundle as _verify_replay_bundle
 from police_peer.strategy import Strategy
@@ -60,6 +65,9 @@ def create_peer(
     budgets: Budgets | None = None,
     mode: str = "warmup",
     wire_profile: str | None = None,
+    declared_private: DeclaredPrivateConfig | None = None,
+    repo_root: Path | None = None,
+    signer_configured: bool = False,
 ) -> PeerFacade:
     """Public factory creating a validated PeerFacade.
 
@@ -113,6 +121,22 @@ def create_peer(
 
     resolved_seed = seed or private.seed
     peer_budgets = budgets or build_budgets(private)
+
+    # Counted-play readiness is checked HERE, before any game exists (DEC-10): a run that
+    # would owe a report it cannot honestly produce refuses to start rather than failing
+    # partway through a series.
+    assert_counted_ready(
+        mode=mode,
+        private=declared_private or DeclaredPrivateConfig(),
+        group_id=group_id,
+        repo_root=repo_root or Path.cwd(),
+        code_version=__version__,
+        config_digest=config_digest(terms),
+        pairing_guard=LeaguePairingGuard(history_store=FilePairingHistoryStore()),
+        opponent_team=(declared_private or DeclaredPrivateConfig()).opponent_group_id,
+        token_ledger=TokenLedger(),
+        signer_configured=signer_configured,
+    )
 
     peer_cfg = PeerConfig(
         natural_role=role,

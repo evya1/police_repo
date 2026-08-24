@@ -15,23 +15,32 @@ and it would look exactly like a true one.
 BEFORE the signature key existed, so the field is excluded from its own preimage. It carries a
 ``sha256:`` prefix; the consensus digest in ``kit_consensus`` does not. They are different
 fields computed over different things, and giving them the same shape would invite exactly one
-confusion too many.
+confusion too many. Identity is per-group and therefore may NEVER enter the consensus scope: a
+per-side value inside a shared preimage makes agreement impossible by construction.
 
 The greeting carries a SUBSET: enough for an opponent to write our half of their declaration,
 and nothing they cannot check. Hardware travels as a digest, never as a spec -- they cannot
 verify our RAM, and a value nobody can check does not belong on a wire.
+
+``counted_games_played`` is EXCLUSIVE of the series about to be played: it is what we had
+played before this one. The result artifact's ``games_played_including_this`` is INCLUSIVE, so
+for a counted series the two differ by exactly one. An opponent count we never learned is
+``None`` (JSON ``null``), never ``0`` -- silence is not a claim of zero.
 """
 
 from __future__ import annotations
 
 import hashlib
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from common.transport.canonical import canonical_bytes
 
 #: Sign-then-insert prefix for the per-group declaration signature.
 SIGNATURE_PREFIX = "sha256:"
+
+#: Both role repositories and both role endpoints are declared by both peers (App. E rule 49).
+ROLE_KEYS = ("cop", "thief")
 
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
@@ -61,7 +70,6 @@ class GroupIdentity:
     github_commit: str
     counted_games_played: int
     code_version: str
-    extra: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for name in ("group_id", "group_name", "llm_model", "code_version"):
@@ -71,21 +79,29 @@ class GroupIdentity:
             raise IdentityError("members is required: a declaration names its group's members")
         for name in ("repos", "mcp_servers"):
             block = getattr(self, name)
-            missing = sorted({"cop", "thief"} - set(block))
+            missing = sorted(set(ROLE_KEYS) - set(block))
             if missing:
                 raise IdentityError(
-                    f"{name} must name both roles; missing {missing}. Both repositories are "
-                    f"declared by both peers (App. E rule 49)"
+                    f"{name} must name both roles; missing {missing}. Both repositories and "
+                    f"both endpoints are declared by both peers (App. E rule 49)"
                 )
         if not self.hardware_spec:
             raise IdentityError(
                 "hardware_spec is required: the computational-fairness declaration is what "
                 "earns the normalization bonus (book ch.5)"
             )
-        if not _COMMIT_RE.match(self.github_commit):
+        if not isinstance(self.github_commit, str) or not _COMMIT_RE.match(self.github_commit):
             raise IdentityError(
-                f"github_commit must be a 40-character hex sha, got {self.github_commit!r}. "
-                f"Every counted game records the exact commit that played (App. E rule 53)"
+                f"github_commit must be a 40-character lowercase hex sha, got "
+                f"{self.github_commit!r}. Every counted game records the exact commit that "
+                f"played (App. E rule 53)"
+            )
+        if isinstance(self.counted_games_played, bool) or not isinstance(
+            self.counted_games_played, int
+        ):
+            raise IdentityError(
+                f"counted_games_played must be an int, got "
+                f"{type(self.counted_games_played).__name__}"
             )
         if self.counted_games_played < 0:
             raise IdentityError("counted_games_played cannot be negative")
@@ -102,6 +118,7 @@ def config_digest(terms: dict) -> str:
 
 
 def _unsigned_block(identity: GroupIdentity) -> dict:
+    """The declaration block as it stands BEFORE the signature key exists."""
     return {
         "group_id": identity.group_id,
         "group_name": identity.group_name,
@@ -114,43 +131,51 @@ def _unsigned_block(identity: GroupIdentity) -> dict:
         "github_commit": identity.github_commit,
         "counted_games_played": identity.counted_games_played,
         "code_version": identity.code_version,
-        **identity.extra,
     }
 
 
 def group_block(identity: GroupIdentity) -> dict:
     """The declaration's block for one group, signed then sealed."""
     block = _unsigned_block(identity)
-    return {**block, "signature": SIGNATURE_PREFIX + hashlib.sha256(
-        canonical_bytes(block)
-    ).hexdigest()}
+    digest = hashlib.sha256(canonical_bytes(block)).hexdigest()
+    return {**block, "signature": SIGNATURE_PREFIX + digest}
 
 
 def verify_group_block(block: dict) -> bool:
     """Re-derive the signature over the block minus the signature itself."""
+    if not isinstance(block, dict):
+        return False
     declared = block.get("signature")
     if not isinstance(declared, str) or not declared.startswith(SIGNATURE_PREFIX):
         return False
     unsigned = {k: v for k, v in block.items() if k != "signature"}
-    expected = SIGNATURE_PREFIX + hashlib.sha256(canonical_bytes(unsigned)).hexdigest()
+    try:
+        expected = SIGNATURE_PREFIX + hashlib.sha256(canonical_bytes(unsigned)).hexdigest()
+    except (TypeError, ValueError):
+        return False
     return declared == expected
 
 
 def identity_greeting_block(identity: GroupIdentity) -> dict:
     """The subset that rides the greeting. Hardware travels as a digest, never as a spec."""
     block = _unsigned_block(identity)
-    return {k: block[k] for k in GREETING_KEYS}
+    return {key: block[key] for key in GREETING_KEYS}
 
 
 def identity_from_greeting(raw: dict) -> dict | None:
     """Read an opponent's declared identity, tolerantly.
 
-    Unknown keys are kept and missing ones are simply absent: SPEC section 7's stance is to
-    refuse only when both sides declare and disagree, so an opponent that says less than we do
-    is not a fault. Returns None when nothing identity-shaped was declared at all.
+    Missing keys are simply absent: SPEC section 7's stance is to refuse only when both sides
+    declare and disagree, so an opponent that says less than we do is not a fault. Returns
+    ``None`` when nothing identity-shaped beyond the handshake's own two keys was declared.
     """
+    if not isinstance(raw, dict):
+        return None
     block = raw.get("identity")
     if not isinstance(block, dict):
         return None
     known = {k: v for k, v in block.items() if k in GREETING_KEYS}
-    return known or None
+    # ``group_id`` alone is the pre-existing handshake block, not a declared identity.
+    if set(known) <= {"group_id"}:
+        return None
+    return known

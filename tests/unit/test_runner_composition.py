@@ -28,6 +28,10 @@ class _StubChannel:
 
 class _StubResult:
     settled = True
+    opponent_group_id = "stub-opponent"
+    ledger: list = []
+    game_id = "stub-game"
+    game_uid = "stub-uid"
 
 
 class _StubFacade:

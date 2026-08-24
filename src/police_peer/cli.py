@@ -45,7 +45,42 @@ def build_parser() -> argparse.ArgumentParser:
              "<artifacts>/kit/<game_uid>/ (ADR-012). The internal replay bundle is written "
              "either way.",
     )
+    parser.add_argument(
+        "--group-code", default=None, help="Our declared group id, overriding [game].group_id"
+    )
+    parser.add_argument(
+        "--members", default=None,
+        help="Comma-separated member names, overriding [game].members",
+    )
+    parser.add_argument(
+        "--repo-cop-url", default=None, help="Our cop repo URL, overriding [game.repos].cop"
+    )
+    parser.add_argument(
+        "--repo-thief-url", default=None,
+        help="Our thief repo URL, overriding [game.repos].thief",
+    )
+    parser.add_argument(
+        "--public-url", default=None,
+        help="Our own tunnel URL, overriding [network.mcp_servers] for OUR role",
+    )
     return parser
+
+
+def _declared_private_overrides(args: argparse.Namespace) -> dict:
+    """CLI flags that override the declared identity's private-config fields (T057)."""
+    overrides: dict = {}
+    if args.group_code is not None:
+        overrides["group_id"] = args.group_code
+    if args.members is not None:
+        overrides["members"] = tuple(
+            m.strip() for m in args.members.split(",") if m.strip()
+        )
+    if args.repo_cop_url is not None or args.repo_thief_url is not None:
+        overrides["repos_cop"] = args.repo_cop_url
+        overrides["repos_thief"] = args.repo_thief_url
+    if args.public_url is not None:
+        overrides["public_url"] = args.public_url
+    return overrides
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -67,6 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         turn_timeout=args.turn_timeout,
         wire_profile=args.wire_profile,
         emit_kit_bundle=args.emit_kit_bundle,
+        declared_private_overrides=_declared_private_overrides(args),
     )
 
 

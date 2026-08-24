@@ -122,8 +122,23 @@ def test_create_peer_custom_budgets(sample_config: dict[str, object]) -> None:
     assert peer.config.budgets.turn_timeout == 10.0
 
 
-def test_create_peer_custom_mode(sample_config: dict[str, object]) -> None:
-    peer = create_peer(sample_config, mode="counted")
+def test_create_peer_custom_mode(sample_config: dict[str, object], tmp_path: Path) -> None:
+    from common.config import PrivateConfig as DeclaredPrivateConfig
+
+    git_dir = tmp_path / ".git"
+    git_dir.mkdir()
+    (git_dir / "HEAD").write_text("c" * 40 + "\n", encoding="utf-8")
+    declared = DeclaredPrivateConfig(
+        group_name="Team", members=("A", "B"),
+        repos={"cop": "https://github.com/x/cop", "thief": "https://github.com/x/thief"},
+        mcp_servers={"cop": "https://cop.x.example/mcp", "thief": "https://thief.x.example/mcp"},
+        llm_model="template", opponent_group_id="opponent",
+    )
+
+    peer = create_peer(
+        sample_config, mode="counted", declared_private=declared, repo_root=tmp_path,
+        signer_configured=True,
+    )
     assert peer.mode == "counted"
     assert peer.config.mode == "counted"
 

@@ -1,5 +1,6 @@
 import pytest
 
+from common.transport.kit_agreement import AgreementOutcome
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.reporting.artifacts import ReportingArtifactBundle
 from police_peer.reporting.gmail import FileIdempotencyStore, GmailSender
@@ -98,11 +99,12 @@ def test_reporting_pipeline_success_and_idempotence(tmp_path):
     )
     pipeline = ReportingPipeline(gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent.json"))
 
-    receipt = pipeline.process_and_send(bundle)
+    agreed = AgreementOutcome(True, "both peers derived one consensus digest")
+    receipt = pipeline.process_and_send(bundle, agreement=agreed)
     assert receipt["status"] == "OK"
 
     with pytest.raises(ReportingPipelineError, match="already been processed"):
-        pipeline.process_and_send(bundle)
+        pipeline.process_and_send(bundle, agreement=agreed)
 
 
 def test_reporting_pipeline_unfinalized_log_refusal(tmp_path):
@@ -120,4 +122,27 @@ def test_reporting_pipeline_unfinalized_log_refusal(tmp_path):
     pipeline = ReportingPipeline(gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent2.json"))
 
     with pytest.raises(ReportingPipelineError, match="Bundle reconciliation failed"):
-        pipeline.process_and_send(bundle)
+        pipeline.process_and_send(
+            bundle, agreement=AgreementOutcome(True, "both peers derived one consensus digest")
+        )
+
+
+def test_reporting_pipeline_refuses_without_mutual_agreement(tmp_path):
+    """W2-P5/CT-08: the pipeline never transmits a series the two peers never agreed on."""
+    bundle = _sample_bundle("series-disagreed")
+
+    gk = ExternalApiGatekeeper()
+    sender = GmailSender(
+        gatekeeper=gk,
+        default_recipient=OFFICIAL_RECIPIENT,
+        scopes=["gmail.send"],
+        service_client=FakeGmailService(),
+        idempotency_store=FileIdempotencyStore(tmp_path / "gmail_sent3.json"),
+    )
+    pipeline = ReportingPipeline(
+        gmail_sender=sender, sent_reports_store=SentReportsStore(tmp_path / "sent3.json")
+    )
+
+    disagreed = AgreementOutcome(False, "no counter-proposal")
+    with pytest.raises(ReportingPipelineError, match="no mutual result agreement"):
+        pipeline.process_and_send(bundle, agreement=disagreed)

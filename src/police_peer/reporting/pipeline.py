@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from common.transport.kit_agreement import AgreementOutcome
 from police_peer.reporting.artifacts import ReportingArtifactBundle
 from police_peer.reporting.gmail import GmailSender
 from police_peer.reporting.schemas import ArtifactError, SeriesResult
@@ -97,9 +98,21 @@ class ReportingPipeline:
         self,
         bundle: ReportingArtifactBundle,
         *,
+        agreement: AgreementOutcome,
         recipient: str | None = None,
         subject: str | None = None,
     ) -> dict[str, Any]:
+        """Transmit the bundle, but only once the mutual result agreement (CT-08) holds.
+
+        ``agreement`` is mandatory and is never re-derived here: it is whatever the caller's
+        own result-agreement exchange produced, so this pipeline cannot silently report a
+        series the two peers never actually agreed on (DEC-10).
+        """
+        if not agreement.agreed:
+            raise ReportingPipelineError(
+                f"refusing to transmit: no mutual result agreement ({agreement.reason})"
+            )
+
         game_uid = bundle.declaration.game_uid
         if self._sent_reports.is_sent(game_uid):
             raise ReportingPipelineError(f"Series report for '{game_uid}' has already been processed.")

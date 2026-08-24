@@ -37,6 +37,14 @@ def build_parser() -> argparse.ArgumentParser:
              "pinned copthief-league-protocol lane). Pass 'internal' only for a peer that "
              "speaks this project's own flat audit shape.",
     )
+    parser.add_argument(
+        "--emit-kit-bundle",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Also project the settled series into the league-kit 14-artifact bundle at "
+             "<artifacts>/kit/<game_uid>/ (ADR-012). The internal replay bundle is written "
+             "either way.",
+    )
     return parser
 
 
@@ -58,6 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         connect_timeout=args.connect_timeout,
         turn_timeout=args.turn_timeout,
         wire_profile=args.wire_profile,
+        emit_kit_bundle=args.emit_kit_bundle,
     )
 
 

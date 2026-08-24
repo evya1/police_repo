@@ -11,7 +11,6 @@ sides zeroed, no repair path (FR-29). The per-sub-game turn loop lives in
 
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass, field
 from typing import Protocol
 
@@ -19,6 +18,7 @@ from common.domain.scoring import Outcome, Role, settled_outcome
 from common.transport import replay_evidence as _replay_evidence
 from common.transport.opponent_pin import OpponentPin
 from common.transport.replay_evidence import SubgameDriver, SubgameReplayEvidence
+from common.transport.series_greeting import exchange_series_greeting
 
 DEFAULT_MAX_STEPS = 35
 
@@ -42,6 +42,7 @@ class PeerConfig:
         seed: int = 0,
         locks: dict[str, str] | None = None,
         mode: str = "warmup",
+        identity_block: dict | None = None,
     ) -> None:
         self.natural_role = natural_role
         self.budgets = budgets
@@ -49,6 +50,7 @@ class PeerConfig:
         self.seed = seed
         self.locks = locks
         self.mode = mode
+        self.identity_block = identity_block
 
 
 @dataclass
@@ -70,6 +72,14 @@ class SeriesResult:
 
     game_id: str
     game_uid: str
+    # The opponent's group id, as the greeting resolved it. `game_id` is the SORTED pair, so it
+    # cannot say which half is theirs -- and every per-group projection (scores, roles, tokens,
+    # repo links) needs to. Our own id is configuration the caller already holds, so only the
+    # discovered half is carried here.
+    opponent_group_id: str = ""
+    # The optional, public subset the opponent actually declared in its greeting.  Missing
+    # fields stay missing; they are never filled from our local assumptions.
+    opponent_identity: dict | None = None
     ledger: list[SeriesRow] = field(default_factory=list)
     settled: bool = False
     settled_outcome: Outcome = Outcome.TAMPER_FORFEIT
@@ -115,8 +125,8 @@ class PeerFacade:
         # per-sub-game negotiation driver, so sub-game 1's verified opponent -- learned
         # right here -- is the one sub-games 2-6 are compared against.
         self._opponent_pin = opponent_pin if opponent_pin is not None else OpponentPin()
-        self._game_id = ""
-        self._game_uid = ""
+        self._game_id = self._game_uid = self._opponent_group_id = ""
+        self._opponent_identity: dict | None = None
         self._ledgers: list[SeriesRow] = []
         self._subgame_driver = subgame_driver or _replay_evidence.default_subgame_driver()
 
@@ -135,6 +145,8 @@ class PeerFacade:
         return SeriesResult(
             game_id=self._game_id,
             game_uid=self._game_uid,
+            opponent_group_id=self._opponent_group_id,
+            opponent_identity=self._opponent_identity,
             ledger=self._ledgers,
             settled=settled,
             settled_outcome=final_outcome,
@@ -143,37 +155,11 @@ class PeerFacade:
 
     def _exchange_greeting(self) -> None:
         """Send our greeting and poll for the opponent's, then verify (fixed FR-13 order)."""
-        from common.transport.integrity import new_nonce
-        from common.transport.negotiate import our_greeting, verify_greeting
-
-        greeting = our_greeting(
-            terms=self.config.terms,
-            nonce=new_nonce(),
-            group_id=self.name,
-            role=self.config.natural_role.value,
-            sub_game_number=1,
-            locks=self.config.locks,
+        resolved = exchange_series_greeting(
+            self.channel, self.config, self.name, self._opponent_pin,
         )
-        self.channel.send_agreement(greeting)
-        deadline = time.monotonic() + self.config.budgets.connect_timeout
-        opponent = None
-        while time.monotonic() < deadline:
-            opponent = self.channel.poll_agreement()
-            if opponent is not None:
-                break
-            time.sleep(self.config.budgets.poll_interval)
-        if opponent is None:
-            raise TimeoutError("opponent greeting not received")
-        agreed = verify_greeting(
-            opponent,
-            self.config.terms,
-            self.name,
-            1,
-            our_locks=self.config.locks,
-        )
-        self._opponent_pin.bind(agreed.opponent_group, sub_game=1)
-        self._game_id = agreed.game_id
-        self._game_uid = agreed.game_uid
+        (self._game_id, self._game_uid, self._opponent_group_id,
+         self._opponent_identity) = resolved
 
 
 # ``run_series`` (the two-peer harness that drives both ends of one channel) lives in its

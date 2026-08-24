@@ -11,6 +11,8 @@ opened just to observe argument pass-through.
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from common.domain.scoring import Role
@@ -48,6 +50,9 @@ def spy(monkeypatch: pytest.MonkeyPatch) -> dict:
     monkeypatch.setattr(runner, "edge_answers", lambda *a, **k: True)
     monkeypatch.setattr(runner, "McpChannel", _StubChannel)
     monkeypatch.setattr(runner, "create_peer", fake_create_peer)
+    monkeypatch.setattr(
+        runner, "settle", lambda *a, **k: SimpleNamespace(agreed=True, reason="test agreement")
+    )
     return calls
 
 
@@ -68,3 +73,11 @@ def test_runner_passes_the_shipped_config_paths_through(spy: dict) -> None:
     assert spy["config_path"] == "config/game.json"
     assert spy["private_config_path"] == "config/game.toml"
     assert spy["role"] is Role.POLICE
+
+
+def test_counted_runner_refuses_before_starting_transport(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        runner, "serve_background",
+        lambda *a, **k: pytest.fail("transport started before counted readiness passed"),
+    )
+    assert runner.run_one_peer(mode="counted") == 2

@@ -12,8 +12,11 @@ from common.transport.loopback import Inboxes
 from common.transport.mcp_client import McpChannel, edge_answers
 from common.transport.mcp_server import serve_background
 from common.transport.series import SeriesResult
+from police_peer.league.readiness import CountedPlayNotReadyError
+from police_peer.league.runtime_evidence import prepare_runtime_evidence
 from police_peer.reporting.replay_bundle import publish_replay_bundle
-from police_peer.sdk import Budgets, create_peer
+from police_peer.reporting.settlement import publish_kit, settle
+from police_peer.sdk import Budgets, __version__, create_peer
 from police_peer.strategy import Strategy
 
 logger = logging.getLogger(__name__)
@@ -71,8 +74,20 @@ def run_one_peer(
     turn_timeout: float = 30.0,
     poll_interval: float = 0.01,
     wire_profile: str | None = None,
+    emit_kit_bundle: bool = True,
+    group_code_confirmed: bool = False,
+    public_url: str = "",
 ) -> int:
     """Run one independent peer process: serve MCP, dial peer, run 6 subgames."""
+    try:
+        runtime = prepare_runtime_evidence(
+            private_config=private_config, shared_config=shared_config, group_id=group_id,
+            mode=mode, group_code_confirmed=group_code_confirmed, public_url=public_url,
+            repo_root=Path(__file__).resolve().parents[2], code_version=__version__,
+        )
+    except CountedPlayNotReadyError as exc:
+        logger.error("Counted play refused before transport startup: %s", exc)
+        return 2
     inboxes = Inboxes()
     serve_background(
         inboxes,
@@ -117,15 +132,27 @@ def run_one_peer(
             budgets=budgets,
             mode=mode,
             wire_profile=wire_profile,
+            identity_block=runtime.greeting_identity,
         )
 
         result = facade.run()
+        agreement = settle(channel, result, our_group=group_id, budget=turn_timeout)
 
         if artifacts_dir:
             write_artifacts(artifacts_dir, result, role=role, group_id=group_id, mode=mode)
             if result.settled:
                 publish_replay_bundle(artifacts_dir, result)
+                if emit_kit_bundle:
+                    publish_kit(artifacts_dir, result, our_group=group_id, mode=mode,
+                                confirmed=agreement.agreed, identity=runtime.identity,
+                                opponent_identity=result.opponent_identity)
 
+        if mode == "counted" and not agreement.agreed:
+            # The series played and audited cleanly; only the settlement handshake did not
+            # complete. The bundle is on disk recording `confirmed: false`, and no report is
+            # owed or sent -- reporting alone on an unconfirmed result is what zeroes both.
+            logger.error("Counted series is not reportable: %s", agreement.reason)
+            return 6
         return 0 if result.settled else 6
     except Exception as exc:
         logger.exception("Series execution failed: %s", exc)

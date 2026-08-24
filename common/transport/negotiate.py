@@ -46,7 +46,7 @@ def our_greeting(
     role: str,
     sub_game_number: int,
     opponent_group: str | None = None,
-    locks: dict[str, str] | None = None,
+    locks: dict[str, str] | None = None, identity_block: dict | None = None,
 ) -> dict:
     """Build our outgoing negotiation greeting.
 
@@ -69,7 +69,10 @@ def our_greeting(
         "group_id": group_id,
         "role": role,
         "sub_game_number": sub_game_number,
-        "identity": {"group_id": group_id, "role": role},
+        # The identity block is PURELY ADDITIVE (CT-08). `verify_greeting` never refuses on
+        # anything inside it: an opponent who declares less than we do is not at fault, and a
+        # handshake that broke on an unknown identity key would be a self-inflicted refusal.
+        "identity": {**(identity_block or {}), "group_id": group_id, "role": role},
     }
     if uid is not None:
         greeting["game_uid"] = uid

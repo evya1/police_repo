@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from common.transport.kit_agreement import AgreementOutcome, assert_reportable
 from police_peer.reporting.artifacts import ReportingArtifactBundle
 from police_peer.reporting.gmail import GmailSender
 from police_peer.reporting.schemas import ArtifactError, SeriesResult
@@ -97,9 +98,15 @@ class ReportingPipeline:
         self,
         bundle: ReportingArtifactBundle,
         *,
+        agreement: AgreementOutcome,
+        counted: bool = True,
         recipient: str | None = None,
         subject: str | None = None,
     ) -> dict[str, Any]:
+        # Nothing leaves without a mutual agreement. Two contradictory counted reports score
+        # zero for BOTH teams (App. E rule 35), so the side that cannot confirm a shared
+        # result declines to send rather than reporting alone and taking its opponent down.
+        assert_reportable(agreement, counted=counted)
         game_uid = bundle.declaration.game_uid
         if self._sent_reports.is_sent(game_uid):
             raise ReportingPipelineError(f"Series report for '{game_uid}' has already been processed.")

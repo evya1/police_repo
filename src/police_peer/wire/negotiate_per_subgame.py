@@ -70,6 +70,7 @@ def _negotiate_subgame(channel, config: PeerConfig, group_id: str, sub_game: int
         sub_game_number=sub_game,
         opponent_group=pin.group,
         locks=config.locks,
+        identity_block=config.identity_block,
     )
     channel.send_agreement(greeting)
     opponent = _await_greeting(channel, config)

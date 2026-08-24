@@ -60,6 +60,7 @@ def create_peer(
     budgets: Budgets | None = None,
     mode: str = "warmup",
     wire_profile: str | None = None,
+    identity_block: dict | None = None,
 ) -> PeerFacade:
     """Public factory creating a validated PeerFacade.
 
@@ -121,6 +122,7 @@ def create_peer(
         seed=resolved_seed,
         locks=peer_locks(private),
         mode=mode,
+        identity_block=identity_block,
     )
 
     if strategy is not None:

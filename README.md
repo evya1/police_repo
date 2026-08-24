@@ -72,8 +72,14 @@ own resolution.
 
 ## Usage
 
-`TODO_BEFORE_SUBMISSION`: document the exact FastMCP launcher, tunnel setup, warm-up/counted mode
-switch, Live GUI start, and controlled shutdown once those interfaces exist and are verified.
+Minimal CLI example:
+
+```sh
+uv run police-peer --help
+```
+
+See [`docs/CLI.md`](docs/CLI.md) for entry points, options, local and remote examples, mode
+behavior, configuration precedence, exit codes, and artifact boundaries.
 
 **Replay (verified, works today).** `police_peer.sdk.verify_replay_bundle(path)` is the sole
 public entrypoint; `scripts/replay.py` is a thin CLI over it:
@@ -169,3 +175,59 @@ Read `CONTRIBUTING.md` and `AGENTS.md`. Claim exactly one ready task, use its wr
 ## License and credits
 
 `TODO_BEFORE_SUBMISSION`: the team must choose and document the repository license and credits policy before release. Do not add a license notice or an attribution without verifying what is actually distributed and legally required — and never remove one that is.
+
+## Codex usage and cost snapshot
+
+This redacted snapshot covers completed local Codex sessions that explicitly referenced either
+repository in this Police/Thief project. It was calculated on 2026-08-24 UTC from local session
+counters. A session was included only when its final lifecycle record was `task_complete`;
+current, incomplete, and unrelated sessions were excluded. No session or turn identifiers,
+machine paths, account details, personal information, email addresses, or credentials are
+recorded here.
+
+### Usage at a glance
+
+```mermaid
+flowchart LR
+    I["Input<br/>36.49M tokens"] --> C{"Cache lookup"}
+    C -->|"98.65% hit"| H["Cache read<br/>35.99M tokens"]
+    C -->|"1.35% miss"| U["Non-cached input<br/>0.49M tokens"]
+    H --> M["GPT-5.6 Sol"]
+    U --> M
+    M --> O["Output<br/>0.05M tokens"]
+```
+
+| Token flow | Tokens | Relative volume |
+| --- | ---: | --- |
+| Input | 36,485,763 | `████████████████████` 100% |
+| Cache read | 35,991,808 | `███████████████████▋` 98.65% of input |
+| Non-cached input | 493,955 | `▎` 1.35% of input |
+| Output | 54,393 | `▏` 0.15% of input |
+
+**Cache hit rate: 98.65%** · **Output-to-input ratio: 0.15%**
+
+| Metric | Completed-session total |
+| --- | ---: |
+| Sessions | 1 |
+| Completed turns | 7 |
+| Model | GPT-5.6 Sol |
+| Service tier | Standard/default |
+| Input tokens, including cached input | 36,485,763 |
+| Cached input tokens | 35,991,808 |
+| Non-cached input tokens | 493,955 |
+| Output tokens | 54,393 |
+| Reasoning output tokens, included in output tokens | 12,805 |
+| Total tokens | 36,540,156 |
+| Estimated ChatGPT credit usage | 436.51 credits |
+
+The estimate uses the [official Codex pricing rate card](https://learn.chatgpt.com/docs/pricing)
+available on the snapshot date: 100 credits per million non-cached input tokens, 10 credits per
+million cached input tokens, and 500 credits per million output tokens for GPT-5.6 Sol at the
+standard tier. The unrounded calculation is 436.51008 credits. Reasoning output is already part
+of output tokens and is not added again.
+
+This is a usage estimate, not a currency invoice. The local records contain token counters and a
+credit meter but no authoritative monetary charge or plan-specific conversion. Included plan
+usage can therefore have no incremental currency charge, while API-key or purchased-credit usage
+may be billed differently. The authoritative current account figure is the
+[Codex usage dashboard](https://chatgpt.com/codex/settings/usage).

@@ -240,8 +240,8 @@ This dashboard combines private-input OpenRouter activity with a committed, sani
 
 | Metric | Aggregate |
 | --- | ---: |
-| Combined reported spend | **$292.07** (`$292.074392` reconciled) |
-| OpenRouter reported spend | $40.874392 |
+| Combined reported spend | **$292.08** (`$292.08` reconciled) |
+| OpenRouter reported spend | $40.88 |
 | Claude Code reported spend | $251.20 |
 | OpenRouter requests | 4,142 |
 | Claude Code sessions | 18 |
@@ -267,15 +267,15 @@ Session appearances are not additive because a session may use more than one mod
 
 | Model | Provider | Requests | Prompt tokens | Completion tokens | Total reported cost | Share of cost |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| google/gemini-3.7-flash-20260813 | Google | 3,077 | 249,543,651 | 1,613,321 | $23.801643 | 58.23% |
-| z-ai/glm-5.2-20260616 | Baidu, Crusoe, Decart, Friendli, GMICloud, Novita, SiliconFlow, StreamLake | 447 | 37,572,921 | 517,421 | $9.248167 | 22.63% |
-| deepseek/deepseek-v4-pro-20260813 | Alibaba, GMICloud, Novita, Parasail, SiliconFlow, Together | 242 | 12,337,550 | 366,486 | $4.341338 | 10.62% |
-| google/gemini-3.1-pro-preview-20260219 | Google | 76 | 3,382,625 | 28,152 | $2.130202 | 5.21% |
-| deepseek/deepseek-v4-pro-20260423 | Baidu | 53 | 1,587,579 | 32,999 | $0.863910 | 2.11% |
-| google/gemini-2.5-pro | Google | 18 | 205,051 | 4,663 | $0.252814 | 0.62% |
-| deepseek/deepseek-v4-flash-20260731 | Baidu, DigitalOcean, Fireworks, GMICloud, Morph, Novita, Relace | 163 | 4,066,925 | 90,406 | $0.136798 | 0.33% |
-| moonshotai/kimi-k2.6-20260420 | Baidu, Decart | 8 | 100,584 | 826 | $0.029599 | 0.07% |
-| Other (15 models) | Multiple providers | 58 | 324,312 | 2,837 | $0.069921 | 0.17% |
+| [Google: Gemini 3.7 Flash](https://openrouter.ai/google/gemini-3.7-flash) | Google | 3,077 | 249,543,651 | 1,613,321 | $23.81 | 58.23% |
+| [Z.ai: GLM 5.2](https://openrouter.ai/z-ai/glm-5.2) | Baidu, Crusoe, Decart, Friendli, GMICloud, Novita, SiliconFlow, StreamLake | 447 | 37,572,921 | 517,421 | $9.25 | 22.63% |
+| [DeepSeek: DeepSeek V4 Pro 0813](https://openrouter.ai/deepseek/deepseek-v4-pro-0813) | Alibaba, GMICloud, Novita, Parasail, SiliconFlow, Together | 242 | 12,337,550 | 366,486 | $4.35 | 10.62% |
+| [Google: Gemini 3.1 Pro Preview](https://openrouter.ai/google/gemini-3.1-pro-preview) | Google | 76 | 3,382,625 | 28,152 | $2.14 | 5.21% |
+| [DeepSeek: DeepSeek V4 Pro 0423](https://openrouter.ai/deepseek/deepseek-v4-pro) | Baidu | 53 | 1,587,579 | 32,999 | $0.87 | 2.11% |
+| [Google: Gemini 2.5 Pro](https://openrouter.ai/google/gemini-2.5-pro) | Google | 18 | 205,051 | 4,663 | $0.26 | 0.62% |
+| [DeepSeek: DeepSeek V4 Flash 0731](https://openrouter.ai/deepseek/deepseek-v4-flash-0731) | Baidu, DigitalOcean, Fireworks, GMICloud, Morph, Novita, Relace | 163 | 4,066,925 | 90,406 | $0.14 | 0.33% |
+| [MoonshotAI: Kimi K2.6](https://openrouter.ai/moonshotai/kimi-k2.6) | Baidu, Decart | 8 | 100,584 | 826 | $0.03 | 0.07% |
+| Other (15 models) | Multiple providers | 58 | 324,312 | 2,837 | $0.07 | 0.17% |
 
 > Claude Code includes four sessions that reported $0.00. One $15.65 multi-model session is retained as unallocated rather than assigning its cost to a model without evidence.
 

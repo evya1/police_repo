@@ -176,58 +176,68 @@ Read `CONTRIBUTING.md` and `AGENTS.md`. Claim exactly one ready task, use its wr
 
 `TODO_BEFORE_SUBMISSION`: the team must choose and document the repository license and credits policy before release. Do not add a license notice or an attribution without verifying what is actually distributed and legally required — and never remove one that is.
 
-## Codex usage and cost snapshot
+<!-- ai-usage:start -->
+<!-- generated aggregate data only -->
+## AI Usage
 
-This redacted snapshot covers completed local Codex sessions that explicitly referenced either
-repository in this Police/Thief project. It was calculated on 2026-08-24 UTC from local session
-counters. A session was included only when its final lifecycle record was `task_complete`;
-current, incomplete, and unrelated sessions were excluded. No session or turn identifiers,
-machine paths, account details, personal information, email addresses, or credentials are
-recorded here.
+This dashboard combines private-input OpenRouter activity with a committed, sanitized Claude Code aggregate. Only aggregate categories and calendar-day buckets are published.
 
-### Usage at a glance
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/ai-usage-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/ai-usage-light.svg">
+  <img alt="Aggregated OpenRouter and Claude Code usage and reported cost" src="docs/assets/ai-usage-light.svg">
+</picture>
 
-```mermaid
-flowchart LR
-    I["Input<br/>36.49M tokens"] --> C{"Cache lookup"}
-    C -->|"98.65% hit"| H["Cache read<br/>35.99M tokens"]
-    C -->|"1.35% miss"| U["Non-cached input<br/>0.49M tokens"]
-    H --> M["GPT-5.6 Sol"]
-    U --> M
-    M --> O["Output<br/>0.05M tokens"]
-```
+### Reconciliation
 
-| Token flow | Tokens | Relative volume |
-| --- | ---: | --- |
-| Input | 36,485,763 | `████████████████████` 100% |
-| Cache read | 35,991,808 | `███████████████████▋` 98.65% of input |
-| Non-cached input | 493,955 | `▎` 1.35% of input |
-| Output | 54,393 | `▏` 0.15% of input |
-
-**Cache hit rate: 98.65%** · **Output-to-input ratio: 0.15%**
-
-| Metric | Completed-session total |
+| Metric | Aggregate |
 | --- | ---: |
-| Sessions | 1 |
-| Completed turns | 7 |
-| Model | GPT-5.6 Sol |
-| Service tier | Standard/default |
-| Input tokens, including cached input | 36,485,763 |
-| Cached input tokens | 35,991,808 |
-| Non-cached input tokens | 493,955 |
-| Output tokens | 54,393 |
-| Reasoning output tokens, included in output tokens | 12,805 |
-| Total tokens | 36,540,156 |
-| Estimated ChatGPT credit usage | 436.51 credits |
+| Combined reported spend | **$292.07** (`$292.074392` reconciled) |
+| OpenRouter reported spend | $40.874392 |
+| Claude Code reported spend | $251.20 |
+| OpenRouter requests | 4,142 |
+| Claude Code sessions | 18 |
+| Combined non-cache input / prompt tokens | 309,147,592 |
+| Combined non-cache output / completion tokens | 3,191,327 |
 
-The estimate uses the [official Codex pricing rate card](https://learn.chatgpt.com/docs/pricing)
-available on the snapshot date: 100 credits per million non-cached input tokens, 10 credits per
-million cached input tokens, and 500 credits per million output tokens for GPT-5.6 Sol at the
-standard tier. The unrounded calculation is 436.51008 credits. Reasoning output is already part
-of output tokens and is not added again.
+OpenRouter covers calendar days `2026-08-17` through `2026-08-21`. No Claude Code date range was inferred. Requests and sessions remain separate activity units.
 
-This is a usage estimate, not a currency invoice. The local records contain token counters and a
-credit meter but no authoritative monetary charge or plan-specific conversion. Included plan
-usage can therefore have no incremental currency charge, while API-key or purchased-credit usage
-may be billed differently. The authoritative current account figure is the
-[Codex usage dashboard](https://chatgpt.com/codex/settings/usage).
+### Claude Code model summary
+
+| Model | Session appearances | Input | Output | Cache read | Cache write | Attributed reported cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Opus 5 | 12 | 21,178 | 499,000 | 1,058,600,000 | 31,504,200 | $197.17 |
+| Sonnet 5 | 7 | 3,887 | 31,910 | 508,600,000 | 13,444,900 | $38.19 |
+| Opus 4.8 | 1 | 877 | 3,200 | 190,200,000 | 10,300,000 | $0.00 |
+| Haiku 4.5 | 1 | 452 | 106 | 1,800,000 | 508,200 | $0.19 |
+| Unallocated multi-model session | — | — | — | — | — | $15.65 |
+| **Total** | **18 sessions** | **26,394** | **534,216** | **1,759,200,000** | **55,757,300** | **$251.20** |
+
+Session appearances are not additive because a session may use more than one model. Cache reads and cache writes are reported separately and are not treated as normal input tokens.
+
+### OpenRouter model summary
+
+| Model | Provider | Requests | Prompt tokens | Completion tokens | Total reported cost | Share of cost |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| google/gemini-3.7-flash-20260813 | Google | 3,077 | 249,543,651 | 1,613,321 | $23.801643 | 58.23% |
+| z-ai/glm-5.2-20260616 | Baidu, Crusoe, Decart, Friendli, GMICloud, Novita, SiliconFlow, StreamLake | 447 | 37,572,921 | 517,421 | $9.248167 | 22.63% |
+| deepseek/deepseek-v4-pro-20260813 | Alibaba, GMICloud, Novita, Parasail, SiliconFlow, Together | 242 | 12,337,550 | 366,486 | $4.341338 | 10.62% |
+| google/gemini-3.1-pro-preview-20260219 | Google | 76 | 3,382,625 | 28,152 | $2.130202 | 5.21% |
+| deepseek/deepseek-v4-pro-20260423 | Baidu | 53 | 1,587,579 | 32,999 | $0.863910 | 2.11% |
+| google/gemini-2.5-pro | Google | 18 | 205,051 | 4,663 | $0.252814 | 0.62% |
+| deepseek/deepseek-v4-flash-20260731 | Baidu, DigitalOcean, Fireworks, GMICloud, Morph, Novita, Relace | 163 | 4,066,925 | 90,406 | $0.136798 | 0.33% |
+| moonshotai/kimi-k2.6-20260420 | Baidu, Decart | 8 | 100,584 | 826 | $0.029599 | 0.07% |
+| Other (15 models) | Multiple providers | 58 | 324,312 | 2,837 | $0.069921 | 0.17% |
+
+> Claude Code includes four sessions that reported $0.00. One $15.65 multi-model session is retained as unallocated rather than assigning its cost to a model without evidence.
+
+Regenerate with a private input kept outside the repository:
+
+```bash
+python scripts/generate_usage_dashboard.py \
+  --openrouter-input /absolute/private/path/openrouter_activity.csv \
+  --claude-input data/claude-code-usage-aggregate.json \
+  --output-dir docs/assets \
+  --update-readme README.md
+```
+<!-- ai-usage:end -->

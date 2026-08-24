@@ -72,8 +72,14 @@ own resolution.
 
 ## Usage
 
-`TODO_BEFORE_SUBMISSION`: document the exact FastMCP launcher, tunnel setup, warm-up/counted mode
-switch, Live GUI start, and controlled shutdown once those interfaces exist and are verified.
+Minimal CLI example:
+
+```sh
+uv run police-peer --help
+```
+
+See [`docs/CLI.md`](docs/CLI.md) for entry points, options, local and remote examples, mode
+behavior, configuration precedence, exit codes, and artifact boundaries.
 
 **Replay (verified, works today).** `police_peer.sdk.verify_replay_bundle(path)` is the sole
 public entrypoint; `scripts/replay.py` is a thin CLI over it:

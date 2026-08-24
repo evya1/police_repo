@@ -128,8 +128,8 @@ def load_llm_settings(toml_data: dict) -> LlmSettings:
         raise ConfigError("[llm].provider_slug is required when provider='openrouter'")
     if not 0 < deadline <= 60:
         raise ConfigError("[llm].step_deadline_seconds must be in (0, 60]")
-    if not 1 <= max_tokens <= 64:
-        raise ConfigError("[llm].max_output_tokens must be between 1 and 64")
+    if not 1 <= max_tokens <= 3200:
+        raise ConfigError("[llm].max_output_tokens must be between 1 and 3200")
     if cadence < 1:
         raise ConfigError("[llm].every_n_steps must be at least 1")
     return LlmSettings(provider, model, provider_slug, deadline, max_tokens, cadence)

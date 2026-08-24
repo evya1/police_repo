@@ -12,9 +12,9 @@ from typing import Any
 from police_peer.infra.llm_client import RawCompletion
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-MAX_OUTPUT_TOKENS = 64
+MAX_OUTPUT_TOKENS = 3200
 MAX_REQUEST_SECONDS = 30.0
-_MAX_RESPONSE_BYTES = 64_000
+_MAX_RESPONSE_BYTES = 256_000
 
 
 class OpenRouterError(Exception):

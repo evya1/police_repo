@@ -31,7 +31,7 @@ __all__ = [
 #: to the exact template version that produced it.
 PROMPT_VERSION = "llm-hint-prompt/v1"
 
-_MAX_TEXT_CHARS = 2000
+_MAX_TEXT_CHARS = 48_000
 
 
 class LlmAdapterError(Exception):

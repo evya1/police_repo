@@ -50,7 +50,7 @@ def test_live_opt_in_without_key_never_constructs_client(monkeypatch) -> None:
         ('provider = "openrouter"\nmodel = ""\nprovider_slug = "novita"', "model"),
         ('provider = "openrouter"\nmodel = "m"\nprovider_slug = ""', "provider_slug"),
         ('provider = "ollama"', "provider"),
-        ('provider = "openrouter"\nmodel = "m"\nprovider_slug = "p"\nmax_output_tokens = 65',
+        ('provider = "openrouter"\nmodel = "m"\nprovider_slug = "p"\nmax_output_tokens = 3201',
          "max_output_tokens"),
         ('provider = "openrouter"\nmodel = "m"\nprovider_slug = "p"\nevery_n_steps = 0',
          "every_n_steps"),

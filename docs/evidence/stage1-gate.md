@@ -19,7 +19,7 @@
    - Command: `uv run pytest tests/integration/test_local_two_agent_game.py::test_stage1_capture_at_step_35_takes_precedence`
    - Result: PASSED. Capture at step 35 takes precedence over survival claim.
 
-4. **Divergence refusal (OPEN-011)**:
+4. **Divergence refusal (production termination guard)**:
    - Command: `uv run pytest tests/integration/test_local_two_agent_game.py::test_stage1_divergence_refusal`
    - Result: PASSED. Refuses to start when `max_moves` and `survival_threshold` diverge.
 

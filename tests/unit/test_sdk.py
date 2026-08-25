@@ -112,7 +112,7 @@ def test_create_peer_from_dict(sample_config: dict[str, object]) -> None:
 def test_create_peer_divergent_contract_refusal(sample_config: dict[str, object]) -> None:
     sample_config["movement_and_barriers"]["max_moves"] = 40  # type: ignore[index]
     sample_config["movement_and_barriers"]["survival_threshold"] = 35  # type: ignore[index]
-    with pytest.raises(ConfigError, match="Operational contract violation"):
+    with pytest.raises(ConfigError, match="termination contract violation"):
         create_peer(sample_config, role=Role.POLICE)
 
 
@@ -138,4 +138,3 @@ def test_stand_in_engine_start_positions_from_terms() -> None:
     engine_thief = StandInEngine(Role.THIEF)
     engine_thief.start_subgame(1, Role.THIEF, terms={"cop_start": [1, 2], "thief_start": [5, 4]})
     assert engine_thief._session.engine.position == (5, 4)
-

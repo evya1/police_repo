@@ -167,13 +167,13 @@ def validate_config(data: dict[str, Any]) -> None:
 
 
 def _validate_operational_contract(data: dict[str, Any]) -> None:
-    """Validate operational contract: max_moves == survival_threshold (OPEN-011)."""
+    """Validate the production termination contract: max_moves == survival_threshold."""
     movement = data.get("movement_and_barriers", {})
     max_moves = movement.get("max_moves")
     survival_thresh = movement.get("survival_threshold")
     if max_moves is not None and survival_thresh is not None and max_moves != survival_thresh:
         raise ConfigError(
-            f"Operational contract violation (OPEN-011): max_moves ({max_moves}) "
+            f"Production termination contract violation: max_moves ({max_moves}) "
             f"and survival_threshold ({survival_thresh}) must be equal"
         )
 

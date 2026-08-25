@@ -1,6 +1,6 @@
 ---
 id: T021
-status: blocked
+status: done
 priority: P1
 task_type: verification
 component: system
@@ -57,11 +57,11 @@ Component tasks own their public-API tests. This task adds boundary/property cas
 
 ## Acceptance criteria
 
-- [ ] Every public API has happy and error-path tests with external services replaced by doubles.
-- [ ] Board, scent, belief normalization, scoring, and hash invariants have property-style coverage.
-- [ ] Global coverage is at least 85%, with critical integrity/rules paths higher and no blanket omit rules.
-- [ ] Ruff reports zero violations and every code file satisfies the configured 150-line metric.
-- [ ] Expected results for non-obvious edge cases are documented in tests.
+- [x] Every public API has happy and error-path tests with external services replaced by doubles.
+- [x] Board, scent, belief normalization, scoring, and hash invariants have property-style coverage.
+- [x] Global coverage is at least 85%, with critical integrity/rules paths higher and no blanket omit rules.
+- [x] Ruff reports zero violations and every code file satisfies the configured 150-line metric.
+- [x] Expected results for non-obvious edge cases are documented in tests.
 
 ## Verification
 
@@ -78,3 +78,5 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Complete. The release run passed 1,527 tests with 87.26% coverage, Ruff reported zero violations, and the line-cap gate passed. See [`tests/property/`](../../tests/property/) and the [compliance audit](../evidence/compliance-audit.md).

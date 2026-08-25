@@ -79,7 +79,7 @@ Notes on this decision:
 - `contract_version` and `agreed_between` are our own bookkeeping fields, not attested anywhere in the reconstructed source; they exist to let a loader detect a stale or foreign contract file, and are explicitly out of scope for `CFG-004`'s "every Appendix F value" requirement.
 - `network_and_league.num_games` is set to the binding `6` (`LEAGUE-001`), not the Appendix B example's demonstration value of `1` — `docs/spec/CANONICAL_REQUIREMENTS.md` and the requirements reconstruction both flag that example value as non-binding.
 - No `technical_loss` key is included: it is not an Appendix F table value (no such row exists in table 17); it is a derived outcome of Appendix E rule 48 via `GAME-013`, computed by domain logic rather than read from the contract.
-- `move_cap` vs `survival_threshold` are carried as two distinct keys, both defaulting to the binding minimum of 35, exactly as `GAME-014` states — this ADR takes no position on their relationship; that is `OPEN-011`, owned by the lecturer.
+- `move_cap` and `survival_threshold` are carried as distinct keys, both defaulting to 35; production validation requires compatible values before play.
 - This is a floor, not a ceiling: `CFG-005` permits negotiated tightening/loosening within status rules, so two teams may still amend values (never field names) by agreement.
 
 ## Alternatives considered

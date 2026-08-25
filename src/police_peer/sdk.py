@@ -108,7 +108,7 @@ def create_peer(
     survival_thresh = int(movement.get("survival_threshold", 35))
     if max_moves != survival_thresh:
         raise ConfigError(
-            f"Operational contract violation (OPEN-011): max_moves ({max_moves}) "
+            f"Production termination contract violation: max_moves ({max_moves}) "
             f"and survival_threshold ({survival_thresh}) must be equal"
         )
 

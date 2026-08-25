@@ -23,7 +23,10 @@ An action request: `{action: MOVE(dir) | STAY | BARRIER(target_cell), actor: own
 
 ## Output
 
-Either an updated game state (own position, own barrier set, board, step count) with no leakage of the opponent's true position, or a typed rejection with no state change; on a terminal condition, a `{outcome, score}` verdict per GAME-013, or an explicit refusal-to-score when GAME-014's two values diverge (OPEN-011).
+Either an updated game state (own position, own barrier set, board, step count) with no leakage
+of the opponent's true position, or a typed rejection with no state change; a compatible
+terminal condition yields a `{outcome, score}` verdict per GAME-013, while incompatible
+GAME-014 values are rejected before play.
 
 ## Externally visible invariants
 
@@ -34,7 +37,7 @@ Either an updated game state (own position, own barrier set, board, step count) 
 
 ## Failure/error behavior
 
-Rejection carries the specific violated rule (e.g. "diagonal move rejected — GAME-005"), never a generic error. A terminal-condition ambiguity under OPEN-011 raises an explicit refusal rather than guessing a precedence.
+Rejection carries the specific violated rule (e.g. "diagonal move rejected — GAME-005"), never a generic error. An incompatible GAME-014 termination contract raises a typed refusal before play.
 
 ## Version / compatibility
 

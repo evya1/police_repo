@@ -18,7 +18,7 @@ A pure, deterministic domain module (`src/police_peer/domain/`) with no network/
 
 - `domain/board.py` — board geometry, position, legality of a raw move (in-bounds, non-diagonal).
 - `domain/rules.py` — barrier placement legality, capture/entrapment/no-legal-move terminal detection, the hidden-position constraint (this role's domain state never computes the opponent's true position; the Thief's own domain state answers entrapment/barrier-on-cell questions from its own local position).
-- `domain/scoring.py` — the fixed GAME-013 score table and the GAME-014/OPEN-011 refusal path.
+- `domain/scoring.py` — the fixed GAME-013 score table and the GAME-014 production refusal path.
 - `config/` — Appendix F status validator (Fixed/Minimum/Negotiated), shared-JSON/private-TOML precedence (CFG-003), per-game configuration lifecycle (CFG-009, CFG-010).
 
 ## State/responsibility ownership
@@ -38,7 +38,7 @@ Domain owns board/rules/scoring state exclusively; config owns the validated par
 | Barrier placed on Thief's current cell | CAPTURE, 20/5 |
 | Thief has no legal move (all neighbors blocked/off-board) | CAPTURE, 20/5 |
 | Step count reaches `survival_threshold` | SURVIVAL, 5/10 |
-| Step count reaches `max_moves` without survival/capture, and the two values diverge | Refuse to score (OPEN-011) |
+| Step count reaches `max_moves` without survival/capture, and the two values diverge | Refuse to score (production termination guard) |
 
 ## Turn-adjudication flow
 
@@ -59,7 +59,7 @@ flowchart TD
     I -->|Police on Thief cell plus valid Capture Claim| J["CAPTURE: 20 to Police, 5 to Thief (GAME-013)"]
     I -->|Barrier on Thief cell or Thief has no legal move| J
     I -->|Step count reaches survival_threshold| K["SURVIVAL: 5 to Police, 10 to Thief (GAME-013)"]
-    I -->|Step count reaches max_moves without survival or capture| L["Blocked by OPEN-011: refuse to score, do not guess"]
+    I -->|Step count reaches max_moves without survival or capture| L["Production termination guard: refuse to score, do not guess"]
     I -->|none of the above| M[Turn passes to opponent]
 ```
 
@@ -69,7 +69,7 @@ flowchart TD
 
 ## Local test strategy
 
-Unit tests per row of the domain test-vector table; property tests for legal-motion invariants and score-derivation determinism; config schema/precedence tests against the CFG-006/007/008 vectors; the OPEN-011 refusal path as an explicit negative test, not a skip.
+Unit tests per row of the domain test-vector table; property tests for legal-motion invariants and score-derivation determinism; config schema/precedence tests against the CFG-006/007/008 vectors; the production termination guard refusal path as an explicit negative test, not a skip.
 
 ## Component-level integration
 

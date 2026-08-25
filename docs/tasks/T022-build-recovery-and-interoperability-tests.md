@@ -1,6 +1,6 @@
 ---
 id: T022
-status: blocked
+status: done
 priority: P1
 task_type: integration
 component: system
@@ -26,11 +26,7 @@ depends_on:
   - T052
   - T053
   - T054
-gates:
-  - id: G-LIVE
-    kind: input_gate
-    scope: live_interop
-    blocks: integration
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -66,7 +62,7 @@ Tests cover derived failure controls without elevating their internal message sh
 
 ## Gates
 
-- `G-LIVE` (`input_gate`, `blocks: integration`) — the task completes locally; it cannot pass the `live_interop` integration gate in the project-level integration plan until this resolves.
+The live interoperability gate is resolved by the completed counted external series and its mutually verified evidence.
 
 ## Constraints
 
@@ -145,3 +141,5 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Complete. Integration, contract, recovery, kit, result-agreement, and parity tests pass. The real six-subgame series is documented in the [match evidence index](../evidence/games/ZeroOne0-vs-bestteam/README.md); all 309 replay records verify, and reciprocal Police/Thief bundles pass parity.

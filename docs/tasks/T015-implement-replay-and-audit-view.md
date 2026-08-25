@@ -89,3 +89,11 @@ logs, verifies both sealed halves before display, and refuses tampered evidence;
 read-only and provides deterministic previous/next navigation over verified records. Honest and
 tampered behavior is covered by `tests/integration/test_replay_gui_adapter.py`, and the README uses
 a genuine Verified OK screenshot captured from the working viewer.
+The completed counted match is verified through
+`scripts/replay_gui.py docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3 --verify-only`
+and the immutable six-subgame bundle under `docs/evidence/games/ZeroOne0-vs-bestteam/`.
+
+Completion links: [Replay GUI launcher](../../scripts/replay_gui.py),
+[adapter tests](../../tests/integration/test_replay_gui_adapter.py),
+[Replay GUI evidence](../assets/replay-gui-verified.png), and
+[completed counted-match evidence](../evidence/games/ZeroOne0-vs-bestteam/README.md).

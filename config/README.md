@@ -32,7 +32,7 @@ Use `docs/spec/CANONICAL_REQUIREMENTS.md` CFG-004 through CFG-008 as the normali
 Runtime secrets belong in environment variables or local files ignored by Git. Never put OAuth credentials, tokens, keys, passwords, personal identifiers, or private member data in either JSON or TOML. `.env.example` contains placeholders only. `credentials.json`, `token.json`, `.env`, and key material are forbidden in commits.
 
 Confirmed public team metadata is team name `ZeroOne`, team number `01`, GitHub handles `evya1`
-and `Us5rName`, and final-project group code `ZeroOne1`. Template wording remains the default; the
+and `Us5rName`, and final-project group code `ZeroOne0`. Template wording remains the default; the
 optional selected provider is OpenRouter and its credential is supplied only through
 `OPENROUTER_API_KEY`.
 
@@ -40,7 +40,8 @@ optional selected provider is OpenRouter and its credential is supplied only thr
 
 - Four official JSON templates/schemas and their exact canonical signing rules.
 - Exact signing-key generation/distribution/rotation procedure.
-- Valid eight-character final-project group code, repository URLs, public MCP URLs, opponent identifiers, and match times.
+- Runtime public MCP URLs for future external matches; the group code, repository URLs, opponent,
+  and completed match time are recorded in the counted-match evidence.
 - Lecturer/team resolution for OPEN-004, OPEN-005, OPEN-007, OPEN-008, and OPEN-009, including scent saturation/merge, role scheduling, and tie aggregation.
 
 T001 records arrival and verification in `docs/inputs/INPUT_REGISTER.md`, then updates affected entries in `docs/spec/OPEN_QUESTIONS.md`. An example may be added only after approval and must be labeled `EXAMPLE — NOT AN OFFICIAL ATTACHED TEMPLATE`. Input receipt creates a Change Request only if an approved canonical product requirement must materially change.

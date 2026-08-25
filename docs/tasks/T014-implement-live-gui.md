@@ -91,3 +91,7 @@ captured from an actual two-process Police/Thief FastMCP warm-up on 2026-08-24. 
 in `tests/unit/test_live_events.py`. The repository-native files replace the task's provisional
 `ui/` paths because the user supplied the reference Live/Replay layout after planning. The
 production Live GUI and its real-run evidence are accepted as complete for final submission.
+
+Completion links: [production launcher](../../scripts/live_gui.py),
+[event tests](../../tests/unit/test_live_events.py), and
+[Live GUI evidence](../assets/live-gui.png).

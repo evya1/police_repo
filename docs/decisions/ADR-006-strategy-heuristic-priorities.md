@@ -46,7 +46,7 @@ Use an ADR only for a sufficiently important and durable technical design decisi
 
 - T007's `heuristics`-scoped acceptance criterion (`{#heuristics}`) in both repositories may now be closed once the seeded scenarios above are demonstrated.
 - W3 (thief_repo) and W4 (police_repo) task scope is bounded to: (a) auditing existing strategy code against this ordering, (b) adding the two required negative-control scenarios, (c) documenting any deviation as a finding, not silently reordering weights.
-- Does not change `OPEN-011`, `OPEN-004`, or any other OPEN item's official status.
+- Does not change the production termination behavior, `OPEN-004`, or any other OPEN item's official status.
 
 ## Validation
 

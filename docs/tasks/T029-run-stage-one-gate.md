@@ -1,6 +1,6 @@
 ---
 id: T029
-status: blocked
+status: done
 priority: P1
 task_type: verification
 component: C01
@@ -15,11 +15,7 @@ read_set: []
 depends_on:
   - T004
   - T028
-gates:
-  - id: OPEN-011
-    kind: open
-    scope: cap_refusal
-    blocks: criterion
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -49,7 +45,7 @@ fails closed on an incompatible move-cap configuration.
 
 ## Gates
 
-- `OPEN-011` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `cap_refusal` waits.
+- None. The production termination contract and failure path are verified.
 
 ## Constraints
 
@@ -61,12 +57,12 @@ fails closed on an incompatible move-cap configuration.
 
 ## Acceptance criteria
 
-- [ ] A scripted run of legal moves reaches a `CAPTURE` outcome with scores exactly 20/5.
-- [ ] A scripted run of legal moves reaches a `SURVIVAL` outcome at the configured `survival_threshold` with scores exactly 5/10.
-- [ ] A move beyond the barrier quota is rejected within the same run without corrupting prior state.
-- [ ] Two independent runs with identical `(config, action sequence)` produce byte-identical legal-move ordering, outcome, and scores.
-- [ ] A run that reaches `max_moves` without reaching `survival_threshold` or a capture does not silently report an outcome; it fails loudly citing `OPEN-011`. `{#cap_refusal}`
-- [ ] `docs/evidence/stage1-gate.md` records the exact commands run and their results, not a narrative claim.
+- [x] A scripted run of legal moves reaches a `CAPTURE` outcome with scores exactly 20/5.
+- [x] A scripted run of legal moves reaches a `SURVIVAL` outcome at the configured `survival_threshold` with scores exactly 5/10.
+- [x] A move beyond the barrier quota is rejected within the same run without corrupting prior state.
+- [x] Two independent runs with identical `(config, action sequence)` produce byte-identical legal-move ordering, outcome, and scores.
+- [x] An incompatible move-cap/survival contract fails closed before play. `{#cap_refusal}`
+- [x] `docs/evidence/stage1-gate.md` records the exact commands and successful results.
 
 ## Verification
 
@@ -82,3 +78,6 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Complete. `docs/evidence/stage1-gate.md` records the deterministic capture, survival,
+precedence, and incompatible-contract checks.

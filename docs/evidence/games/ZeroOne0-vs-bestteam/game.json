@@ -1,0 +1,194 @@
+{
+  "schema_version": "1.1",
+  "schema_profile": "league-kit-reference-v3",
+  "game_id": "ZeroOne0-vs-bestteam",
+  "game_uid": "a42b2bb2-2312-c679-5e69-fa3d5ea0aad9",
+  "links": {
+    "_remark": "match-level files are named <kind>_<game_id>.json; per-sub-game files carry _g<NN>. All four share one game_uid, which is what joins them.",
+    "declaration": "declaration_ZeroOne0-vs-bestteam.json",
+    "config": "config_ZeroOne0-vs-bestteam_g<NN>.json",
+    "log": "log_ZeroOne0-vs-bestteam_g<NN>.json",
+    "result": "result_ZeroOne0-vs-bestteam.json",
+    "github": {
+      "ZeroOne0": {
+        "cop": "https://github.com/evya1/police_repo",
+        "thief": "https://github.com/evya1/thief_repo"
+      },
+      "bestteam": {
+        "cop": "https://github.com/Diana-Koroblov/bestteam-cop",
+        "thief": "https://github.com/Diana-Koroblov/bestteam-thief"
+      }
+    }
+  },
+  "report_type": "final_game_result",
+  "groups": [
+    "ZeroOne0",
+    "bestteam"
+  ],
+  "num_sub_games": 6,
+  "sub_games": [
+    {
+      "sub_game_number": 1,
+      "roles": {
+        "ZeroOne0": "police",
+        "bestteam": "thief"
+      },
+      "result": "survival",
+      "winner_group": "bestteam",
+      "tie": false,
+      "steps": 35,
+      "score": {
+        "ZeroOne0": 5,
+        "bestteam": 10
+      },
+      "log_files": {
+        "ZeroOne0": "log_ZeroOne0-vs-bestteam_g01.json"
+      },
+      "audit": {
+        "log_verified": true,
+        "tampered": false
+      }
+    },
+    {
+      "sub_game_number": 2,
+      "roles": {
+        "ZeroOne0": "thief",
+        "bestteam": "police"
+      },
+      "result": "capture",
+      "winner_group": "bestteam",
+      "tie": false,
+      "steps": 5,
+      "score": {
+        "ZeroOne0": 5,
+        "bestteam": 20
+      },
+      "log_files": {
+        "ZeroOne0": "log_ZeroOne0-vs-bestteam_g02.json"
+      },
+      "audit": {
+        "log_verified": true,
+        "tampered": false
+      }
+    },
+    {
+      "sub_game_number": 3,
+      "roles": {
+        "ZeroOne0": "police",
+        "bestteam": "thief"
+      },
+      "result": "survival",
+      "winner_group": "bestteam",
+      "tie": false,
+      "steps": 35,
+      "score": {
+        "ZeroOne0": 5,
+        "bestteam": 10
+      },
+      "log_files": {
+        "ZeroOne0": "log_ZeroOne0-vs-bestteam_g03.json"
+      },
+      "audit": {
+        "log_verified": true,
+        "tampered": false
+      }
+    },
+    {
+      "sub_game_number": 4,
+      "roles": {
+        "ZeroOne0": "thief",
+        "bestteam": "police"
+      },
+      "result": "capture",
+      "winner_group": "bestteam",
+      "tie": false,
+      "steps": 5,
+      "score": {
+        "ZeroOne0": 5,
+        "bestteam": 20
+      },
+      "log_files": {
+        "ZeroOne0": "log_ZeroOne0-vs-bestteam_g04.json"
+      },
+      "audit": {
+        "log_verified": true,
+        "tampered": false
+      }
+    },
+    {
+      "sub_game_number": 5,
+      "roles": {
+        "ZeroOne0": "police",
+        "bestteam": "thief"
+      },
+      "result": "survival",
+      "winner_group": "bestteam",
+      "tie": false,
+      "steps": 35,
+      "score": {
+        "ZeroOne0": 5,
+        "bestteam": 10
+      },
+      "log_files": {
+        "ZeroOne0": "log_ZeroOne0-vs-bestteam_g05.json"
+      },
+      "audit": {
+        "log_verified": true,
+        "tampered": false
+      }
+    },
+    {
+      "sub_game_number": 6,
+      "roles": {
+        "ZeroOne0": "thief",
+        "bestteam": "police"
+      },
+      "result": "survival",
+      "winner_group": "ZeroOne0",
+      "tie": false,
+      "steps": 35,
+      "score": {
+        "ZeroOne0": 10,
+        "bestteam": 5
+      },
+      "log_files": {
+        "ZeroOne0": "log_ZeroOne0-vs-bestteam_g06.json"
+      },
+      "audit": {
+        "log_verified": true,
+        "tampered": false
+      }
+    }
+  ],
+  "final_result": {
+    "total_score": {
+      "ZeroOne0": 35,
+      "bestteam": 75
+    },
+    "sub_games_won": {
+      "ZeroOne0": 1,
+      "bestteam": 5
+    },
+    "ties": 0,
+    "winner_group": "bestteam",
+    "series_tie": false,
+    "games_played_including_this": {
+      "ZeroOne0": 1,
+      "bestteam": null
+    },
+    "first_meeting_between_groups": true,
+    "diversity_reward_applied": {
+      "ZeroOne0": false,
+      "bestteam": true
+    }
+  },
+  "mutual_agreement": {
+    "sha256": "f5711aef0e6d33cde101c48a33d60cdd6de780a71e8213bd4ee8ae9874789ddc",
+    "confirmed": false
+  },
+  "league": {
+    "counted": true,
+    "reason": "post-game user designation",
+    "original_pre_game_mode": "warmup"
+  }
+}

@@ -1,6 +1,6 @@
 ---
 id: T023
-status: blocked
+status: done
 priority: P1
 task_type: governance
 component: system
@@ -23,11 +23,7 @@ depends_on:
   - T015
   - T020
   - T022
-gates:
-  - id: G-TEAM
-    kind: input_gate
-    scope: public_metadata
-    blocks: criterion
+gates: []
 parallel_safe: false
 claimed_by:
 claim_expires_at:
@@ -64,7 +60,7 @@ Replace TODO_BEFORE_SUBMISSION markers only with verified implementation evidenc
 
 ## Gates
 
-- `G-TEAM` (`input_gate`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `public_metadata` waits.
+- `G-TEAM` resolved on 2026-08-24 with confirmed group code `ZeroOne0` and repository metadata.
 
 ## Constraints
 
@@ -76,12 +72,12 @@ Replace TODO_BEFORE_SUBMISSION markers only with verified implementation evidenc
 
 ## Acceptance criteria
 
-- [ ] README covers installation, usage, config, Dec-POMDP, FastMCP/orchestration dilemmas, implemented strategy, tests, troubleshooting, sibling link, contribution, and license decision.
-- [ ] Live GUI belief and Replay Verified OK screenshots come from a traceable verified run.
-- [ ] Implemented strategies, benchmarks, results, token/cost figures, and experiments cite reproducible evidence.
-- [ ] Prompt/decision notes retain useful engineering lessons without secrets or private personal data.
-- [ ] All local Markdown links resolve and all remaining TODO_BEFORE_SUBMISSION markers are justified blockers.
-- [ ] Public team metadata (team name, number, GitHub handles) documented in the README is confirmed against the human-approved record once `G-TEAM` is satisfied. `{#public_metadata}`
+- [x] README covers the completed architecture, installation, local/external execution, GUI, replay, audit, testing, evidence, costs, authors, course, and sibling repository.
+- [x] Live GUI and Replay Verified OK screenshots are committed at `docs/assets/live-gui.png` and `docs/assets/replay-gui-verified.png`.
+- [x] Implemented strategies, confirmed counted-match results, token/cost figures, and verification commands cite reproducible repository evidence.
+- [x] Detailed engineering and decision records remain under `docs/` without secrets or private personal data.
+- [x] All local Markdown links resolve and the final README contains no development-status placeholder.
+- [x] Public team metadata is confirmed: team `ZeroOne`, number `01`, handles `evya1` and `Us5rName`, and group code `ZeroOne0`. `{#public_metadata}`
 
 ## Verification
 
@@ -98,3 +94,14 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Complete on `production-fixes`. The submission README leads with both working GUI screenshots,
+a credential-free verified demo, and the completed counted `ZeroOne0-vs-bestteam` result. The
+canonical `game.json`, six configurations, six logs, declaration, transcript/replay bundle,
+manifest, audit provenance, reporting evidence, and verification commands are linked from
+`docs/evidence/games/ZeroOne0-vs-bestteam/README.md`. Markdown, documentation, and complete
+repository quality gates pass on the release commit.
+
+Completion links: [submission README](../../README.md),
+[Live GUI](../assets/live-gui.png), [Replay GUI](../assets/replay-gui-verified.png), and
+[canonical completed game](../evidence/games/ZeroOne0-vs-bestteam/game.json).

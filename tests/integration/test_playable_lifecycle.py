@@ -179,5 +179,5 @@ def test_survival_threshold_boundaries() -> None:
     assert eng._session.engine.survived() is True
 
     # Divergent configuration must refuse
-    with pytest.raises(ValueError, match="OPEN-011"):
+    with pytest.raises(ValueError, match="termination contract"):
         eng.start_subgame(1, Role.THIEF, terms={"max_steps": 34, "survival_threshold": 35})

@@ -85,6 +85,18 @@ class RenderingTests(unittest.TestCase):
         self.assertIn("Other (2 models)", markdown)
         self.assertIn(">Other</text>", svg)
 
+    def test_openrouter_model_and_provider_presentation_is_linked(self) -> None:
+        item = self.openrouter["models"].pop("vendor/model<unsafe&")
+        item["providers"] = {"Baidu", "Google", "Novita"}
+        self.openrouter["models"]["z-ai/glm-5.2-20260616"] = item
+        markdown = render_markdown(self.openrouter, self.claude)
+        self.assertIn("[Z.ai: GLM 5.2](https://openrouter.ai/z-ai/glm-5.2)", markdown)
+        self.assertIn('href="https://openrouter.ai/provider/baidu"', markdown)
+        self.assertIn('src="docs/assets/providers/baidu.png"', markdown)
+        self.assertIn("Baidu Qianfan</a>, Google,", markdown)
+        self.assertIn("NovitaAI</a>", markdown)
+        self.assertNotIn("openrouter.ai/provider/google-", markdown)
+
     def test_outputs_exclude_timestamps_sensitive_values_and_paths(self) -> None:
         outputs = render_svg(self.openrouter, self.claude, "light") + render_markdown(
             self.openrouter, self.claude

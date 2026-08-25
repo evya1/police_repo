@@ -54,7 +54,7 @@ Closes the `police_repo` half of the independent review dated 2026-08-22. The sh
 `thief_repo`'s `T042` (ADR-005 source-of-truth direction); this task verifies parity, it does
 not redesign shared behaviour.
 
-Scope is exactly the review's findings. It does **not** reopen OPEN-011 termination
+Scope is exactly the review's findings. It does **not** change production termination
 semantics, group scoring, reporting, GUI, or branch hygiene, and it does **not** change
 ADR-007 or `T041`, which stay evaluation-only.
 

@@ -474,7 +474,7 @@ Measured evidence at branch head `38bbed2` — the last commit of the wave, afte
 - `common/` is byte-identical to `thief_repo` (identical git blob hashes for every tracked
   path under `common/`).
 
-Scope explicitly **not** touched: OPEN-011 termination semantics, group scoring, reporting,
+Scope explicitly **not** touched: production termination semantics, group scoring, reporting,
 GUI, branch hygiene. **ADR-007 is unchanged and `T041` remains evaluation-only.**
 
 ### TC-P24 outcome

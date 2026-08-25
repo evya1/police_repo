@@ -29,7 +29,7 @@ A completed sub-game's full step log plus the final mutual audit outcome (SEC-00
 
 - `verified: true` is set only after a complete mutual audit with no hash mismatch (SEC-005, SEC-006).
 - A `TAMPERED` outcome is terminal — no downstream consumer may reinterpret it as a clean result.
-- `score` always matches the fixed GAME-013 table for the given `outcome`, except when GAME-014's ambiguity (OPEN-011) legitimately blocks a move-cap-exhaustion result — in that case no result is emitted at all rather than a guessed one.
+- `score` always matches the fixed GAME-013 table for the given `outcome`; an incompatible GAME-014 termination contract is rejected before play and can never emit a guessed result.
 
 ## Failure/error behavior
 

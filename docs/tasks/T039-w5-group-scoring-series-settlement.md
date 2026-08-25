@@ -41,7 +41,7 @@ risk: medium
 
 Mirrors `thief_repo`'s `T039` shared-file patch to `common/transport/series.py`
 byte-for-byte, then applies the equivalent group/pool settlement logic to
-`src/police_peer/league/`. Same `OPEN-011` refusal discipline applies.
+`src/police_peer/league/`. Same `production termination guard` refusal discipline applies.
 
 ## Expected outcome
 

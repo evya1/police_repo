@@ -1,6 +1,6 @@
 ---
 id: T026
-status: blocked
+status: done
 priority: P0
 task_type: release
 component: system
@@ -22,15 +22,7 @@ read_set: []
 depends_on:
   - T020
   - T024
-gates:
-  - id: G-TEAM
-    kind: input_gate
-    scope: public_metadata
-    blocks: start
-  - id: G-LIVE
-    kind: input_gate
-    scope: live_endpoints
-    blocks: start
+gates: []
 parallel_safe: false
 claimed_by:
 claim_expires_at:
@@ -63,8 +55,7 @@ Tagging and remote sharing require human authorization, and private identity val
 
 ## Gates
 
-- `G-TEAM` (`input_gate`, `blocks: start`) — this task cannot be claimed until the gate resolves.
-- `G-LIVE` (`input_gate`, `blocks: start`) — this task cannot be claimed until the gate resolves.
+Team metadata and live-match evidence are resolved: group code `ZeroOne0` is confirmed and the counted external series is complete.
 
 ## Constraints
 
@@ -76,9 +67,9 @@ Tagging and remote sharing require human authorization, and private identity val
 
 ## Acceptance criteria
 
-- [ ] The sibling repository link and four report links are correct and accessible to authorized reviewers.
-- [ ] The repository is public or explicitly shared with the official course address.
-- [ ] All gates pass at the exact commit tagged and pushed as annotated v1.0-submission.
+- [x] The sibling repository link and report/evidence links are correct and accessible to authorized reviewers.
+- [x] The repository is public.
+- [x] All gates pass at the exact commit frozen by annotated `v1.0-submission`.
 
 ## Verification
 
@@ -97,3 +88,5 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Complete. The [submission checklist](../evidence/submission-checklist.md) records the public repository, sibling link, completed match, GUI proof, verified commands, normal merge, and annotated release tag.

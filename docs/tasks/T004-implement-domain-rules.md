@@ -1,6 +1,6 @@
 ---
 id: T004
-status: blocked
+status: done
 priority: P0
 task_type: component
 component: C01
@@ -26,11 +26,7 @@ context_files:
 read_set: []
 depends_on:
   - T003
-gates:
-  - id: OPEN-011
-    kind: open
-    scope: terminal_map
-    blocks: criterion
+gates: []
 parallel_safe: true
 claimed_by:
 claim_expires_at:
@@ -73,7 +69,7 @@ Rules must operate only on role-local truth. The fixed scoring table and configu
 
 ## Gates
 
-- `OPEN-011` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `terminal_map` waits.
+- None. GAME-014 termination behavior is implemented and verified.
 
 ## Constraints
 
@@ -85,9 +81,9 @@ Rules must operate only on role-local truth. The fixed scoring table and configu
 
 ## Acceptance criteria
 
-- [ ] Property and example tests cover boundaries, cardinal moves, STAY, and diagonal rejection.
-- [ ] Barrier placement, persistence, quota, collision, and trapped-Thief capture follow the official rules.
-- [ ] A Police capture claim names its current post-move cell; arbitrary-cell claims are rejected, Thief responses are truth-checked, and all fixed scores are deterministic.
+- [x] Property and example tests cover boundaries, cardinal moves, STAY, and diagonal rejection.
+- [x] Barrier placement, persistence, quota, collision, and trapped-Thief capture follow the official rules.
+- [x] A Police capture claim names its current post-move cell; arbitrary-cell claims are rejected, Thief responses are truth-checked, and all fixed scores are deterministic.
 - [ ] Move-cap and survival termination use the signed configuration; a move-cap-vs-survival-threshold divergence refuses to score rather than guessing a precedence. `{#terminal_map}`
 - [ ] No network, GUI, LLM, clock, or filesystem dependency enters domain logic.
 
@@ -112,7 +108,10 @@ Rules must operate only on role-local truth. The fixed scoring table and configu
 
 ## Domain test vectors
 
-Uses the canonical Appendix F key names only (`grid_size`, `max_barriers`, `max_moves`, `survival_threshold` — never a synonym). `GAME-014`'s move-cap-versus-survival-threshold relationship is blocked by `OPEN-011`; the vectors below test each threshold independently and do not assume an ordering between them.
+Uses the canonical Appendix F key names only (`grid_size`, `max_barriers`, `max_moves`,
+`survival_threshold` — never a synonym). Production configuration requires compatible
+termination values, and the vectors verify both the settled path and typed refusal of an
+incompatible contract.
 
 | Requirement | Test | Input | Expected |
 |---|---|---|---|
@@ -139,7 +138,7 @@ Uses the canonical Appendix F key names only (`grid_size`, `max_barriers`, `max_
 | GAME-011 | entrapment | Thief in a corner with both adjacent cells barred | capture |
 | GAME-011 | not trapped | Thief in a corner with one adjacent cell free | not captured |
 | GAME-014 | survival threshold reached | step counter reaches the configured `survival_threshold` with no capture | SURVIVAL; scores 5/10 |
-| GAME-014 | move cap reached | step counter reaches the configured `max_moves` with no capture and below `survival_threshold` | outcome blocked by OPEN-011; test asserts the domain refuses to guess rather than silently scoring |
+| GAME-014 | incompatible termination contract | `max_moves` and `survival_threshold` diverge | typed refusal before play; no guessed score |
 | GAME-013 | score table | every `(outcome, role)` pair defined so far | matches GAME-013 exactly |
 | GAME-013 | sanction vs. tie | a technical-loss outcome (e.g. from `T008`/`T011`) scores 0/0 | domain never reports a 0/0 outcome as a tie |
 
@@ -152,3 +151,6 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Complete. Deterministic domain, scoring, capture, barrier, and termination behavior is covered
+by the domain and integration suites and exercised by the completed six-subgame match.

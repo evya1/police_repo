@@ -31,7 +31,7 @@ ARCH-001, ARCH-002, ARCH-003, ARCH-009 (process isolation and the module boundar
 
 - Given a `config/game.json` shared contract and a `config/game.toml` private file, the component validates every Appendix F Fixed/Minimum/Negotiated value and rejects a mismatch before play (CFG-001…008).
 - Given a legal action (move N/S/E/W/STAY, or a barrier declaration), the component updates only the acting side's own position/barrier state and rejects an illegal one with no state change (GAME-004…008, GAME-012).
-- Given a terminal condition — Police lands on the Thief cell with a valid Capture Claim, a barrier lands on the Thief's cell, the Thief has no legal move, or a fixed step count is reached — the component emits the correct outcome and score from GAME-009…014, or refuses to score and surfaces `gates: [{id: OPEN-011, ...}]` when the move-cap/survival-threshold ordering is genuinely ambiguous.
+- Given a terminal condition — Police lands on the Thief cell with a valid Capture Claim, a barrier lands on the Thief's cell, the Thief has no legal move, or a fixed step count is reached — the component emits the correct outcome and score from GAME-009…014, and rejects an incompatible move-cap/survival-threshold contract before play.
 - Given a new game, the component enforces that configuration changes only under recorded opponent agreement and that a per-game configuration file with a unique name is committed (CFG-009, CFG-010).
 
 ## Inputs
@@ -58,7 +58,7 @@ A validated game state; a legal/illegal action verdict with no side effects on i
 
 - Config validation failure (mismatched Fixed value, Minimum value below threshold, missing Negotiated agreement): refuse before Step 0, name the exact differing field.
 - Illegal action: reject with no state change; caller receives a typed rejection, not a silent no-op.
-- Move-cap-versus-survival-threshold divergence (OPEN-011): refuse to score rather than guess a precedence.
+- Move-cap-versus-survival-threshold divergence (production termination guard): refuse to score rather than guess a precedence.
 
 ## Edge cases
 
@@ -80,7 +80,7 @@ A validated game state; a legal/illegal action verdict with no side effects on i
 
 ## Relevant OPEN/input gates
 
-- OPEN-011 — terminal-outcome map; `blocks: criterion` on `{#cap_refusal}`. The binding minimum of 35 for both `max_moves` and `survival_threshold`, and the GAME-013 score table, are unaffected.
+- GAME-014 production behavior is complete: compatible termination values settle deterministically, and incompatible values fail closed before play.
 - OPEN-005 — reclassified `implementation_status: RESOLVED_LOCALLY`; `blocks: criterion` only on labeling a proposed negotiated change to a Minimum parameter, never on `{#config_validation}`.
 - OPEN-001 (via ADR-001) — the negotiated nested shape for `config/game.json` is our own engineering choice pending official confirmation; it does not block this component's implementation.
 

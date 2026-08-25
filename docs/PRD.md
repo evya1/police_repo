@@ -127,7 +127,9 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 - Python and uv are the planned implementation environment, subject to dependency-selection tasks.
 - Public reachability requires a team-selected tunneling mechanism and a remote opponent.
 - Gmail automation requires local OAuth credentials and explicit human authorization.
-- Official JSON templates/schemas and the Word form must be supplied later, as must the answer on whether Step 0 requires any course-supplied credential. Team name/number, GitHub handles, and the two repository URLs are confirmed; the eight-character group code is a candidate awaiting human confirmation.
+- Official JSON templates/schemas and the answer on whether Step 0 requires any course-supplied
+  credential remain external inputs. Team name/number, GitHub handles, both repository URLs, and
+  the eight-character group code `ZeroOne0` are confirmed.
 
 ## Risks
 
@@ -141,9 +143,9 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 
 ## Open questions
 
-- OPEN-001 through OPEN-011 in `docs/spec/OPEN_QUESTIONS.md` are active; each now carries both an `official_status` and an `implementation_status`, so an unresolved question blocks only the scope it actually governs.
+- Active questions are listed individually in `docs/spec/OPEN_QUESTIONS.md`; each blocks only the scope it actually governs.
 - OPEN-001, OPEN-004, OPEN-006, and OPEN-007 block production interoperability or reporting decisions at specific criteria, not whole components.
-- The unresolved fields in OPEN-003 block final submission packaging, not core development.
+- OPEN-003 and OPEN-010 are resolved by the confirmed team metadata and completed counted match.
 - OPEN-005's directional ambiguity carries `implementation_status: RESOLVED_LOCALLY`; `official_status` remains OPEN. See the local-resolution note in `docs/spec/OPEN_QUESTIONS.md`.
 - OPEN-009's saturation/merge ambiguity carries `implementation_status: OPERATIONAL_CONVENTION`; `official_status` remains OPEN. Scent implementation, default-profile selection, and model-lock declaration proceed against the recorded convention; the official reading is confirmed before counted play.
 - OPEN-001 and OPEN-007 likewise carry `implementation_status: OPERATIONAL_CONVENTION`: the artifact contract and the canonical serialization/commitment contract are recorded and vector-verified locally, while final authoritative compliance stays gated on the official files.
@@ -154,7 +156,6 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 | Version | Date | Status | Change | Approval |
 |---|---|---|---|---|
 | 0.1 | 2026-08-14 | draft | Initial canonical PRD reconstructed from authorized sources | Pending project-team review |
-| 0.2 | 2026-08-15 | draft | Recorded OPEN-011 (move-cap-versus-survival-threshold termination ambiguity), discovered while decomposing stage-1 board logic into T003/T004/T028/T029; no requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
 | 0.3 | 2026-08-15 | draft | Adopted two-level planning: moved mechanism-level detail out to component/mechanism PRDs, added G-007/NG-009/US-008/SC-011, narrowed OPEN-005's implementation-side scope. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
 | 0.4 | 2026-08-16 | accepted profile | Recorded the selected runtime interoperability profile (`reference-v3`, `subtractive_chebyshev_v1`, `belief`, unbound smell) with `multiplicative_book_v1` additionally supported. No requirement was added, removed, or normatively changed | Orchestrator edit |
 | 0.5 | 2026-08-16 | draft | Reconciled documented state with verified implementation; recorded the runtime baseline (PLANQ-002), artifact, canonical-serialization, Step-0, series, and scent operational conventions; corrected the OPEN-006 signing-key assumption and the OPEN-010 confirmation point; recorded the verification ladder. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |

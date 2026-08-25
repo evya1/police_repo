@@ -89,9 +89,23 @@ def load_claude(path: str | Path) -> dict[str, object]:
         raise DashboardError("invalid Claude aggregate input") from None
 
 
-def combined_totals(openrouter: dict[str, object], claude: dict[str, object]) -> dict[str, object]:
+def combined_totals(
+    openrouter: dict[str, object], claude: dict[str, object], codex: dict[str, object]
+) -> dict[str, object]:
     return {
-        "cost": openrouter["cost"] + parse_money(claude["accounted_cost_usd"]),
-        "input": openrouter["prompt"] + parse_count(claude["totals"]["input_tokens"]),
-        "output": openrouter["completion"] + parse_count(claude["totals"]["output_tokens"]),
+        "cost": (
+            openrouter["cost"]
+            + parse_money(claude["accounted_cost_usd"])
+            + parse_money(codex["estimated_cost_usd"])
+        ),
+        "input": (
+            openrouter["prompt"]
+            + parse_count(claude["totals"]["input_tokens"])
+            + parse_count(codex["totals"]["input_tokens"])
+        ),
+        "output": (
+            openrouter["completion"]
+            + parse_count(claude["totals"]["output_tokens"])
+            + parse_count(codex["totals"]["output_tokens"])
+        ),
     }

@@ -13,6 +13,7 @@ CLAUDE_KEYS = {
     "source",
     "session_count",
     "reported_cost_usd",
+    "accounted_cost_usd",
     "reported_api_time_seconds",
     "reported_wall_time_seconds",
     "zero_reported_cost_sessions",
@@ -27,7 +28,7 @@ MODEL_KEYS = {
     "output_tokens",
     "cache_read_tokens",
     "cache_write_tokens",
-    "attributed_reported_cost_usd",
+    "attributed_cost_usd",
 }
 TOTAL_KEYS = {"input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens"}
 
@@ -68,15 +69,18 @@ def load_claude(path: str | Path) -> dict[str, object]:
         for model in data["models"]:
             if not isinstance(model, dict) or set(model) != MODEL_KEYS:
                 raise DashboardError("invalid Claude aggregate input")
-            attributed += parse_money(model["attributed_reported_cost_usd"])
+            attributed += parse_money(model["attributed_cost_usd"])
             for key in TOTAL_KEYS:
                 summed[key] += parse_count(model[key])
         expected = {key: parse_count(data["totals"][key]) for key in TOTAL_KEYS}
-        total = parse_money(data["reported_cost_usd"])
+        reported_total = parse_money(data["reported_cost_usd"])
+        accounted_total = parse_money(data["accounted_cost_usd"])
         unallocated = parse_money(data["unallocated_multi_model_cost_usd"])
-        if summed != expected or attributed + unallocated != total:
+        if summed != expected or attributed + unallocated != accounted_total:
             raise DashboardError("Claude reconciliation failed")
-        if total != Decimal("251.20") or parse_count(data["session_count"]) != 18:
+        if reported_total != Decimal("251.20") or accounted_total != Decimal("410.76"):
+            raise DashboardError("Claude reconciliation failed")
+        if parse_count(data["session_count"]) != 18:
             raise DashboardError("Claude reconciliation failed")
         if parse_count(data["zero_reported_cost_sessions"]) != 4:
             raise DashboardError("Claude reconciliation failed")
@@ -87,7 +91,7 @@ def load_claude(path: str | Path) -> dict[str, object]:
 
 def combined_totals(openrouter: dict[str, object], claude: dict[str, object]) -> dict[str, object]:
     return {
-        "cost": openrouter["cost"] + parse_money(claude["reported_cost_usd"]),
+        "cost": openrouter["cost"] + parse_money(claude["accounted_cost_usd"]),
         "input": openrouter["prompt"] + parse_count(claude["totals"]["input_tokens"]),
         "output": openrouter["completion"] + parse_count(claude["totals"]["output_tokens"]),
     }

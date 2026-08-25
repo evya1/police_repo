@@ -264,16 +264,17 @@ This dashboard combines private-input OpenRouter activity with a committed, sani
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/ai-usage-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/ai-usage-light.svg">
-  <img alt="Aggregated OpenRouter and Claude Code usage and reported cost" src="docs/assets/ai-usage-light.svg">
+  <img alt="Aggregated OpenRouter and Claude Code usage and accounted cost" src="docs/assets/ai-usage-light.svg">
 </picture>
 
 ### Reconciliation
 
 | Metric | Aggregate |
 | --- | ---: |
-| Combined reported spend | **$292.07** (`$292.074392` reconciled) |
+| Combined accounted spend | **$451.63** (`$451.634392` reconciled) |
 | OpenRouter reported spend | $40.874392 |
-| Claude Code reported spend | $251.20 |
+| Claude Code accounted spend | $410.76 |
+| Claude Code source-reported spend | $251.20 |
 | OpenRouter requests | 4,142 |
 | Claude Code sessions | 18 |
 | Combined non-cache input / prompt tokens | 309,147,592 |
@@ -283,14 +284,16 @@ OpenRouter covers calendar days `2026-08-17` through `2026-08-21`. No Claude Cod
 
 ### Claude Code model summary
 
-| Model | Session appearances | Input | Output | Cache read | Cache write | Attributed reported cost |
+| Model | Session appearances | Input | Output | Cache read | Cache write | Attributed cost |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Opus 5 | 12 | 21,178 | 499,000 | 1,058,600,000 | 31,504,200 | $197.17 |
 | Sonnet 5 | 7 | 3,887 | 31,910 | 508,600,000 | 13,444,900 | $38.19 |
-| Opus 4.8 | 1 | 877 | 3,200 | 190,200,000 | 10,300,000 | $0.00 |
+| Opus 4.8 | 1 | 877 | 3,200 | 190,200,000 | 10,300,000 | $159.56 |
 | Haiku 4.5 | 1 | 452 | 106 | 1,800,000 | 508,200 | $0.19 |
 | Unallocated multi-model session | — | — | — | — | — | $15.65 |
-| **Total** | **18 sessions** | **26,394** | **534,216** | **1,759,200,000** | **55,757,300** | **$251.20** |
+| **Total** | **18 sessions** | **26,394** | **534,216** | **1,759,200,000** | **55,757,300** | **$410.76** |
+
+Opus 4.8 is a $159.56 list-price equivalent calculated from [Anthropic's standard pricing](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): $5/M input, $25/M output, $6.25/M default five-minute cache writes, and $0.50/M cache reads. Other Claude costs remain source-reported.
 
 Session appearances are not additive because a session may use more than one model. Cache reads and cache writes are reported separately and are not treated as normal input tokens.
 
@@ -308,7 +311,7 @@ Session appearances are not additive because a session may use more than one mod
 | [MoonshotAI: Kimi K2.6](https://openrouter.ai/moonshotai/kimi-k2.6) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a>, <a href="https://openrouter.ai/provider/decart"><img src="docs/assets/providers/decart.png" width="16" alt=""> Decart</a> | 8 | 100,584 | 826 | $0.03 | 0.07% |
 | Other (15 models) | Multiple providers | 58 | 324,312 | 2,837 | $0.07 | 0.17% |
 
-> Claude Code includes four sessions that reported $0.00. One $15.65 multi-model session is retained as unallocated rather than assigning its cost to a model without evidence.
+> Claude Code includes four sessions that source-reported $0.00. The Opus 4.8 list-price equivalent is included in accounted spend; one $15.65 multi-model session remains unallocated rather than assigning its cost to a model without evidence.
 
 Regenerate with a private input kept outside the repository:
 

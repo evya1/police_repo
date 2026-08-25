@@ -15,12 +15,12 @@ def render_svg(openrouter: dict[str, object], claude: dict[str, object], theme: 
         f"<style>{css}</style>",
         ui.rect(0, 0, ui.WIDTH, ui.HEIGHT, "", palette["bg"], 0),
         ui.text(36, 39, "AI usage", "heading"),
-        ui.text(36, 61, "Reported cost and aggregate token activity", "subheading"),
+        ui.text(36, 61, "Accounted cost and aggregate token activity", "subheading"),
     ]
     cards = [
         ("Combined spend", ui.money(combined["cost"]), "#6D5BD0"),
         ("OpenRouter spend", ui.money(openrouter["cost"]), "#6D5BD0"),
-        ("Claude Code spend", ui.money(Decimal(claude["reported_cost_usd"])), "#D97706"),
+        ("Claude Code spend", ui.money(Decimal(claude["accounted_cost_usd"])), "#D97706"),
         ("OpenRouter requests", f"{openrouter['requests']:,}", "#1597A8"),
     ]
     for index, card in enumerate(cards):
@@ -37,7 +37,7 @@ def render_svg(openrouter: dict[str, object], claude: dict[str, object], theme: 
             ui.rect(36, 266, 758, 458, "card"),
             ui.rect(814, 266, 350, 458, "card"),
             ui.text(60, 298, "OpenRouter daily reported cost", "section"),
-            ui.text(838, 298, "Reported cost by source", "section"),
+            ui.text(838, 298, "Accounted cost by source", "section"),
         ]
     )
     top = ui.top_models(openrouter)
@@ -77,7 +77,7 @@ def render_svg(openrouter: dict[str, object], claude: dict[str, object], theme: 
         out.append(ui.text(x + bar_width / 2, baseline + 20, ui.date_label(day), "axis", "middle"))
         out.append(ui.text(x + bar_width / 2, cursor - 7, ui.money(totals[day]), "small", "middle"))
     source_costs = [
-        ("Claude Code", Decimal(claude["reported_cost_usd"]), "#D97706"),
+        ("Claude Code", Decimal(claude["accounted_cost_usd"]), "#D97706"),
         ("OpenRouter", openrouter["cost"], "#6D5BD0"),
     ]
     source_max = max(value for _, value, _ in source_costs)

@@ -77,16 +77,17 @@ def render_markdown(openrouter: dict[str, object], claude: dict[str, object]) ->
         "<picture>",
         '  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/ai-usage-dark.svg">',
         '  <source media="(prefers-color-scheme: light)" srcset="docs/assets/ai-usage-light.svg">',
-        '  <img alt="Aggregated OpenRouter and Claude Code usage and reported cost" src="docs/assets/ai-usage-light.svg">',
+        '  <img alt="Aggregated OpenRouter and Claude Code usage and accounted cost" src="docs/assets/ai-usage-light.svg">',
         "</picture>",
         "",
         "### Reconciliation",
         "",
         "| Metric | Aggregate |",
         "| --- | ---: |",
-        f"| Combined reported spend | **${combined['cost'].quantize(Decimal('0.01')):,.2f}** (`${combined['cost']}` reconciled) |",
+        f"| Combined accounted spend | **${combined['cost'].quantize(Decimal('0.01')):,.2f}** (`${combined['cost']}` reconciled) |",
         f"| OpenRouter reported spend | ${openrouter['cost']} |",
-        f"| Claude Code reported spend | ${Decimal(claude['reported_cost_usd']):.2f} |",
+        f"| Claude Code accounted spend | ${Decimal(claude['accounted_cost_usd']):.2f} |",
+        f"| Claude Code source-reported spend | ${Decimal(claude['reported_cost_usd']):.2f} |",
         f"| OpenRouter requests | {_int(openrouter['requests'])} |",
         f"| Claude Code sessions | {_int(claude['session_count'])} |",
         f"| Combined non-cache input / prompt tokens | {_int(combined['input'])} |",
@@ -96,7 +97,7 @@ def render_markdown(openrouter: dict[str, object], claude: dict[str, object]) ->
         "",
         "### Claude Code model summary",
         "",
-        "| Model | Session appearances | Input | Output | Cache read | Cache write | Attributed reported cost |",
+        "| Model | Session appearances | Input | Output | Cache read | Cache write | Attributed cost |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for model in claude["models"]:
@@ -108,13 +109,15 @@ def render_markdown(openrouter: dict[str, object], claude: dict[str, object]) ->
                 _int(model["output_tokens"]),
                 _int(model["cache_read_tokens"]),
                 _int(model["cache_write_tokens"]),
-                _label(model["attributed_reported_cost_usd"]),
+                _label(model["attributed_cost_usd"]),
             )
         )
     lines.extend(
         [
             f"| Unallocated multi-model session | — | — | — | — | — | ${_label(claude['unallocated_multi_model_cost_usd'])} |",
-            f"| **Total** | **{_int(claude['session_count'])} sessions** | **{_int(claude['totals']['input_tokens'])}** | **{_int(claude['totals']['output_tokens'])}** | **{_int(claude['totals']['cache_read_tokens'])}** | **{_int(claude['totals']['cache_write_tokens'])}** | **${Decimal(claude['reported_cost_usd']):.2f}** |",
+            f"| **Total** | **{_int(claude['session_count'])} sessions** | **{_int(claude['totals']['input_tokens'])}** | **{_int(claude['totals']['output_tokens'])}** | **{_int(claude['totals']['cache_read_tokens'])}** | **{_int(claude['totals']['cache_write_tokens'])}** | **${Decimal(claude['accounted_cost_usd']):.2f}** |",
+            "",
+            "Opus 4.8 is a $159.56 list-price equivalent calculated from [Anthropic's standard pricing](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): $5/M input, $25/M output, $6.25/M default five-minute cache writes, and $0.50/M cache reads. Other Claude costs remain source-reported.",
             "",
             "Session appearances are not additive because a session may use more than one model. Cache reads and cache writes are reported separately and are not treated as normal input tokens.",
             "",
@@ -140,7 +143,7 @@ def render_markdown(openrouter: dict[str, object], claude: dict[str, object]) ->
     lines.extend(
         [
             "",
-            "> Claude Code includes four sessions that reported $0.00. One $15.65 multi-model session is retained as unallocated rather than assigning its cost to a model without evidence.",
+            "> Claude Code includes four sessions that source-reported $0.00. The Opus 4.8 list-price equivalent is included in accounted spend; one $15.65 multi-model session remains unallocated rather than assigning its cost to a model without evidence.",
             "",
             "Regenerate with a private input kept outside the repository:",
             "",

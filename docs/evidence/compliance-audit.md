@@ -26,10 +26,11 @@
 - Live and Replay screenshots decode at 970×690 and are linked from the README.
 - All 23 generated OpenRouter model/provider hyperlinks returned HTTP 200; all 15 committed provider assets decode locally.
 - OpenRouter request counts, token counts, costs, percentages, and provider memberships are unchanged by the presentation mapping.
+- The Opus 4.8 row records a $159.56 standard list-price equivalent using Anthropic's default five-minute cache rates; Claude Code accounted spend reconciles to $410.76 and combined accounted spend to $451.634392.
 - The private OpenRouter input remains outside the repository.
 - Superseded question IDs and stale group codes are absent from tracked submission content.
 - [`LICENSE`](../../LICENSE) matches the required Educational Use EULA, SHA-256 `b8f5904d8625f22f18f3d6217b4cf066bf3c921fe895fcb8a324b690a63f8a06`.
 
 ## AI usage block
 
-The pre-presentation checksum was `f5f6b268ac8e6f0e07d291f6247166f2f0c5d4e6010a960389a692d7e822b8a4`. The final checksum is `b38d0f1ab6cb41b80f2402b5a941f00ae4bf138b33dddb2a50fc145b26a1a5d8`; only the authorized model/provider presentation changed, while every numerical value and calculation remains unchanged.
+The checksum before the Opus 4.8 cost update was `b38d0f1ab6cb41b80f2402b5a941f00ae4bf138b33dddb2a50fc145b26a1a5d8`; the checksum after regeneration is `f3755b7ab309b86df8c231b4299b763ee1fea3de55867fdb802533d1c74b6697`. The authorized numerical change adds the Opus 4.8 list-price equivalent and reconciles the Claude Code and combined totals; OpenRouter values and memberships remain unchanged.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import re
 import sys
 import unittest
 from collections import defaultdict
@@ -13,8 +14,10 @@ from xml.etree import ElementTree
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
 from generate_usage_dashboard import main  # noqa: E402
+from usage_dashboard_codex import load_codex  # noqa: E402
 from usage_dashboard_data import load_claude  # noqa: E402
-from usage_dashboard_markdown import render_markdown, update_readme  # noqa: E402
+from usage_dashboard_markdown import render_markdown  # noqa: E402
+from usage_dashboard_markdown_update import update_readme  # noqa: E402
 from usage_dashboard_svg import render_svg  # noqa: E402
 
 SENTINELS = (
@@ -60,15 +63,17 @@ def aggregate() -> dict[str, object]:
 
 class RenderingTests(unittest.TestCase):
     claude_path = Path(__file__).parents[1] / "data" / "claude-code-usage-aggregate.json"
+    codex_path = Path(__file__).parents[1] / "data" / "codex-usage-aggregate.json"
 
     def setUp(self) -> None:
         self.openrouter = aggregate()
         self.claude = load_claude(self.claude_path)
+        self.codex = load_codex(self.codex_path)
 
     def test_svg_is_deterministic_valid_and_theme_specific(self) -> None:
-        light = render_svg(self.openrouter, self.claude, "light")
-        dark = render_svg(self.openrouter, self.claude, "dark")
-        self.assertEqual(light, render_svg(self.openrouter, self.claude, "light"))
+        light = render_svg(self.openrouter, self.claude, self.codex, "light")
+        dark = render_svg(self.openrouter, self.claude, self.codex, "dark")
+        self.assertEqual(light, render_svg(self.openrouter, self.claude, self.codex, "light"))
         ElementTree.fromstring(light)
         ElementTree.fromstring(dark)
         self.assertNotEqual(light, dark)
@@ -76,8 +81,8 @@ class RenderingTests(unittest.TestCase):
         self.assertIn("#10131A", dark)
 
     def test_xml_and_markdown_escape_labels_and_group_other(self) -> None:
-        svg = render_svg(self.openrouter, self.claude, "light")
-        markdown = render_markdown(self.openrouter, self.claude)
+        svg = render_svg(self.openrouter, self.claude, self.codex, "light")
+        markdown = render_markdown(self.openrouter, self.claude, self.codex)
         self.assertIn("model&lt;unsafe&amp;", svg)
         self.assertNotIn("model<unsafe&", svg)
         self.assertIn("model&lt;unsafe&amp;", markdown)
@@ -85,14 +90,34 @@ class RenderingTests(unittest.TestCase):
         self.assertIn("Other (2 models)", markdown)
         self.assertIn(">Other</text>", svg)
 
+    def test_openrouter_model_and_provider_presentation_is_linked(self) -> None:
+        item = self.openrouter["models"].pop("vendor/model<unsafe&")
+        item["providers"] = {"Baidu", "Google", "Novita"}
+        self.openrouter["models"]["z-ai/glm-5.2-20260616"] = item
+        markdown = render_markdown(self.openrouter, self.claude, self.codex)
+        self.assertIn("[Z.ai: GLM 5.2](https://openrouter.ai/z-ai/glm-5.2)", markdown)
+        self.assertIn('href="https://openrouter.ai/provider/baidu"', markdown)
+        self.assertIn('src="docs/assets/providers/baidu.png"', markdown)
+        self.assertIn("Baidu Qianfan</a>, Google,", markdown)
+        self.assertIn("NovitaAI</a>", markdown)
+        self.assertNotIn("openrouter.ai/provider/google-", markdown)
+
     def test_outputs_exclude_timestamps_sensitive_values_and_paths(self) -> None:
-        outputs = render_svg(self.openrouter, self.claude, "light") + render_markdown(
-            self.openrouter, self.claude
+        outputs = render_svg(self.openrouter, self.claude, self.codex, "light") + render_markdown(
+            self.openrouter, self.claude, self.codex
         )
         self.assertNotIn(EXACT_TIMESTAMP, outputs)
         self.assertNotIn(str(Path.home()), outputs)
         for sentinel in SENTINELS:
             self.assertNotIn(sentinel, outputs)
+
+    def test_public_costs_have_at_most_two_decimal_places(self) -> None:
+        outputs = render_svg(self.openrouter, self.claude, self.codex, "light") + render_markdown(
+            self.openrouter, self.claude, self.codex
+        )
+        self.assertEqual(re.findall(r"\$[\d,]+\.\d{3,}", outputs), [])
+        self.assertIn("### Total AI / LLM Cost — **$639.99**", outputs)
+        self.assertIn("| Total AI / LLM cost | **$639.99** |", outputs)
 
     def test_readme_update_changes_only_marker_content(self) -> None:
         with TemporaryDirectory() as directory:
@@ -117,6 +142,8 @@ class RenderingTests(unittest.TestCase):
                     sensitive_path,
                     "--claude-input",
                     str(self.claude_path),
+                    "--codex-input",
+                    str(self.codex_path),
                     "--output-dir",
                     "/unused-output",
                 ]

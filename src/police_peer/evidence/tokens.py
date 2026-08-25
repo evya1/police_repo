@@ -126,6 +126,7 @@ def event_from_hint_result(
     provider_called = hint_result.fallback_reason not in (
         FallbackReason.NO_PROVIDER,
         FallbackReason.NON_CLAIM,
+        FallbackReason.SKIPPED,
     )
     fallback = hint_result.fallback_reason is not None
     if provider_called:

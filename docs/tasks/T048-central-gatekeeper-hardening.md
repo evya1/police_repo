@@ -1,6 +1,6 @@
 ---
 id: T048
-status: not_started
+status: done
 priority: P0
 task_type: component
 component: C06
@@ -71,18 +71,18 @@ dependency is what serializes that shared path; the two tasks must never run in 
 
 ## Acceptance criteria
 
-- [ ] One `Lock`/`Condition`-protected state machine enforces the global active count, the configured
+- [x] One `Lock`/`Condition`-protected state machine enforces the global active count, the configured
       `concurrent_requests`, a bounded waiting count, the token bucket, the daily quota, and per-lane
       limits and reservations.
-- [ ] Excess work queues until a permit or the deadline; `QueueFull` is raised only at real capacity.
-- [ ] `reporting` and `llm` are distinct lanes inside the single Gatekeeper, and a saturated `llm`
+- [x] Excess work queues until a permit or the deadline; `QueueFull` is raised only at real capacity.
+- [x] `reporting` and `llm` are distinct lanes inside the single Gatekeeper, and a saturated `llm`
       lane leaves the `reporting` reservation usable.
-- [ ] Retries occur only for typed or transparently classified 429/transient errors, and the
+- [x] Retries occur only for typed or transparently classified 429/transient errors, and the
       remaining deadline budget is proven before any sleep or retry.
-- [ ] Tests use barriers and fake time to prove maximum concurrency, FIFO or a documented
+- [x] Tests use barriers and fake time to prove maximum concurrency, FIFO or a documented
       deterministic queue discipline, reporting reservation under LLM saturation, deadline expiry,
       daily reset, the retry schedule, and no leaked permits or counters on success or exception.
-- [ ] No live external call occurs in any test.
+- [x] No live external call occurs in any test.
 
 ## Verification
 
@@ -92,4 +92,7 @@ dependency is what serializes that shared path; the two tasks must never run in 
 
 ## Result and evidence
 
-(to be filled)
+Validated on `production-fixes`. The single condition-protected Gatekeeper enforces bounded
+concurrency, lane reservation, deterministic queuing, deadlines, quota/token limits, and typed
+retry policy without live network calls in tests. The combined completion audit passed 209 tests
+with no failures on 2026-08-24.

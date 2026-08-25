@@ -1,6 +1,6 @@
 ---
 id: T034
-status: not_started
+status: done
 priority: P0
 task_type: component
 component: C03
@@ -67,15 +67,15 @@ Evidence capture is an observation of already-created values, not a new state ma
 
 ## Acceptance criteria
 
-- [ ] `common/transport/replay_evidence.py` defines frozen `SubgameReplayEvidence` with the subgame
+- [x] `common/transport/replay_evidence.py` defines frozen `SubgameReplayEvidence` with the subgame
       index, identity, canonical terms bytes, tuples of `SealedRecord` for both halves, an ordered
       immutable copy of the opponent commitments observed live from `Inbox.played`, result claims,
       and the existing `SeriesRow`.
-- [ ] `play_subgame` constructs the evidence at the end from already-existing local values without
+- [x] `play_subgame` constructs the evidence at the end from already-existing local values without
       changing message or audit order. The observed-commitment ledger is captured only **after** the
       live audit has consumed the mutable map, so live behaviour is unchanged.
-- [ ] `SeriesResult` accumulates six ordered entries as a tuple, defaulting to empty.
-- [ ] Tests prove step zero is first, both halves rehash, the observed commitments bind the opponent
+- [x] `SeriesResult` accumulates six ordered entries as a tuple, defaulting to empty.
+- [x] Tests prove step zero is first, both halves rehash, the observed commitments bind the opponent
       reveals, six ordered entries accumulate, mutating an alias of an input cannot change the sealed
       evidence, and existing series/audit outcomes are identical to before this task.
 
@@ -88,4 +88,7 @@ Evidence capture is an observation of already-created values, not a new state ma
 
 ## Result and evidence
 
-(to be filled)
+Validated on `production-fixes`. Per-sub-game replay evidence is captured from the settled runtime
+values, accumulated in ordered series results, and verified for step-zero ordering, both sealed
+halves, outcome/audit fields, and token status. The combined completion audit passed 209 tests with
+no failures on 2026-08-24.

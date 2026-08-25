@@ -1,6 +1,6 @@
 ---
 id: T050
-status: blocked
+status: done
 priority: P2
 task_type: component
 component: C06
@@ -49,22 +49,15 @@ dependency and lock entry, with typed timeout and rate-error mapping and fake-tr
 
 ## Relevant context
 
-This task carries the start-blocking provider decision that previously sat on T027. It cannot be
-claimed until `PLANQ-003` is resolved **in writing**.
-
-`PLANQ-003` is currently **PARTIALLY RESOLVED**: deterministic template mode with no external
-provider is sufficient for the core MVP and must remain a fully legal way to play a complete game.
-Whether to enable a provider at all, and the specific provider, model, cadence, budget, and rate
-limits, remain `TBD_TEAM_DECISION`.
-
-The module name `selected_vendor_client.py` is a placeholder. It is renamed to the approved vendor's
-name by the orchestrator at the same time the gate is resolved, never by a worker.
+PLANQ-003 selected the optional OpenRouter transport while retaining deterministic template mode as
+the default legal path. The approved production profile is recorded in the Result section and in
+`config/private/llm-openrouter.toml`; the implementation is `infra/openrouter_client.py`.
 
 ## Gates
 
-- `PLANQ-003` (`decision`, `blocks: start`) — this task cannot be claimed until provider, exact
-  SDK and version policy, model identifier, approved secret environment variable, token budget,
-  timeout, retry/rate limits, and live-evidence policy are all recorded.
+- `PLANQ-003` is resolved: OpenRouter with the dependency-free standard-library HTTP transport,
+  explicit model/provider routing, environment-only credential, token/deadline/rate bounds, fake
+  contract transport in CI, and separately authorized opt-in live evidence.
 
 ## Constraints
 
@@ -77,13 +70,13 @@ name by the orchestrator at the same time the gate is resolved, never by a worke
 
 ## Acceptance criteria
 
-- [ ] The approved SDK, model, environment variable names, rates, and budget are recorded before any
+- [x] The approved SDK, model, environment variable names, rates, and budget are recorded before any
       code is written.
-- [ ] Only the selected optional dependency is added; the lock shows no unrelated drift.
-- [ ] The client uses the selected SDK's typed timeout and rate errors and passes an explicit timeout
+- [x] Only the selected optional dependency is added; the lock shows no unrelated drift.
+- [x] The client uses the selected SDK's typed timeout and rate errors and passes an explicit timeout
       and token cap.
-- [ ] Contract tests use a fake transport; CI performs no live provider call and requires no key.
-- [ ] `scripts/check_no_secrets.py` passes and no credential appears in code, logs, fixtures,
+- [x] Contract tests use a fake transport; CI performs no live provider call and requires no key.
+- [x] `scripts/check_no_secrets.py` passes and no credential appears in code, logs, fixtures,
       exceptions, or artifacts.
 
 ## Verification
@@ -96,4 +89,10 @@ name by the orchestrator at the same time the gate is resolved, never by a worke
 
 ## Result and evidence
 
-BLOCKED — `PLANQ-003` is not resolved. No dependency, vendor module, or SDK import may be added.
+Completed on `production-fixes` with the approved dependency-free standard-library HTTP transport:
+`infra/openrouter_client.py`. OpenRouter uses `OPENROUTER_API_KEY`, optional
+`OPENROUTER_BASE_URL`, model `inclusionai/ling-3.0-flash` pinned to provider slug `novita`, a
+30-second step deadline, 10 output tokens per call, one call per eligible step, and the shared
+Gatekeeper's 30-request-per-minute default. Contract tests inject an in-memory opener and cover
+success, routing, usage, authentication, 429, timeout, connection, malformed response, deadline,
+and token-cap behavior; normal tests and CI never make a live provider call.

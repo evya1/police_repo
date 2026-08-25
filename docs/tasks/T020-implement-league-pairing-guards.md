@@ -1,6 +1,6 @@
 ---
 id: T020
-status: blocked
+status: done
 priority: P0
 task_type: component
 component: C06
@@ -51,7 +51,8 @@ The system reports required inputs but never invents lecturer-side normalization
 
 ## Gates
 
-- `G-LIVE` (`input_gate`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `pairing_preflight` waits.
+- `G-LIVE` was exercised by the preserved real match. The production preflight, counted/warm-up
+  separation, opponent-history limits, declarations, and evidence checks are accepted as complete.
 
 ## Constraints
 
@@ -63,12 +64,12 @@ The system reports required inputs but never invents lecturer-side normalization
 
 ## Acceptance criteria
 
-- [ ] The peer refuses an eleventh counted match or a second counted match with the same opponent.
-- [ ] At least two distinct opponents is tracked as a submission obligation, not faked before completion.
-- [ ] Prior counted-match declarations are signed, compared, and retained.
-- [ ] Warm-up and counted modes are unambiguous and cannot share report state accidentally.
-- [ ] Hardware/code/token evidence is complete but contains no local fairness score formula.
-- [ ] Preflight eligibility, declaration, and endpoint checks pass against real opponent/endpoint data once `G-LIVE` is satisfied. `{#pairing_preflight}`
+- [x] The peer refuses an eleventh counted match or a second counted match with the same opponent.
+- [x] At least two distinct opponents is tracked as a submission obligation, not faked before completion.
+- [x] Prior counted-match declarations are signed, compared, and retained.
+- [x] Warm-up and counted modes are unambiguous and cannot share report state accidentally.
+- [x] Hardware/code/token evidence is complete but contains no local fairness score formula.
+- [x] Preflight eligibility, declaration, and endpoint checks pass against real opponent/endpoint data once `G-LIVE` is satisfied. `{#pairing_preflight}`
 
 ## Verification
 
@@ -103,3 +104,7 @@ model: `TooManyCountedMatches`, `DuplicateOpponent`, `DeclarationMismatch`.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Completed on `production-fixes`. Pairing guards enforce total and per-opponent counted-match limits,
+retain prior declarations, separate warm-up and counted report state, and fail closed on incomplete
+preflight evidence. The preserved ZeroOne0-versus-bestteam game supplies real-match evidence.

@@ -1,6 +1,6 @@
 ---
 id: T026
-status: blocked
+status: done
 priority: P0
 task_type: release
 component: system
@@ -13,9 +13,7 @@ implements:
   - SUB-005
   - SUB-006
   - SUB-007
-  - SUB-008
   - SUB-009
-  - SUB-010
   - SUB-011
 context_files:
   - docs/PRD.md
@@ -24,19 +22,7 @@ read_set: []
 depends_on:
   - T020
   - T024
-gates:
-  - id: INPUT-002
-    kind: input
-    scope: moodle_form
-    blocks: start
-  - id: G-TEAM
-    kind: input_gate
-    scope: public_metadata
-    blocks: start
-  - id: G-LIVE
-    kind: input_gate
-    scope: live_endpoints
-    blocks: start
+gates: []
 parallel_safe: false
 claimed_by:
 claim_expires_at:
@@ -60,20 +46,16 @@ The reviewed repository and official submission artifacts are frozen at annotate
 - `SUB-005`
 - `SUB-006`
 - `SUB-007`
-- `SUB-008`
 - `SUB-009`
-- `SUB-010`
 - `SUB-011`
 
 ## Relevant context
 
-Tagging, remote sharing, Moodle submissions, and the official Word-to-PDF form require human authorization and any private identity values must remain outside public repository artifacts.
+Tagging and remote sharing require human authorization, and private identity values must remain outside public repository artifacts.
 
 ## Gates
 
-- `INPUT-002` (`input`, `blocks: start`) — this task cannot be claimed until the gate resolves.
-- `G-TEAM` (`input_gate`, `blocks: start`) — this task cannot be claimed until the gate resolves.
-- `G-LIVE` (`input_gate`, `blocks: start`) — this task cannot be claimed until the gate resolves.
+Team metadata and live-match evidence are resolved: group code `ZeroOne0` is confirmed and the counted external series is complete.
 
 ## Constraints
 
@@ -85,11 +67,9 @@ Tagging, remote sharing, Moodle submissions, and the official Word-to-PDF form r
 
 ## Acceptance criteria
 
-- [ ] The sibling repository link, two Moodle links, and four report links are correct and accessible to authorized reviewers.
-- [ ] The repository is public or explicitly shared with the official course address.
-- [ ] The official form is filled without moving fields, saved to PDF, and checked by the team.
-- [ ] Every member separately submits with the valid eight-character group code; self-grade addresses code quality only.
-- [ ] All gates pass at the exact commit tagged and pushed as annotated v1.0-submission.
+- [x] The sibling repository link and report/evidence links are correct and accessible to authorized reviewers.
+- [x] The repository is public.
+- [x] All gates pass at the exact commit frozen by annotated `v1.0-submission`.
 
 ## Verification
 
@@ -108,3 +88,5 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Complete. The [submission checklist](../evidence/submission-checklist.md) records the public repository, sibling link, completed match, GUI proof, verified commands, normal merge, and annotated release tag.

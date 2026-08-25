@@ -1,0 +1,365 @@
+{
+  "artifact_kind": "log",
+  "game_id": "ZeroOne0-vs-bestteam",
+  "game_uid": "a42b2bb2-2312-c679-5e69-fa3d5ea0aad9",
+  "opponent_committed_steps": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "opponent_records": [
+    {
+      "code_version": "bcceebaaf50e5466274a803c36ca0c9709ac7135",
+      "commit": "0dbb86f19aff926c9b454d0ec92a50f08b52183e67560155a161044c5dfef338",
+      "group_name": "bestteam",
+      "model": "template",
+      "nonce": "f3928191d3fd475b4057213503df7d63",
+      "num_games_declared": 4,
+      "spec": {
+        "cpu_cores": 8,
+        "cpu_type": "AMD Ryzen 7 9700X 8-Core Processor",
+        "gpu_type": "AMD Radeon RX 9070 XT; AMD Radeon(TM) Graphics",
+        "os": "Windows",
+        "ram_gb": 31.2,
+        "vram_gb": 0
+      },
+      "step": 0,
+      "sub_game_number": 4,
+      "type": "system_spec"
+    },
+    {
+      "commit": "0d989d8366a4f721cd7377e8a9a79f377cc390978a730095cab69ac5f2cb8f21",
+      "github_commit": "bcceebaaf50e5466274a803c36ca0c9709ac7135",
+      "hint": "Going south, low and quiet. You will not follow.",
+      "intent": "truth",
+      "move": "MOVE:S",
+      "nonce": "22a49a6f3528877a1fb02ce1627895ef",
+      "position": [
+        1,
+        0
+      ],
+      "role": "police",
+      "state": "grid=7x7;self=[1, 0];barriers=[]",
+      "step": 1,
+      "sub_game": 4,
+      "verdict": "moved"
+    },
+    {
+      "commit": "950993de5876e60e73da44b49b60ad8b8bf66fd0208148599eaa69ef3fdd8db8",
+      "hint": "Drifting west while you read the wrong scent.",
+      "intent": "lie",
+      "move": "MOVE:E",
+      "nonce": "73efdd4e73ff829f967325a0c7053941",
+      "position": [
+        1,
+        1
+      ],
+      "role": "police",
+      "state": "grid=7x7;self=[1, 1];barriers=[]",
+      "step": 2,
+      "sub_game": 4,
+      "verdict": "moved"
+    },
+    {
+      "commit": "5e750a20fa98f95e9adaac58bd343d245901df84594fae8697d4f6c52d139e1c",
+      "hint": "I lean east, where your trail runs thin.",
+      "intent": "truth",
+      "move": "MOVE:E",
+      "nonce": "c1ec17f38281bf06a00a6681aaa1e3b0",
+      "position": [
+        1,
+        2
+      ],
+      "role": "police",
+      "state": "grid=7x7;self=[1, 2];barriers=[]",
+      "step": 3,
+      "sub_game": 4,
+      "verdict": "moved"
+    },
+    {
+      "commit": "1315a2e60421ea294b96efd3251581315708327636c7f09d527002d4d7ca0e10",
+      "hint": "East it is. Catch me if the board allows.",
+      "intent": "truth",
+      "move": "MOVE:E",
+      "nonce": "f0ee8f8de9797f7562760e167409125e",
+      "position": [
+        1,
+        3
+      ],
+      "role": "police",
+      "state": "grid=7x7;self=[1, 3];barriers=[]",
+      "step": 4,
+      "sub_game": 4,
+      "verdict": "moved"
+    }
+  ],
+  "records": [
+    {
+      "commit": "b8ef3ff66871d01c8abe34e7869077e41d281399ba9cbe677dabf82429aeb7ba",
+      "intent": "declare",
+      "nonce": "86c0cf23d486b08bc5327a306644fe50",
+      "sender": "thief",
+      "step": 0
+    },
+    {
+      "barrier_cell": null,
+      "commit": "d9d7f19580a1fd381175e016d7c38fc7d8f714f24a344cd996b2409821bfc156",
+      "fallback": false,
+      "hint": "I am here",
+      "intent": "evade",
+      "move": "MOVE:N",
+      "nonce": "5a6afcf9a96a80858114ed2b792acbb8",
+      "position": [
+        2,
+        3
+      ],
+      "prompt_text": "",
+      "reasoning": "",
+      "response_seconds": 0.0,
+      "sender": "thief",
+      "smell_grid": {
+        "0,1": 0.2,
+        "0,2": 0.2,
+        "0,3": 0.2,
+        "0,4": 0.2,
+        "0,5": 0.2,
+        "1,1": 0.2,
+        "1,2": 0.5,
+        "1,3": 0.5,
+        "1,4": 0.5,
+        "1,5": 0.2,
+        "2,1": 0.2,
+        "2,2": 0.5,
+        "2,3": 0.8,
+        "2,4": 0.5,
+        "2,5": 0.2,
+        "3,1": 0.2,
+        "3,2": 0.5,
+        "3,3": 0.5,
+        "3,4": 0.5,
+        "3,5": 0.2,
+        "4,1": 0.2,
+        "4,2": 0.2,
+        "4,3": 0.2,
+        "4,4": 0.2,
+        "4,5": 0.2
+      },
+      "state": "grid=7x7;self=[2, 3];barriers=[]",
+      "step": 1,
+      "timestamp": "2026-08-24T19:48:38.398810+00:00",
+      "verdict": "truth"
+    },
+    {
+      "barrier_cell": null,
+      "claim_response": {
+        "caught": false,
+        "claim": [
+          1,
+          0
+        ]
+      },
+      "commit": "4093503687b7a927304d9cb5f23a5293c51ff4153f8e4e5244ce806d37bdeb89",
+      "fallback": false,
+      "hint": "I am here",
+      "intent": "evade",
+      "move": "MOVE:N",
+      "nonce": "0142077105aa5c2a8294450abcd7fb64",
+      "position": [
+        1,
+        3
+      ],
+      "prompt_text": "",
+      "reasoning": "",
+      "response_seconds": 0.0,
+      "sender": "thief",
+      "smell_grid": {
+        "0,1": 0.2,
+        "0,2": 0.5,
+        "0,3": 0.5,
+        "0,4": 0.5,
+        "0,5": 0.2,
+        "1,1": 0.2,
+        "1,2": 0.5,
+        "1,3": 0.8,
+        "1,4": 0.5,
+        "1,5": 0.2,
+        "2,1": 0.2,
+        "2,2": 0.5,
+        "2,3": 0.7,
+        "2,4": 0.5,
+        "2,5": 0.2,
+        "3,1": 0.2,
+        "3,2": 0.4,
+        "3,3": 0.4,
+        "3,4": 0.4,
+        "3,5": 0.2,
+        "4,1": 0.1,
+        "4,2": 0.1,
+        "4,3": 0.1,
+        "4,4": 0.1,
+        "4,5": 0.1
+      },
+      "state": "grid=7x7;self=[1, 3];barriers=[]",
+      "step": 2,
+      "timestamp": "2026-08-24T19:48:40.456152+00:00",
+      "verdict": "truth"
+    },
+    {
+      "barrier_cell": null,
+      "claim_response": {
+        "caught": false,
+        "claim": [
+          1,
+          1
+        ]
+      },
+      "commit": "d7a3f03741fd7ed2c7336ec7f156896dfbe61ac889fc0bd15acf46530fe3821c",
+      "fallback": false,
+      "hint": "I am here",
+      "intent": "evade",
+      "move": "MOVE:N",
+      "nonce": "27a8e5c34426e31ebe520b81f233c651",
+      "position": [
+        0,
+        3
+      ],
+      "prompt_text": "",
+      "reasoning": "",
+      "response_seconds": 0.0,
+      "sender": "thief",
+      "smell_grid": {
+        "0,1": 0.2,
+        "0,2": 0.5,
+        "0,3": 0.8,
+        "0,4": 0.5,
+        "0,5": 0.2,
+        "1,1": 0.2,
+        "1,2": 0.5,
+        "1,3": 0.7,
+        "1,4": 0.5,
+        "1,5": 0.2,
+        "2,1": 0.2,
+        "2,2": 0.4,
+        "2,3": 0.6,
+        "2,4": 0.4,
+        "2,5": 0.2,
+        "3,1": 0.1,
+        "3,2": 0.3,
+        "3,3": 0.3,
+        "3,4": 0.3,
+        "3,5": 0.1
+      },
+      "state": "grid=7x7;self=[0, 3];barriers=[]",
+      "step": 3,
+      "timestamp": "2026-08-24T19:48:40.914758+00:00",
+      "verdict": "truth"
+    },
+    {
+      "barrier_cell": null,
+      "claim_response": {
+        "caught": false,
+        "claim": [
+          1,
+          2
+        ]
+      },
+      "commit": "525ed0fa7a0608c4eee187d17b67343eb4ea0b6330fc96018ec600858741fcc7",
+      "fallback": false,
+      "hint": "I am here",
+      "intent": "evade",
+      "move": "MOVE:S",
+      "nonce": "13f3fe3f66c85ef9e3aa628fc69ecaca",
+      "position": [
+        1,
+        3
+      ],
+      "prompt_text": "",
+      "reasoning": "",
+      "response_seconds": 0.0,
+      "sender": "thief",
+      "smell_grid": {
+        "0,1": 0.2,
+        "0,2": 0.5,
+        "0,3": 0.7,
+        "0,4": 0.5,
+        "0,5": 0.2,
+        "1,1": 0.2,
+        "1,2": 0.5,
+        "1,3": 0.8,
+        "1,4": 0.5,
+        "1,5": 0.2,
+        "2,1": 0.2,
+        "2,2": 0.5,
+        "2,3": 0.5,
+        "2,4": 0.5,
+        "2,5": 0.2,
+        "3,1": 0.2,
+        "3,2": 0.2,
+        "3,3": 0.2,
+        "3,4": 0.2,
+        "3,5": 0.2
+      },
+      "state": "grid=7x7;self=[1, 3];barriers=[]",
+      "step": 4,
+      "timestamp": "2026-08-24T19:48:41.534381+00:00",
+      "verdict": "truth"
+    },
+    {
+      "barrier_cell": null,
+      "claim_response": {
+        "caught": true,
+        "claim": [
+          1,
+          3
+        ]
+      },
+      "commit": "64c2d618b32a4fb000fcf157e376e5c37b54c8190efb08988c8adea5c350be5f",
+      "fallback": false,
+      "hint": "I am here",
+      "intent": "evade",
+      "move": "MOVE:N",
+      "nonce": "418c8497b7ee0d54d3bb8e5376d6b1f0",
+      "position": [
+        0,
+        3
+      ],
+      "prompt_text": "",
+      "reasoning": "",
+      "response_seconds": 0.0,
+      "sender": "thief",
+      "smell_grid": {
+        "0,1": 0.2,
+        "0,2": 0.5,
+        "0,3": 0.8,
+        "0,4": 0.5,
+        "0,5": 0.2,
+        "1,1": 0.2,
+        "1,2": 0.5,
+        "1,3": 0.7,
+        "1,4": 0.5,
+        "1,5": 0.2,
+        "2,1": 0.2,
+        "2,2": 0.4,
+        "2,3": 0.4,
+        "2,4": 0.4,
+        "2,5": 0.2,
+        "3,1": 0.1,
+        "3,2": 0.1,
+        "3,3": 0.1,
+        "3,4": 0.1,
+        "3,5": 0.1
+      },
+      "state": "grid=7x7;self=[0, 3];barriers=[]",
+      "step": 5,
+      "timestamp": "2026-08-24T19:48:42.120665+00:00",
+      "verdict": "truth",
+      "win_claim": {
+        "type": "capture"
+      }
+    }
+  ],
+  "schema_status": "internal_interop",
+  "schema_version": "internal-interop-1",
+  "sub_game_index": 4
+}

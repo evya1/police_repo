@@ -43,7 +43,8 @@ The repository has a reviewed initial foundation dependency baseline — Python 
 
 ## Relevant context
 
-This planning scaffold intentionally omits uv.lock because runtime libraries and compatible versions have not yet been approved. Quality-only dependencies already live in pyproject.toml.
+The approved runtime and quality dependencies are declared in `pyproject.toml` and resolved by the
+committed `uv.lock`.
 
 This task selects the *initial* foundation dependency baseline only, per the narrowed `PLANQ-002`: the Python baseline, the FastMCP direct dependency, the existing test/quality dependencies, and the already-approved uv bootstrap/version policy. It does not select the GUI toolkit, which `PLANQ-007` owns, and it does not select the Gmail sender library, which `PLANQ-005` owns. Do not install a package in this task merely because a later component might need it.
 

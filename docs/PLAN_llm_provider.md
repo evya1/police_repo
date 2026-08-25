@@ -2,7 +2,9 @@
 
 ## Phase 0 — orchestrator decisions
 
-Replace the current broad T027 outcome with the task split below. T027 can start without choosing a vendor. T050 cannot start until PLANQ-003 names the provider/model/SDK/budget/rates and updates the dependency lock. T013 remains authoritative for generic token aggregation.
+The broad T027 outcome is split below. T027 owns the provider-neutral boundary, T050 owns the
+resolved dependency-free OpenRouter transport, and T013 remains authoritative for generic token
+aggregation. Template mode remains the default.
 
 ## T027 — deterministic hint plan and typed provider port
 

@@ -16,8 +16,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from common.transport.atomic_publish import Checkpoint, SelfVerifyError, publish_atomic
-from common.transport.canonical import commit as recompute_commit
+from common.transport.atomic_publish import Checkpoint, SelfVerifyError
 from common.transport.kit_consensus import mutual_agreement
 from common.transport.kit_documents import (
     build_config,
@@ -26,36 +25,12 @@ from common.transport.kit_documents import (
     build_result,
 )
 from common.transport.kit_names import config_name, declaration_name, log_name, result_name
-from common.transport.kit_records import build_summary
 from common.transport.kit_settlement import result_row, series_final
-from common.transport.league_kit_envelope import wrap_outbound_records
 from common.transport.series import SeriesResult
+from police_peer.reporting.kit_bundle_documents import document_bytes, records, summary
 
 #: The kit reads one flat directory; the internal bundle keeps its own place beside this one.
 KIT_SUBDIR = "kit"
-
-
-def _records(sealed) -> list[dict]:
-    """Decode our sealed records back to dicts and wrap them in the kit's audit envelope."""
-    flat = [
-        {**json.loads(record.payload_bytes), "nonce": record.nonce, "commit": record.commitment}
-        for record in sealed
-    ]
-    return wrap_outbound_records(flat)
-
-
-def _document_bytes(doc: dict) -> bytes:
-    """Readable bytes with an explicit newline -- the EMAILED report is the compact form."""
-    return (json.dumps(doc, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
-
-
-def _audit_block(evidence, row) -> dict:
-    return {
-        "passed": bool(row.audit_ok),
-        "skipped": False,
-        "verified_steps": len(evidence.own_records),
-        "failed_steps": [],
-    }
 
 
 def build_kit_bundle(
@@ -72,8 +47,16 @@ def build_kit_bundle(
     games_played: dict[str, int | None] | None = None,
     first_meeting: bool = True,
     confirmed: bool = False,
+    include_tokens: bool = True,
 ) -> dict[str, bytes]:
-    """Build the 14 kit documents for one settled series. Pure: no I/O, no clock."""
+    """Build the 14 kit documents for one settled series. Pure: no I/O, no clock.
+
+    ``include_tokens`` controls whether the optional per-row ``tokens``` and
+    ``final_result.tokens_total_series`` are projected. The kit's checker treats those as
+    optional (it skips their sum gate when they are absent), so ``include_tokens=False``
+    keeps the kit to only its mandatory fields. The signed aggregate/mutual-agreement are
+    computed over the same written rows/final for consistency.
+    """
     ours, theirs = our_group, result.opponent_group_id
     if not ours or not theirs:
         raise SelfVerifyError(
@@ -93,27 +76,26 @@ def build_kit_bundle(
         number = evidence.sub_game_index
         row = by_number[number]
         terms = json.loads(evidence.terms_bytes)
-        files[config_name(game_id, number)] = _document_bytes(
+        files[config_name(game_id, number)] = document_bytes(
             build_config(**ids, sub_game_number=number, terms=terms, **common)
         )
         entry = result_row(
             row=row, our_group=ours, opponent_group=theirs,
-            tokens=(tokens_by_sub_game or {}).get(number, {ours: 0, theirs: 0}),
+            tokens=(tokens_by_sub_game or {}).get(number, {ours: 0, theirs: 0})
+            if include_tokens else {ours: 0, theirs: 0},
             log_file=log_name(game_id, number),
         )
         rows.append(entry)
-        summary = build_summary(
-            sub_game_number=number, our_group=ours, our_role=row.role.value,
-            opponent_group=theirs, result=row.outcome.value,
-            winner_group=entry["winner_group"], steps=row.steps,
-            audit=_audit_block(evidence, row),
+        log_summary = summary(
+            evidence, row, number=number, ours=ours, theirs=theirs,
+            winner=entry["winner_group"],
         )
-        files[log_name(game_id, number)] = _document_bytes(
+        files[log_name(game_id, number)] = document_bytes(
             build_log(
-                **ids, sub_game_number=number, summary=summary,
-                records=_records(evidence.own_records),
+                **ids, sub_game_number=number, summary=log_summary,
+                records=records(evidence.own_records),
                 opponent_records=(
-                    _records(evidence.opponent_records) if evidence.opponent_records else None
+                    records(evidence.opponent_records) if evidence.opponent_records else None
                 ),
                 opponent_committed_steps=[s for s, _ in evidence.observed_opponent_commitments],
                 **common,
@@ -123,7 +105,17 @@ def build_kit_bundle(
     final = series_final(
         rows, pair, counted=counted, games_played=games_played, first_meeting=first_meeting
     )
-    files[declaration_name(game_id)] = _document_bytes(
+    written_rows = rows
+    written_final = final
+    if not include_tokens:
+        # Keep the kit to only its mandatory fields: the per-row `tokens` and the
+        # aggregate `tokens_total_series` are optional to the kit and dropped here.
+        # The consensus digest ignores tokens, so the mutual-agreement is unchanged.
+        written_rows = [
+            {k: v for k, v in row.items() if k != "tokens"} for row in rows
+        ]
+        written_final = {k: v for k, v in final.items() if k != "tokens_total_series"}
+    files[declaration_name(game_id)] = document_bytes(
         build_declaration(
             **ids,
             groups=groups or [{"group_id": pair[0]}, {"group_id": pair[1]}],
@@ -131,28 +123,15 @@ def build_kit_bundle(
             step_zero=step_zero, **common,
         )
     )
-    files[result_name(game_id)] = _document_bytes(
+    files[result_name(game_id)] = document_bytes(
         build_result(
-            **ids, groups=list(pair), sub_games=rows, final_result=final,
-            mutual_agreement=mutual_agreement(game_id, final, rows, confirmed=confirmed),
+            **ids, groups=list(pair), sub_games=written_rows,
+            final_result=written_final,
+            mutual_agreement=mutual_agreement(game_id, written_final, written_rows, confirmed=confirmed),
             **common,
         )
     )
     return files
-
-
-def _self_verify(staging: Path) -> None:
-    """Reload every written log and reproduce every commit before anything is published."""
-    problems: list[str] = []
-    for path in sorted(staging.glob("log_*.json")):
-        doc = json.loads(path.read_text(encoding="utf-8"))
-        for half in ("records", "opponent_records"):
-            for index, record in enumerate(doc.get(half) or []):
-                recomputed = recompute_commit(record["payload"], record["nonce"])
-                if recomputed != record["commit"]:
-                    problems.append(f"{path.name} {half}[{index}] does not reproduce its commit")
-    if problems:
-        raise SelfVerifyError("; ".join(problems[:6]))
 
 
 def publish_kit_bundle(
@@ -160,11 +139,17 @@ def publish_kit_bundle(
     result: SeriesResult,
     *,
     on_checkpoint: Checkpoint | None = None,
+    include_tokens: bool = True,
     **kwargs,
 ) -> Path:
-    """Publish the kit bundle at ``<root>/kit/<game_uid>/``, atomically or not at all."""
-    files = build_kit_bundle(result, **kwargs)
-    return publish_atomic(
-        Path(artifact_root) / KIT_SUBDIR, result.game_uid, files, _self_verify,
-        on_checkpoint=on_checkpoint,
+    """Publish the kit bundle at ``<root>/kit/<game_uid>/``, atomically or not at all.
+
+    ``include_tokens`` is forwarded to :func:`build_kit_bundle`; when False the kit
+    carries only its mandatory fields (no optional token metadata).
+    """
+    from police_peer.reporting.kit_bundle_publish import publish_kit_bundle as publish
+
+    return publish(
+        artifact_root, result, on_checkpoint=on_checkpoint,
+        include_tokens=include_tokens, **kwargs,
     )

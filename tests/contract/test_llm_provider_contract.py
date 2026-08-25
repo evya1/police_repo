@@ -121,7 +121,7 @@ def test_empty_output_text_is_rejected():
 
 
 def test_oversized_output_text_is_rejected():
-    adapter, _ = _adapter([_reply(text="x" * 5000)])
+    adapter, _ = _adapter([_reply(text="x" * 48_001)])
     with pytest.raises(InvalidOutputTextError):
         adapter.render(_request(), deadline=None)
 

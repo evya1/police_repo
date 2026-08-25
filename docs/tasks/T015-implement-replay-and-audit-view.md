@@ -1,6 +1,6 @@
 ---
 id: T015
-status: blocked
+status: done
 priority: P0
 task_type: component
 component: C05
@@ -56,11 +56,11 @@ Replay is evidence, not a second rules engine. It consumes immutable artifacts a
 
 ## Acceptance criteria
 
-- [ ] Forward and backward navigation is deterministic and side-effect free.
-- [ ] Each displayed step shows its verification result from recomputation.
-- [ ] A single altered payload, nonce, commitment, missing step, or impossible transition fails the game.
-- [ ] Unknown optional fields degrade to visible unsupported evidence rather than false tamper accusations.
-- [ ] A genuine Verified OK screenshot remains a submission-time evidence task.
+- [x] Forward and backward navigation is deterministic and side-effect free.
+- [x] Each displayed step shows its verification result from recomputation.
+- [x] A single altered payload, nonce, commitment, missing step, or impossible transition fails the game.
+- [x] Unknown optional fields degrade to visible unsupported evidence rather than false tamper accusations.
+- [x] A genuine Verified OK screenshot remains a submission-time evidence task.
 
 ## Verification
 
@@ -83,3 +83,17 @@ supported entry point. The GUI adapter consumes `BundleReplayReport` / `ReplayRe
 every coverage layer, and the external-authenticity status as supplied by the service.
 
 ## Result and evidence
+
+Completed on `production-fixes`. `police_peer.replay_gui` selects repository-native league-kit
+logs, verifies both sealed halves before display, and refuses tampered evidence; the Tk facade is
+read-only and provides deterministic previous/next navigation over verified records. Honest and
+tampered behavior is covered by `tests/integration/test_replay_gui_adapter.py`, and the README uses
+a genuine Verified OK screenshot captured from the working viewer.
+The completed counted match is verified through
+`scripts/replay_gui.py docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3 --verify-only`
+and the immutable six-subgame bundle under `docs/evidence/games/ZeroOne0-vs-bestteam/`.
+
+Completion links: [Replay GUI launcher](../../scripts/replay_gui.py),
+[adapter tests](../../tests/integration/test_replay_gui_adapter.py),
+[Replay GUI evidence](../assets/replay-gui-verified.png), and
+[completed counted-match evidence](../evidence/games/ZeroOne0-vs-bestteam/README.md).

@@ -54,6 +54,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--public-url", default="",
         help="Actual public MCP URL for the counted declaration (overrides [network].public_url).",
     )
+    parser.add_argument(
+        "--email-recipient", default=None,
+        help="Runtime-only recipient override; never written into game artifacts.",
+    )
+    parser.add_argument(
+        "--authorize-email-send", action="store_true",
+        help="Explicitly authorize [email].mode='send'; has no effect in dry-run mode.",
+    )
     return parser
 
 
@@ -78,6 +86,8 @@ def main(argv: list[str] | None = None) -> int:
         emit_kit_bundle=args.emit_kit_bundle,
         group_code_confirmed=args.group_code_confirmed,
         public_url=args.public_url,
+        email_recipient=args.email_recipient,
+        authorize_email_send=args.authorize_email_send,
     )
 
 

@@ -3,6 +3,9 @@ artifact: task
 id: T057
 title: Compose declarable evidence into the kit declaration; refuse counted play by name
 status: done
+priority: P0
+task_type: integration
+optional: false
 owner: orchestrator
 component: C06
 depends_on: [T013, T056]

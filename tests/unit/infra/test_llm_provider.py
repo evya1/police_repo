@@ -113,4 +113,4 @@ def test_normalize_text_rejects_non_string():
 
 def test_normalize_text_rejects_oversized():
     with pytest.raises(InvalidOutputTextError):
-        _normalize_text("x" * 2001)
+        _normalize_text("x" * 48_001)

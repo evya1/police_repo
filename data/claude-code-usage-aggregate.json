@@ -2,6 +2,7 @@
   "source": "Claude Code",
   "session_count": 18,
   "reported_cost_usd": "251.20",
+  "accounted_cost_usd": "410.76",
   "reported_api_time_seconds": 17740,
   "reported_wall_time_seconds": 29280,
   "zero_reported_cost_sessions": 4,
@@ -13,7 +14,7 @@
       "output_tokens": 499000,
       "cache_read_tokens": 1058600000,
       "cache_write_tokens": 31504200,
-      "attributed_reported_cost_usd": "197.17"
+      "attributed_cost_usd": "197.17"
     },
     {
       "model": "Sonnet 5",
@@ -22,7 +23,7 @@
       "output_tokens": 31910,
       "cache_read_tokens": 508600000,
       "cache_write_tokens": 13444900,
-      "attributed_reported_cost_usd": "38.19"
+      "attributed_cost_usd": "38.19"
     },
     {
       "model": "Opus 4.8",
@@ -31,7 +32,7 @@
       "output_tokens": 3200,
       "cache_read_tokens": 190200000,
       "cache_write_tokens": 10300000,
-      "attributed_reported_cost_usd": "0.00"
+      "attributed_cost_usd": "159.56"
     },
     {
       "model": "Haiku 4.5",
@@ -40,7 +41,7 @@
       "output_tokens": 106,
       "cache_read_tokens": 1800000,
       "cache_write_tokens": 508200,
-      "attributed_reported_cost_usd": "0.19"
+      "attributed_cost_usd": "0.19"
     }
   ],
   "unallocated_multi_model_cost_usd": "15.65",

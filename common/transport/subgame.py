@@ -47,7 +47,7 @@ def play_subgame(
     if max_moves != survival_threshold or max_steps != survival_threshold:
         raise ValueError(
             f"divergent max_moves/max_steps ({max_steps}) and survival_threshold "
-            f"({survival_threshold}) refused (OPEN-011)"
+            f"({survival_threshold}) refused by the production termination contract"
         )
 
     board_size = int(terms.get("board_size", 7))

@@ -9,27 +9,36 @@ from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
-from usage_dashboard_data import DashboardError, combined_totals, load_claude  # noqa: E402
+from usage_dashboard_codex import load_codex  # noqa: E402
+from usage_dashboard_data import (  # noqa: E402
+    DashboardError,
+    combined_totals,
+    load_claude,
+)
 
 SESSION_SENTINEL = "SENSITIVE_SESSION_ID_SENTINEL"
 
 
 class ClaudeTests(unittest.TestCase):
     aggregate_path = Path(__file__).parents[1] / "data" / "claude-code-usage-aggregate.json"
+    codex_path = Path(__file__).parents[1] / "data" / "codex-usage-aggregate.json"
 
     def test_aggregate_and_unallocated_cost_reconcile(self) -> None:
         data = load_claude(self.aggregate_path)
         attributed = sum(
-            (Decimal(item["attributed_reported_cost_usd"]) for item in data["models"]), Decimal(0)
+            (Decimal(item["attributed_cost_usd"]) for item in data["models"]), Decimal(0)
         )
-        self.assertEqual(attributed, Decimal("235.55"))
+        self.assertEqual(attributed, Decimal("395.11"))
         self.assertEqual(
-            attributed + Decimal(data["unallocated_multi_model_cost_usd"]), Decimal("251.20")
+            attributed + Decimal(data["unallocated_multi_model_cost_usd"]), Decimal("410.76")
         )
 
     def test_repeated_summary_cannot_increase_deduplicated_session_count(self) -> None:
         data = load_claude(self.aggregate_path)
-        self.assertEqual((data["session_count"], data["reported_cost_usd"]), (18, "251.20"))
+        self.assertEqual(
+            (data["session_count"], data["reported_cost_usd"], data["accounted_cost_usd"]),
+            (18, "251.20", "410.76"),
+        )
         data["session_count"] = 19
         with TemporaryDirectory() as directory:
             path = Path(directory) / "aggregate.json"
@@ -49,12 +58,13 @@ class ClaudeTests(unittest.TestCase):
 
     def test_combined_totals(self) -> None:
         claude = load_claude(self.aggregate_path)
+        codex = load_codex(self.codex_path)
         openrouter = {"cost": Decimal("40.874392"), "prompt": 309_121_198, "completion": 2_657_111}
         self.assertEqual(
-            combined_totals(openrouter, claude),
-            {"cost": Decimal("292.074392"), "input": 309_147_592, "output": 3_191_327},
+            combined_totals(openrouter, claude, codex),
+            {"cost": Decimal("675.3687136"), "input": 318_631_659, "output": 4_657_926},
         )
-        self.assertEqual(Decimal("292.074392").quantize(Decimal("0.01")), Decimal("292.07"))
+        self.assertEqual(Decimal("675.3687136").quantize(Decimal("0.01")), Decimal("675.37"))
 
 
 if __name__ == "__main__":

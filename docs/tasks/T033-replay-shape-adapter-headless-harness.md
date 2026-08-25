@@ -1,6 +1,6 @@
 ---
 id: T033
-status: not_started
+status: done
 priority: P0
 task_type: component
 component: C03
@@ -72,33 +72,33 @@ reported as historical authenticity.
 
 ## Acceptance criteria
 
-- [ ] `common/transport/replay_types.py` defines frozen `ReplayVerdict`, `VerificationCoverage`,
+- [x] `common/transport/replay_types.py` defines frozen `ReplayVerdict`, `VerificationCoverage`,
       `SealedRecord`, `ReplayIssue`, and `ReplayReport` exactly as specified in the shared
       architecture, using `@dataclass(frozen=True, slots=True)` and `StrEnum`.
       `VerificationCoverage` carries one independent boolean per layer: `integrity`,
       `live_binding`, `physics`, `outcome`, `bundle_digests`, `external_authenticity`.
-- [ ] `common/transport/replay_records.py` provides strict nested and flat codecs that retain
+- [x] `common/transport/replay_records.py` provides strict nested and flat codecs that retain
       canonical payload bytes and validate step, nonce, commitment shape, sequence, and homogeneous
       record shape. Booleans are rejected where integers are required; nonce is non-empty;
       commitment is 64 lowercase hex; steps are unique, ordered, and contiguous from 0.
-- [ ] `common/transport/replay.py` provides pure `verify_replay(log_doc, config_doc) -> ReplayReport`
+- [x] `common/transport/replay.py` provides pure `verify_replay(log_doc, config_doc) -> ReplayReport`
       with exact identity and terms checks, verifying every record through `verify_commit`.
-- [ ] Each coverage layer is reported independently and honestly: a supported foreign shape sets
+- [x] Each coverage layer is reported independently and honestly: a supported foreign shape sets
       `integrity` true and `physics`/`live_binding` false rather than collapsing to a single level;
       a mixed shape inside one half is `INVALID`.
-- [ ] `external_authenticity` is false whenever no peer receipt or T018-authorized signature has been
+- [x] `external_authenticity` is false whenever no peer receipt or T018-authorized signature has been
       verified, even when every local check passes. `VERIFIED_OK` means "all available checks
       passed", never "historically authentic".
-- [ ] Verdicts are distinct: commitment mismatch or withheld committed reveal is `TAMPERED`; physics
+- [x] Verdicts are distinct: commitment mismatch or withheld committed reveal is `TAMPERED`; physics
       or outcome failure with intact commitments is `ILLEGAL`; malformed syntax, type, or identity is
       `INVALID`; absent required evidence is `INCOMPLETE`.
-- [ ] The first-record heuristic and the regex shape inference are deleted, not bypassed.
-- [ ] Tests cover empty, malformed, and mixed shape; duplicate, skipped, negative, and out-of-order
+- [x] The first-record heuristic and the regex shape inference are deleted, not bypassed.
+- [x] Tests cover empty, malformed, and mixed shape; duplicate, skipped, negative, and out-of-order
       steps; wrong config and wrong UID; both halves; semantic payload mutation; canonical
       whitespace and key-order behaviour; four physics failures including a role-wrong capture
       claim; foreign degradation; unanchored-recomputed authenticity honesty; and deterministic
       report equality.
-- [ ] Ruff clean, line cap ok, and `diff -rq` of `common/` across both repos reports no difference
+- [x] Ruff clean, line cap ok, and `diff -rq` of `common/` across both repos reports no difference
       after the approved result is ported.
 
 ## Verification
@@ -110,4 +110,7 @@ reported as historical authenticity.
 
 ## Result and evidence
 
-(to be filled)
+Validated on `production-fixes`. The strict shared replay codecs and pure verifier cover all
+declared verdict, coverage, malformed-input, sequencing, and authenticity cases. Shared replay
+sources remain mirrored between Police and Thief; the combined completion audit passed 209 tests
+with no failures on 2026-08-24.

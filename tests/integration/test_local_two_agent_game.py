@@ -4,7 +4,7 @@ Proves:
 - Capture outcome with scores 20 (Police) / 5 (Thief)
 - Survival outcome at survival_threshold (35) with scores 5 (Police) / 10 (Thief)
 - Capture at step 35 takes precedence over survival if capture occurs
-- Operational divergence refusal (max_moves != survival_threshold) citing OPEN-011
+- Production termination-contract refusal when max_moves != survival_threshold
 - Barrier quota rejection without state corruption
 - Deterministic reproducibility across independent runs
 """
@@ -25,7 +25,7 @@ def _create_pair(
     barriers_max: int = 14,
 ) -> tuple[GameEngine, GameEngine]:
     if max_steps != survival_thresh:
-        raise ValueError("divergent max_moves and survival_threshold refused (OPEN-011)")
+        raise ValueError("divergent max_moves and survival_threshold refused by termination contract")
     board = Board(size=size)
     cop = GameEngine(
         board=board,
@@ -100,10 +100,10 @@ def test_stage1_capture_at_step_35_takes_precedence() -> None:
 
 
 def test_stage1_divergence_refusal() -> None:
-    with pytest.raises(ValueError, match="OPEN-011"):
+    with pytest.raises(ValueError, match="termination contract"):
         _create_pair(max_steps=34, survival_thresh=35)
 
-    with pytest.raises(ValueError, match="OPEN-011"):
+    with pytest.raises(ValueError, match="termination contract"):
         _create_pair(max_steps=35, survival_thresh=40)
 
 

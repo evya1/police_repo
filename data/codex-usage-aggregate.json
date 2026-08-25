@@ -1,0 +1,33 @@
+{
+  "source": "Codex",
+  "session_count": 14,
+  "first_day": "2026-08-24",
+  "last_day": "2026-08-25",
+  "cost_method": "estimated_api_list_price",
+  "pricing": {
+    "input_per_million_usd": "4.00",
+    "cached_input_per_million_usd": "0.40",
+    "cache_write_per_million_usd": "5.00",
+    "output_per_million_usd": "20.00"
+  },
+  "models": [
+    {
+      "model": "GPT-5.6 Sol",
+      "session_appearances": 14,
+      "input_tokens": 9484067,
+      "output_tokens": 1466599,
+      "cache_read_tokens": 391165184,
+      "cache_write_tokens": 0,
+      "reasoning_output_tokens": 494310,
+      "attributed_cost_usd": "223.7343216"
+    }
+  ],
+  "totals": {
+    "input_tokens": 9484067,
+    "output_tokens": 1466599,
+    "cache_read_tokens": 391165184,
+    "cache_write_tokens": 0,
+    "reasoning_output_tokens": 494310
+  },
+  "estimated_cost_usd": "223.7343216"
+}

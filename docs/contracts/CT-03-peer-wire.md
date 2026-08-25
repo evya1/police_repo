@@ -82,7 +82,7 @@ These declarations sit **outside** the closed signed-terms set. The signed terms
 | `wire_shape` | `reference-v3` |
 | `scent_model` | `subtractive_chebyshev_v1` (default; `multiplicative_book_v1` also supported and selectable) |
 | `info_mode` | `belief` — the rival's position is outside the observation space; under `reference-v3` this is structural, because the rival's position never crosses the wire |
-| `smell_binding` | current/unbound. The `commit_grid_v1` extension is **not** on our critical path: it is not implemented anywhere the project can verify today, and it changes a commit preimage |
+| `smell_binding` | current/unbound; `commit_grid_v1` is excluded from the approved profile because it changes the commitment preimage |
 
 ### Turn order
 

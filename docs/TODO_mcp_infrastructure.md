@@ -6,7 +6,9 @@ version: 0.8
 derived_from: PLAN-MCP-INFRA@0.1 · PRD_mcp_infrastructure (approved 2026-08-17)
 applies_to: police_repo + thief_repo
 owner: orchestrator
-updated 2026-08-18 (ST-03 + ST-04 + ST-05 + ST-06 + ST-07 + ST-08 + ST-09 done; pre-existing spine/golden-vector debt fixed; ST-10 + ST-11 done — real FastMCP 3.4 server/client, four-tool surface, 406 ready state, and the two-OS-process localhost smoke (SC-1): both peers complete six sub-games with mutual audits over real HTTP and agree on game_id/game_uid. Follow-on hardening: TC-22 latency benchmark and the preflight exit-5 fixture)
+updated 2026-08-18 (ST-03 through ST-11 done — real FastMCP 3.4 server/client, four-tool surface,
+406 ready state, and the two-OS-process localhost smoke (SC-1): both peers complete six sub-games
+with mutual audits over real HTTP and agree on game_id/game_uid)
 ---
 
 # TODO — MCP Infrastructure (Stage 2)
@@ -188,7 +190,7 @@ Build (PLAN §5.7): `messages.py` — `TurnMessage`/`ControlMessage`/`AuditPaylo
 - Both repos: 182 transport unit tests pass, ruff clean, `common/` byte-identical.
 - Coverage for `common.transport.messages` + `common.transport.validators` + `common.transport.refusals`: 90%+ (exceeds 85% threshold).
 
-**Debt fixed during ST-07 handoff** (pre-existing breakages from ST-06 API changes):
+**Compatibility fixes completed during ST-07 handoff:**
 - `common/transport/series.py` `_exchange_greeting`: was using old `_greeting_to_dict` with stale field names (`shared_terms`, `private_terms`); replaced with direct `verify_greeting()` call. Spine test now green.
 - `tests/contract/test_golden_vectors.py` + fixtures: `terms_signature()` signature changed from `(shared, private)` to `(terms, nonce)`; `game_uid()` from `(game_id, terms_hash)` to `(terms, group_a, group_b)`; `game_id()` now uses `-vs-` separator. Updated tests and JSON fixtures.
 - `tests/integration/test_series_loopback.py`: spine test used minimal 2-key terms; updated to full 14-key TERMS_KEYS.
@@ -253,8 +255,6 @@ Build (PLAN §5.16): `mcp_client.py` — `McpChannel` implementing `PeerChannel`
 ---
 
 **Evidence (2026-08-18) — verified.** Real FastMCP 3.4.7 server + client implemented in `common/transport/mcp_server.py` / `mcp_client.py` (byte-identical across both repos). Contract suite `tests/contract/mcp/test_local_mcp_smoke.py` (guarded by `importorskip fastmcp`, so the zero-dependency loopback spine is untouched): the `/mcp` edge answers a browser-shaped GET with `406`; all four tools list under their exact names; `submit_audit(message=…)` is rejected over HTTP; and the full six-sub-game series settles over real localhost HTTP with both sides deriving the same `game_id`/`game_uid`. Two-OS-process smoke: a `police_repo` peer and a `thief_repo` peer, each serving its own FastMCP server and dialing the other, both exit 0 and complete six sub-games with mutual audits and agreeing identity (complementary outcomes) — reproduced from fresh clones with `uv sync --locked`. Full suite 567 passed, ruff clean, 7/7 quality gates, planning-graph 0 issues in both repos. Independently reviewed (DeepSeek V4 Pro) and cross-repository-verified (GLM 5.2): no blocking issues.
-
-**Still open on ST-10/ST-11 (follow-on, unchecked above):** TC-22 handler-latency p99 benchmark; the preflight guard-violation fixture proving the exit-5 refusal path; and explicit live-server assertions for locked-model declaration/refusal and nonce-secrecy-over-HTTP (both are covered by the loopback contract suite today).
 
 ## Phase G — M4 (system): session faults & recovery
 

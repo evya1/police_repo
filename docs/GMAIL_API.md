@@ -32,6 +32,7 @@ published by `runner.py`, and has no production caller.
 | `gmail.py::build_email_message(*, sender: str, recipient: str, subject: str, body: str, attachments: list[tuple[str, bytes]]) -> tuple[EmailMessage, str]` | Builds the MIME object and returns it plus ASCII URL-safe base64 of all MIME bytes. No I/O. Raises `AttachmentMissingError` for zero attachments or an empty member. It does not parse JSON, validate filenames/addresses, or restrict recipients. Called by `GmailSender`; downstream is Python's `email` package. |
 | `gmail.py::GmailSender(...)` | Constructor requires an `ExternalApiGatekeeper` and a valid scope; accepts `sender_email: str = "peer@local"`, `default_recipient: str | None`, injected `service_client: Any`, and optional store. With no store it creates the working-directory store above. It does not construct an OAuth/Gmail client. |
 | `gmail.py::GmailSender.send_report(*, game_uid: str, artifacts: list[tuple[str, bytes]], recipient: str | None = None, subject: str | None = None, body: str = "Automated Police/Thief series report attached.") -> dict[str, Any]` | Rejects an already-marked UID, missing client, or missing recipient; constructs the message; calls Gmail only through the Gatekeeper; marks sent only after the call returns; returns the client's dictionary unchanged (no required keys are validated or consumed). Client/Gatekeeper/store errors propagate. Called only by `ReportingPipeline` and tests. |
+| `gmail.py::GmailSender.send_kit_result(*, game_uid: str, result: dict[str, Any], filename: str | None = None, recipient: str | None = None, subject: str | None = None) -> dict[str, Any]` | Kit-compatible send (SPEC §6.1, WARNINGS §6): body is the canonical compact bytes of `result`, the single attachment is that same file named `result_<game_id>.json` (or `filename`). Declaration/config/log are never emailed. Same guards (idempotency, client, recipient, draft) as `send_report`; the older 14-attachment path is untouched. |
 | `gmail.py::GmailError` hierarchy | `GmailClientNotConfiguredError`, `InvalidScopeError`, `AttachmentMissingError`, `DraftSubstitutionError`, and `DuplicateSendError`. Missing recipient is instead `ValueError`. A missing/unusable `messages()` resource is treated as forbidden draft substitution. |
 | `src/police_peer/reporting/artifacts.py::ReportingArtifactBundle` | Dataclass containing `Declaration`, six `SubGameConfig`, six `SubGameLog`, one `SeriesResult`, and optional `Callable[[bytes, str], bool]` verifier. `validate_bundle() -> None` validates counts, schemas, identifiers, finalization, and—only when a verifier exists—log signatures. `to_attachments() -> list[tuple[str, bytes]]` validates again and returns 14 ordered canonical JSON members. Pure; `ArtifactError` subclasses report malformed/inconsistent data. Used by `ReportingPipeline`. |
 | `src/police_peer/reporting/pipeline.py::SentReportsStore(path: Path | None = None)` | Loads `.sent_reports.json` once into a cache. `is_sent(str) -> bool`; `mark_sent(str) -> None` overwrites compact sorted JSON. Missing/JSON/type errors load empty; other reads and all writes propagate. It creates no parent and has no atomic replace or locking. |
@@ -48,10 +49,7 @@ arbitrary strings; the example uses `dry-run`, but there is no mode enum, send b
 explicit authorization parameter. `GmailSender` separately exposes `sender_email`,
 `default_recipient`, `scopes`, `service_client`, and `idempotency_store` as constructor inputs.
 
-- Authoritative recipient: `rmisegal+uoh26finalgame@gmail.com` (PDF p. 71, §9.3; p. 141,
-  Appendix F table 20). `EmailSettings` defaults to it. **The Gmail adapter does not enforce it**:
-  any non-empty per-call or default address is accepted, and a per-call value overrides the
-  default.
+- Default recipient is the placeholder `example@example.com`; the real league address must be set in private config before a counted run. **The Gmail adapter does not enforce any address**: any non-empty per-call or default address is accepted, and a per-call value overrides the default.
 - OAuth scope: `https://www.googleapis.com/auth/gmail.send` (PDF p. 105, Appendix A §1.3).
   `validate_oauth_scope` also accepts the shorthand `gmail.send`; broader scopes fail before a
   call.
@@ -115,6 +113,15 @@ Content-Transfer-Encoding: base64
 
 MIME boundaries and header folding are chosen by the standard library, so the complete encoded
 `raw` string is not deterministic even when attachment JSON bytes are.
+
+### `send_kit_result` — kit-compatible format
+
+`GmailSender.send_kit_result` is the league-kit-compatible sender (SPEC §6.1, WARNINGS §6). It
+emails the **result only**:
+
+- Body: the **canonical compact** bytes of the kit result (`common.transport.canonical.canonical_bytes`, `sort_keys=True, ensure_ascii=False, separators=(",", ":")`) — never a pretty-printed re-serialization. `EmailMessage` appends a trailing newline to the `text/plain` body, which is accepted.
+- Attachment: exactly **one** named file, `result_<game_id>.json` (or the supplied `filename`), whose payload is the same canonical bytes.
+- Declaration/config/log artifacts are **never** emailed; they are published in the repos and reached via the result's `links.github` (rule 49).
 
 ## JSON attachments and source map
 
@@ -228,7 +235,7 @@ fake = FakeService()
 sender = GmailSender(
     gatekeeper=ExternalApiGatekeeper(),
     scopes=["https://www.googleapis.com/auth/gmail.send"],
-    default_recipient="rmisegal+uoh26finalgame@gmail.com",
+    default_recipient="example@example.com",
     service_client=fake,
     idempotency_store=FileIdempotencyStore(Path("artifacts/state/gmail-sent.json")),
 )
@@ -246,7 +253,7 @@ from police_peer.reporting.gmail import build_email_message
 
 message, raw = build_email_message(
     sender="peer@local",
-    recipient="rmisegal+uoh26finalgame@gmail.com",
+    recipient="example@example.com",
     subject=f"[PoliceThief-Report] Series {bundle.declaration.game_uid}",
     body="Automated Police/Thief series report attached.",
     attachments=bundle.to_attachments(),
@@ -274,7 +281,7 @@ generated Gmail outbox or receipt file.
 | PDF requirement | Implemented location | Status |
 | --- | --- | --- |
 | Each peer automatically emails after every legal counted game (p. 71, §9.3) | `reporting.pipeline.ReportingPipeline.process_and_send`; absent from `runner.run_one_peer` | not wired |
-| Only `rmisegal+uoh26finalgame@gmail.com` is allowed (p. 71; p. 141, App. F table 20) | `wire.identity_config.LECTURER_REPORT_ADDRESS`; `GmailSender.send_report` accepts overrides | partial |
+| Only `rmisegal+uoh26finalgame@gmail.com` is the league address (p. 71; p. 141, App. F table 20); the code default is now `example@example.com` | `wire.identity_config.LECTURER_REPORT_ADDRESS`; `GmailSender.send_report` accepts overrides | placeholder |
 | Send-only OAuth scope (p. 105, App. A §1.3) | `reporting.gmail.GMAIL_SEND_SCOPE` / `validate_oauth_scope` | implemented |
 | Local OAuth files and consent/refresh flow (pp. 105–109, App. A) | ignore/safety configuration; no Gmail client factory | missing |
 | Gatekeeper rate, quota, DoS, and 429 backoff (pp. 72–79, §9.3.1–3) | `infra.external_api_gatekeeper.ExternalApiGatekeeper` | implemented |

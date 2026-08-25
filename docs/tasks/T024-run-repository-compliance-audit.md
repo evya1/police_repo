@@ -1,6 +1,6 @@
 ---
 id: T024
-status: blocked
+status: done
 priority: P1
 task_type: verification
 component: system
@@ -70,11 +70,11 @@ Excellence criteria remain recommendations unless independently required. The au
 
 ## Acceptance criteria
 
-- [ ] Ruff, pytest/coverage, line cap, secrets, docs, links, task IDs, archives, and workflow-permission gates all pass.
-- [ ] Every MUST requirement maps to passing automated evidence or an explicit human gate.
-- [ ] No secrets, private identifiers, generated archives, stale names, or unsupported status claims are tracked.
-- [ ] No speculative service, plugin, framework, or duplicate planning artifact remains.
-- [ ] The compliance record lists actual commands, exact results, deviations, and approved exceptions.
+- [x] Ruff, pytest/coverage, line cap, secrets, docs, links, task IDs, archives, and workflow-permission gates all pass.
+- [x] Every MUST requirement maps to passing automated evidence or an explicit human gate.
+- [x] No secrets, private identifiers, generated archives, stale names, or unsupported status claims are tracked.
+- [x] No speculative service, plugin, framework, or duplicate planning artifact remains.
+- [x] The compliance record lists actual commands, exact results, deviations, and approved exceptions.
 
 ## Verification
 
@@ -92,3 +92,5 @@ To be completed immediately before execution.
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Complete. Exact commands and results are recorded in the [compliance audit](../evidence/compliance-audit.md); the locked install, full suite, seven repository gates, replay audit, and reciprocal parity all pass.

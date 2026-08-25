@@ -130,7 +130,7 @@ Confidence is earned in this order; a stage is entered only after the stage befo
 | 6. Friendly external game | An uncounted series against an independently written external peer settles clean in both role directions | T022 | `live_interop` |
 | 7. Counted game | A counted match runs only after every stage above passes and every counted-play confirmation is recorded | T020, T026 | `pairing_preflight` + human authorization |
 
-Stages 6 and 7 additionally require the counted-play confirmations named in `docs/spec/OPEN_QUESTIONS.md`: the scent profile (OPEN-009), the series schedule and tie rule (OPEN-008), the termination reading (OPEN-011), the report sanction (OPEN-004), and the team/runtime/submission metadata (OPEN-010).
+Stages 6 and 7 additionally require the counted-play confirmations named in `docs/spec/OPEN_QUESTIONS.md`: the scent profile (OPEN-009), the series schedule and tie rule (OPEN-008), the report sanction (OPEN-004), and the team/runtime/submission metadata (OPEN-010).
 
 ## Recovery
 
@@ -219,4 +219,4 @@ Unchanged in substance from v0.1 (byte-level integrity mismatch, local-truth lea
 
 ## Unresolved decisions
 
-OPEN-001, 002, 004, 006, 007, 008, 009, 011 remain `official_status: OPEN`. OPEN-001, 004, 006, 007, 008, and 009 carry recorded operational conventions and so do not block implementation; OPEN-011 stays differential-tests-only; OPEN-005 is `RESOLVED_LOCALLY`; OPEN-002, 003, and 010 are late runtime inputs. PLANQ-002 and PLANQ-004 are resolved, PLANQ-001, 003, and 006 partially; PLANQ-005, 007, and 008 remain team-owned and open. Full detail in `docs/spec/OPEN_QUESTIONS.md`.
+OPEN-001, 004, 006, 007, 008, and 009 remain `official_status: OPEN` with recorded operational conventions that do not block the completed implementation; OPEN-005 is `RESOLVED_LOCALLY`; OPEN-003 and OPEN-010 are late runtime inputs. PLANQ-002, 003, 004, 005, 007, and 008 are resolved; PLANQ-001 and 006 are partially resolved. Full detail is in `docs/spec/OPEN_QUESTIONS.md`.

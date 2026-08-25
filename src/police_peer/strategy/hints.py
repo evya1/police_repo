@@ -61,12 +61,17 @@ class HintWriter:
         arena: str,
         max_words: int,
         provider: TextProvider | None = None,
+        every_n_steps: int = 1,
     ) -> None:
+        if every_n_steps < 1:
+            raise ValueError("every_n_steps must be at least 1")
         self.role = role
         self.rng = rng
         self.arena = arena
         self.max_words = max_words
         self.provider = provider
+        self.every_n_steps = every_n_steps
+        self._eligible_turns = 0
         # Sealed audit state (SEC-009), never part of the public (hint,
         # verdict) return. Per-turn: valid only until the next say() call --
         # callers (e.g. BrainBase.decide) must read it immediately after.
@@ -94,6 +99,9 @@ class HintWriter:
             return HintResult(plan.fallback_text, "truth", FallbackReason.NON_CLAIM, TokenUsage(0, 0))
         if self.provider is None:
             return self._fallback(plan, FallbackReason.NO_PROVIDER, TokenUsage(0, 0))
+        self._eligible_turns += 1
+        if self._eligible_turns % self.every_n_steps:
+            return self._fallback(plan, FallbackReason.SKIPPED, TokenUsage(0, 0))
         request = HintRenderRequest(
             role=self.role, arena=self.arena, target_landmark=plan.target_landmark,
             claim=plan.claim, max_words=self.max_words,

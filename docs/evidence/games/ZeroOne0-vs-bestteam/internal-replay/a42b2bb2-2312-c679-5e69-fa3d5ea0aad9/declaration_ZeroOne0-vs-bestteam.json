@@ -1,0 +1,10 @@
+{
+  "artifact_kind": "declaration",
+  "game_id": "ZeroOne0-vs-bestteam",
+  "game_uid": "a42b2bb2-2312-c679-5e69-fa3d5ea0aad9",
+  "schema_status": "internal_interop",
+  "schema_version": "internal-interop-1",
+  "settled": true,
+  "settled_outcome": "survival",
+  "sub_game_count": 6
+}

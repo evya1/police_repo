@@ -1,6 +1,6 @@
 ---
 id: T046
-status: not_started
+status: done
 priority: P0
 task_type: component
 component: C06
@@ -80,27 +80,27 @@ create false compliance.
 
 ## Acceptance criteria
 
-- [ ] Pure builders emit deterministic declaration, config, log, result, and manifest dictionaries.
+- [x] Pure builders emit deterministic declaration, config, log, result, and manifest dictionaries.
       All carry `schema_version`, `artifact_kind`, `schema_status: internal_interop`, non-empty
       `game_uid` and `game_id`, config/log pairs carry the same `sub_game_index`, and cross-document
       expected record counts and final steps agree for both halves (RP-12), so a truncated final
       record cannot pass merely because the remaining sequence is contiguous.
-- [ ] Serialization is UTF-8 with stable key ordering and a trailing newline.
-- [ ] The writer creates `<root>/replay/.<uid>.staging-<random>` with mode 0700, writes the exact
+- [x] Serialization is UTF-8 with stable key ordering and a trailing newline.
+- [x] The writer creates `<root>/replay/.<uid>.staging-<random>` with mode 0700, writes the exact
       member set, flushes and **fsyncs** files and the staging directory where supported, computes
       digests, reloads and self-verifies all six config/log pairs, acquires an **O_EXCL publication
       lock**, renames once, and fsyncs the parent directory where supported.
-- [ ] The manifest lists exact member names and SHA-256 file digests: one declaration, six configs,
+- [x] The manifest lists exact member names and SHA-256 file digests: one declaration, six configs,
       six non-empty logs, one result.
-- [ ] Failure injected after each individual write, after fsync, and at publish leaves no destination
+- [x] Failure injected after each individual write, after fsync, and at publish leaves no destination
       directory and no staging residue; cleanup happens in `finally`.
-- [ ] An existing destination is never overwritten, and a stale publication lock is reported for
+- [x] An existing destination is never overwritten, and a stale publication lock is reported for
       T022 recovery rather than silently deleted.
-- [ ] Two concurrent publishers race for the same UID: exactly one wins, the loser fails closed, and
+- [x] Two concurrent publishers race for the same UID: exactly one wins, the loser fails closed, and
       the winner's bundle is never overwritten or partially observed.
-- [ ] Integration test publishes a bundle from a real settled series and verifies exact counts,
+- [x] Integration test publishes a bundle from a real settled series and verifies exact counts,
       digests, and identity.
-- [ ] No document claims official-schema compliance while `INPUT-001` is unresolved.
+- [x] No document claims official-schema compliance while `INPUT-001` is unresolved.
       `{#official_templates}`
 
 ## Verification
@@ -111,4 +111,7 @@ create false compliance.
 
 ## Result and evidence
 
-(to be filled)
+Validated on `production-fixes`. Deterministic internal-interop builders, atomic publication,
+manifest/digest verification, injected-failure cleanup, collision handling, and concurrent
+publication are covered by the declared unit and integration tests. The combined completion audit
+for T027/T033/T034/T046/T047/T048 passed 209 tests with no failures on 2026-08-24.

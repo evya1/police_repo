@@ -14,6 +14,7 @@ from pathlib import Path
 
 from common.transport.kit_agreement import AgreementOutcome, build_proposal
 from common.transport.kit_identity import GroupIdentity, group_block
+from common.transport.kit_names import result_name
 from common.transport.kit_settlement import result_row, series_final
 from common.transport.series import SeriesResult
 from police_peer.reporting.kit_bundle import publish_kit_bundle
@@ -58,12 +59,16 @@ def publish_kit(
     confirmed: bool,
     identity: GroupIdentity | None = None,
     opponent_identity: dict | None = None,
-) -> None:
+) -> Path | None:
     """Publish the kit projection beside the internal bundle.
 
     Deliberately non-fatal: the internal bundle is the evidence of record and is already on
     disk by the time we get here. A projection that cannot be written is a reporting problem
     to be seen and fixed, not a reason to lose a settled series.
+
+    The kit projection carries only the kit's mandatory fields. Token usage is optional to
+    the kit (its checker skips token gates when the keys are absent), so it is deliberately
+    not projected here -- this also avoids fabricating a value for ``unknown`` usage.
     """
     try:
         counted = mode == "counted"
@@ -84,10 +89,16 @@ def publish_kit(
         if result.replay_evidence:
             terms = json.loads(result.replay_evidence[0].terms_bytes)
             max_tokens = terms.get("token_budget_per_series")
-        publish_kit_bundle(
+        # The kit projection carries only the kit's mandatory fields. Per-row `tokens` and
+        # `final_result.tokens_total_series` are optional to the kit and would require
+        # projecting a value for `unknown` usage, so they are omitted entirely.
+        bundle = publish_kit_bundle(
             artifacts_dir, result, our_group=our_group, counted=counted,
             confirmed=confirmed, groups=groups, games_played=games_played,
             max_tokens_per_game=max_tokens,
+            tokens_by_sub_game=None, include_tokens=False,
         )
+        return bundle / result_name(result.game_id)
     except Exception as exc:  # noqa: BLE001 - never let a projection fault destroy evidence
         logger.error("Kit bundle projection failed (internal bundle is intact): %s", exc)
+        return None

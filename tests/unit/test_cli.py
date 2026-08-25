@@ -50,6 +50,12 @@ def test_build_parser_custom_args() -> None:
 
 def test_build_parser_counted_mode() -> None:
     parser = build_parser()
-    args = parser.parse_args(["--mode", "counted"])
+    args = parser.parse_args(
+        [
+            "--mode", "counted", "--email-recipient", "recipient@example.invalid",
+            "--authorize-email-send",
+        ]
+    )
     assert args.mode == "counted"
-
+    assert args.email_recipient == "recipient@example.invalid"
+    assert args.authorize_email_send is True

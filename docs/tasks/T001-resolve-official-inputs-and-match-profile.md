@@ -12,7 +12,6 @@ implements:
   - REPORT-006
   - REPORT-009
   - SUB-009
-  - SUB-010
 context_files:
   - docs/PRD.md
   - docs/PLAN.md
@@ -67,11 +66,10 @@ A human-approved input packet closes or explicitly defers every blocking officia
 - `REPORT-006`
 - `REPORT-009`
 - `SUB-009`
-- `SUB-010`
 
 ## Relevant context
 
-This task coordinates intake across OPEN-001 through OPEN-011; it is claimable and begins requesting/registering inputs immediately — no `depends_on` task and no `gates:` entry blocks its start. Team name `ZeroOne`, team number `01`, and GitHub handles `evya1` and `Us5rName` are recorded non-secret inputs. The orchestrator obtains the remaining official attachments, authoritative clarifications, eight-character final-project group code, repository/endpoint values, and any private form-only values, then registers and verifies each input without storing secret contents. Each unresolved item is represented below as a criterion-scoped gate on the specific acceptance criterion it affects, not as a whole-task blocker.
+This task coordinates intake across the active OPEN items; it is claimable and begins requesting/registering inputs immediately — no `depends_on` task and no `gates:` entry blocks its start. Team name `ZeroOne`, team number `01`, and GitHub handles `evya1` and `Us5rName` are recorded non-secret inputs. The orchestrator obtains the remaining official attachments, authoritative clarifications, eight-character final-project group code, and repository/endpoint values, then registers and verifies each input without storing secret contents. Each unresolved item is represented below as a criterion-scoped gate on the specific acceptance criterion it affects, not as a whole-task blocker.
 
 ## Gates
 
@@ -92,7 +90,7 @@ This task coordinates intake across OPEN-001 through OPEN-011; it is claimable a
 
 ## Acceptance criteria
 
-- [ ] The four official reporting templates/schemas and official Moodle form are either attached verbatim or still marked MISSING OFFICIAL INPUT; completed runtime match instances and conflicting flat/nested candidate layouts are not mistaken for the missing schema contract. `{#official_schemas}`
+- [ ] The four official reporting templates/schemas are either attached verbatim or still marked MISSING OFFICIAL INPUT; completed runtime match instances and conflicting flat/nested candidate layouts are not mistaken for the missing schema contract. `{#official_schemas}`
 - [ ] The confirmed team name, number, and GitHub handles are retained, while the valid eight-character group code and role ownership are resolved without committing private data. `{#team_metadata}` The sibling URL, public MCP address, and opponent agreement values are resolved once a live opponent/endpoint is available. `{#live_endpoints}`
 - [ ] OPEN-004 and OPEN-005 have written lecturer/team decisions; no sanction or Minimum direction is inferred. `{#sanction_minimum_decisions}`
 - [ ] OPEN-007, OPEN-008, and OPEN-009 are resolved or explicitly deferred; compact/spaced serialization, Nonce placement, role schedule, tie aggregation, and scent clamp/merge/update behavior remain test-only branches until approved. `{#serialization_series_scent}`

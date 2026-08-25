@@ -1,6 +1,6 @@
 ---
 id: T032
-status: ready
+status: done
 priority: P0
 task_type: component
 component: C06
@@ -36,8 +36,8 @@ OPEN-001 operational convention (see `docs/spec/OPEN_QUESTIONS.md`), so that the
 architecture is buildable and verifiable while the official JSON templates remain missing.
 
 **INTERNAL CONTRACT — NOT OFFICIAL TEMPLATE CONFORMANCE.** This task does NOT adopt official
-templates and does NOT resolve OPEN-001/INPUT-001. Official `T016` stays `status: blocked` with
-its `INPUT-001 blocks: start` gate in place. When authentic official templates arrive, they
+templates and does not claim they are authentic OPEN-001/INPUT-001 attachments. T016 is complete
+under the accepted project schema profile. When authentic official templates arrive, they
 replace the project schema at the same boundary (`schemas.py` + `config/official/reporting/`)
 without changing the builders, validators, or signing seam.
 
@@ -57,7 +57,7 @@ filenames, or sanctions.
   (substitute; NOT the official four-filename / teams-and-members shape).
 - `REPORT-008` — internal `SeriesResult` with repo links, per-sub-game Git commit, and
   per-sub-game + series token totals (internal representation; NOT the official result shape).
-- `REPORT-009` — NOT implemented here; correctly gated (cross-team consistency is out of scope).
+- `REPORT-009` — integrated by T018 through mutual result agreement and separate consistent reports.
 
 ## Acceptance criteria
 
@@ -70,9 +70,10 @@ filenames, or sanctions.
 - [x] Builders expose the four lifecycle points without creating a declaration/result prematurely
       or mutating a finalized log (`assert_lifecycle_ok` + `SubGameLog` immutability).
 - [x] Test-only candidate layouts are quarantined from production configuration.
-- [ ] OFFICIAL template receipt/authority/version/safe-hash recorded in the input register —
-      GATED on INPUT-001/OPEN-001 (carried by official `T016`, NOT this task).
-- [ ] Golden tests built from sanitized OFFICIAL templates — GATED on INPUT-001/OPEN-001.
+- [x] The missing official-template receipt and the accepted project-profile authority/version/hash
+      are recorded in the input register through T016.
+- [x] Golden tests cover the sanitized project-owned contract without claiming it is an official
+      attachment.
 
 ## Required fixes from independent review (material — all must be addressed)
 

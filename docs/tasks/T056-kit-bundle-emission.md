@@ -3,6 +3,9 @@ artifact: task
 id: T056
 title: Emit the league-kit 14-artifact bundle from a settled series
 status: done
+priority: P0
+task_type: component
+optional: false
 owner: orchestrator
 component: C06
 depends_on: [T046, T047, T053]

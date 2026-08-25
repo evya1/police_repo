@@ -1,0 +1,109 @@
+{
+  "artifact_kind": "manifest",
+  "game_id": "ZeroOne0-vs-bestteam",
+  "game_uid": "a42b2bb2-2312-c679-5e69-fa3d5ea0aad9",
+  "members": [
+    {
+      "name": "declaration_ZeroOne0-vs-bestteam.json",
+      "sha256": "bff520c4ef874a9b4e9a2fd5547f88274b1448ccbc324d37389d812ef102ba8c"
+    },
+    {
+      "name": "config_ZeroOne0-vs-bestteam_g01.json",
+      "sha256": "063a42ed89df1ef56d9152d556e639fab080171a36c38edba91890d508d0920f"
+    },
+    {
+      "name": "config_ZeroOne0-vs-bestteam_g02.json",
+      "sha256": "263965d0e86c37dfd7f396bc7c042389b41c4e22f2205661c1a22191f274f2fb"
+    },
+    {
+      "name": "config_ZeroOne0-vs-bestteam_g03.json",
+      "sha256": "ae91c1a458ddb0b66b452de76c8332cbb2c76f0d272bd7779f0cccdc2dd68077"
+    },
+    {
+      "name": "config_ZeroOne0-vs-bestteam_g04.json",
+      "sha256": "cf780101ac7fc411aced89da2b3123b499f2f868399f841d9934c554af5248f8"
+    },
+    {
+      "name": "config_ZeroOne0-vs-bestteam_g05.json",
+      "sha256": "bf9048d125fa1d2db34036dfa47bcad78f5909660ceefbad59127058b05b3b16"
+    },
+    {
+      "name": "config_ZeroOne0-vs-bestteam_g06.json",
+      "sha256": "8a65a0da5921286c0faaede9431877fa482b893280d13f660934434df0429ed9"
+    },
+    {
+      "name": "log_ZeroOne0-vs-bestteam_g01.json",
+      "sha256": "e3dcffa1e5f492c605710948a973149bc0a938204d3ce99a24db1701dbbd18e4"
+    },
+    {
+      "name": "log_ZeroOne0-vs-bestteam_g02.json",
+      "sha256": "b491ecb77fbde51853a377ead86957f735844c4f0cbfec01a70c13de4fad4972"
+    },
+    {
+      "name": "log_ZeroOne0-vs-bestteam_g03.json",
+      "sha256": "d43b285d438f809b96bbba740cb4a607c3b1afb9056e8001e020f606c686b7c6"
+    },
+    {
+      "name": "log_ZeroOne0-vs-bestteam_g04.json",
+      "sha256": "16bad6e45d6c57cb8105bc7d3f0e22a7af9c9ffcdf912e178ad349b092e0ce63"
+    },
+    {
+      "name": "log_ZeroOne0-vs-bestteam_g05.json",
+      "sha256": "39fdafbf2f5c26c323736715587994b6873b5a3ba8c92c9552b09bf41240ab2a"
+    },
+    {
+      "name": "log_ZeroOne0-vs-bestteam_g06.json",
+      "sha256": "8cedd46236d06747022645dff300777e31b1abe4c584f6d84167898bf283622b"
+    },
+    {
+      "name": "result_ZeroOne0-vs-bestteam.json",
+      "sha256": "10e710c6a95c1f08b819cbf6560f10f8466083e06137eaf9849108beeead0667"
+    }
+  ],
+  "schema_status": "internal_interop",
+  "schema_version": "internal-interop-1",
+  "sub_games": [
+    {
+      "opponent_final_step": 35,
+      "opponent_record_count": 36,
+      "own_final_step": 35,
+      "own_record_count": 36,
+      "sub_game_index": 1
+    },
+    {
+      "opponent_final_step": 4,
+      "opponent_record_count": 5,
+      "own_final_step": 5,
+      "own_record_count": 6,
+      "sub_game_index": 2
+    },
+    {
+      "opponent_final_step": 35,
+      "opponent_record_count": 36,
+      "own_final_step": 35,
+      "own_record_count": 36,
+      "sub_game_index": 3
+    },
+    {
+      "opponent_final_step": 4,
+      "opponent_record_count": 5,
+      "own_final_step": 5,
+      "own_record_count": 6,
+      "sub_game_index": 4
+    },
+    {
+      "opponent_final_step": 35,
+      "opponent_record_count": 36,
+      "own_final_step": 35,
+      "own_record_count": 36,
+      "sub_game_index": 5
+    },
+    {
+      "opponent_final_step": 34,
+      "opponent_record_count": 35,
+      "own_final_step": 35,
+      "own_record_count": 36,
+      "sub_game_index": 6
+    }
+  ]
+}

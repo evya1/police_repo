@@ -84,7 +84,7 @@ Given a completed, mutually audited match, when both teams agree on the result, 
 
 ### US-007: Prepare submission
 
-Given implementation evidence exists, when the team prepares both repositories, then each contains the required academic/user documentation, sibling link, safe configuration history, and annotated submission tag, and each member submits the official form separately. (system scope)
+Given implementation evidence exists, when the team prepares both repositories, then each contains the required academic/user documentation, sibling link, safe configuration history, and annotated submission tag. (system scope)
 
 ### US-008: Implement one bounded task
 
@@ -92,7 +92,7 @@ Given a claimed task, when a worker reads `AGENTS.md`, the task file, and only t
 
 ## Functional requirements
 
-The functional contract is the canonical requirement set: ARCH-001..009, GAME-001..014, NET-001..005, STRAT-001..009, SEC-001..010, CFG-001..010, OBS-001..007, REPORT-001..013, LEAGUE-001..007, SUB-001..012. There are 96 project-behavior/submission requirements. Any conflict is governed by `docs/spec/OPEN_QUESTIONS.md`; downstream artifacts may not choose silently. Each requirement's primary-owning component is recorded in `docs/spec/TRACEABILITY.md`; this PRD does not restate requirement text.
+The functional contract is the canonical requirement set: ARCH-001..009, GAME-001..014, NET-001..005, STRAT-001..009, SEC-001..010, CFG-001..010, OBS-001..007, REPORT-001..013, LEAGUE-001..007, and the repository-relevant SUB requirements in `docs/spec/CANONICAL_REQUIREMENTS.md`. There are 94 project-behavior/submission requirements. Any conflict is governed by `docs/spec/OPEN_QUESTIONS.md`; downstream artifacts may not choose silently. Each requirement's primary-owning component is recorded in `docs/spec/TRACEABILITY.md`; this PRD does not restate requirement text.
 
 ## Quality requirements
 
@@ -127,7 +127,9 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 - Python and uv are the planned implementation environment, subject to dependency-selection tasks.
 - Public reachability requires a team-selected tunneling mechanism and a remote opponent.
 - Gmail automation requires local OAuth credentials and explicit human authorization.
-- Official JSON templates/schemas and the Word form must be supplied later, as must the answer on whether Step 0 requires any course-supplied credential. Team name/number, GitHub handles, and the two repository URLs are confirmed; the eight-character group code is a candidate awaiting human confirmation.
+- Official JSON templates/schemas and the answer on whether Step 0 requires any course-supplied
+  credential remain external inputs. Team name/number, GitHub handles, both repository URLs, and
+  the eight-character group code `ZeroOne0` are confirmed.
 
 ## Risks
 
@@ -141,9 +143,9 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 
 ## Open questions
 
-- OPEN-001 through OPEN-011 in `docs/spec/OPEN_QUESTIONS.md` are active; each now carries both an `official_status` and an `implementation_status`, so an unresolved question blocks only the scope it actually governs.
+- Active questions are listed individually in `docs/spec/OPEN_QUESTIONS.md`; each blocks only the scope it actually governs.
 - OPEN-001, OPEN-004, OPEN-006, and OPEN-007 block production interoperability or reporting decisions at specific criteria, not whole components.
-- OPEN-002 and the unresolved fields in OPEN-003 block final submission packaging, not core development.
+- OPEN-003 and OPEN-010 are resolved by the confirmed team metadata and completed counted match.
 - OPEN-005's directional ambiguity carries `implementation_status: RESOLVED_LOCALLY`; `official_status` remains OPEN. See the local-resolution note in `docs/spec/OPEN_QUESTIONS.md`.
 - OPEN-009's saturation/merge ambiguity carries `implementation_status: OPERATIONAL_CONVENTION`; `official_status` remains OPEN. Scent implementation, default-profile selection, and model-lock declaration proceed against the recorded convention; the official reading is confirmed before counted play.
 - OPEN-001 and OPEN-007 likewise carry `implementation_status: OPERATIONAL_CONVENTION`: the artifact contract and the canonical serialization/commitment contract are recorded and vector-verified locally, while final authoritative compliance stays gated on the official files.
@@ -154,9 +156,8 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 | Version | Date | Status | Change | Approval |
 |---|---|---|---|---|
 | 0.1 | 2026-08-14 | draft | Initial canonical PRD reconstructed from authorized sources | Pending project-team review |
-| 0.2 | 2026-08-15 | draft | Recorded OPEN-011 (move-cap-versus-survival-threshold termination ambiguity), discovered while decomposing stage-1 board logic into T003/T004/T028/T029; no requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
 | 0.3 | 2026-08-15 | draft | Adopted two-level planning: moved mechanism-level detail out to component/mechanism PRDs, added G-007/NG-009/US-008/SC-011, narrowed OPEN-005's implementation-side scope. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
-| 0.4 | 2026-08-16 | draft | Recorded the selected runtime interoperability profile (`reference-v3`, `subtractive_chebyshev_v1`, `belief`, unbound smell) with `multiplicative_book_v1` additionally supported, and narrowed OPEN-009's implementation-side scope. `official_status` for OPEN-009 is unchanged and still OPEN. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
+| 0.4 | 2026-08-16 | accepted profile | Recorded the selected runtime interoperability profile (`reference-v3`, `subtractive_chebyshev_v1`, `belief`, unbound smell) with `multiplicative_book_v1` additionally supported. No requirement was added, removed, or normatively changed | Orchestrator edit |
 | 0.5 | 2026-08-16 | draft | Reconciled documented state with verified implementation; recorded the runtime baseline (PLANQ-002), artifact, canonical-serialization, Step-0, series, and scent operational conventions; corrected the OPEN-006 signing-key assumption and the OPEN-010 confirmation point; recorded the verification ladder. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
 
 After approval, every material behavior/scope change requires a Change Request naming affected requirement IDs, source/authority, impact, approval, and resulting PRD version, followed by PLAN/task reconciliation.

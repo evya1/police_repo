@@ -38,9 +38,8 @@ risk: medium
 
 # T038 — Wave W4b: Police Production-Integration (police_repo)
 
-Mirrors the shape of `thief_repo`'s `T038`/PR #36 outcome, but this is a **real
-implementation task** here, not a verification record — police_repo has not yet wired a
-real brain into production the way thief_repo's PR #36 did.
+Mirrors the completed `thief_repo` T038/PR #36 outcome and records the Police production-brain
+integration.
 
 ## Expected outcome
 

@@ -126,5 +126,5 @@ is deferred to the Replay-completion-equivalent gate for T049+T052 together, onc
 belongs to the sibling T052 worker (kit protocol adapter), not this task — confirmed by diff
 before staging; this commit touches only the four declared T049 files.
 
-**Remaining:** T013 (token evidence) and T051 (composition) still need this adapter wired into
-the runner/composition root; T050 (selected vendor) remains `BLOCKED_EXTERNAL: PLANQ-003`.
+**Follow-on completion:** T013 seals token evidence, T050 supplies the production OpenRouter
+transport, and T051 wires the adapter into the runner/composition root on `production-fixes`.

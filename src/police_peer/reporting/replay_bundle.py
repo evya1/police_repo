@@ -29,6 +29,7 @@ from common.transport.atomic_publish import (
 from common.transport.replay import verify_replay
 from common.transport.replay_types import ReplayVerdict
 from common.transport.series import SeriesResult
+from police_peer.evidence.token_ledger import TokenLedger
 from police_peer.reporting import replay_documents as docs
 
 #: Historical names, kept so no caller or test has to learn a new vocabulary for the same faults.
@@ -74,6 +75,7 @@ def publish_replay_bundle(
     result: SeriesResult,
     *,
     on_checkpoint: Checkpoint | None = None,
+    token_ledger: TokenLedger | None = None,
 ) -> Path:
     """Publish one internal-interop replay bundle at ``<root>/replay/<game_uid>/``.
 
@@ -81,7 +83,8 @@ def publish_replay_bundle(
     an O_EXCL lock with a single rename. Raises a ``ReplayBundleError`` subclass and leaves
     no destination directory or staging residue on any failure.
     """
-    files = docs.build_all_documents(result)  # pure; raises before any I/O if malformed
+    usage = token_ledger.as_dict(include_warmup=True) if token_ledger is not None else None
+    files = docs.build_all_documents(result, usage)  # pure; raises before any I/O if malformed
     return publish_atomic(
         Path(artifact_root) / "replay",
         result.game_uid,

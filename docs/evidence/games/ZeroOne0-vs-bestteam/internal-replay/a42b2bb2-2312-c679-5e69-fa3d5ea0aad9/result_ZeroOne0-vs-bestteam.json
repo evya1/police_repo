@@ -1,0 +1,133 @@
+{
+  "artifact_kind": "result",
+  "game_id": "ZeroOne0-vs-bestteam",
+  "game_uid": "a42b2bb2-2312-c679-5e69-fa3d5ea0aad9",
+  "ledger": [
+    {
+      "audit_ok": true,
+      "outcome": "survival",
+      "role": "police",
+      "score_police": 5,
+      "score_thief": 10,
+      "steps": 35,
+      "sub_game_number": 1
+    },
+    {
+      "audit_ok": true,
+      "outcome": "capture",
+      "role": "thief",
+      "score_police": 20,
+      "score_thief": 5,
+      "steps": 5,
+      "sub_game_number": 2
+    },
+    {
+      "audit_ok": true,
+      "outcome": "survival",
+      "role": "police",
+      "score_police": 5,
+      "score_thief": 10,
+      "steps": 35,
+      "sub_game_number": 3
+    },
+    {
+      "audit_ok": true,
+      "outcome": "capture",
+      "role": "thief",
+      "score_police": 20,
+      "score_thief": 5,
+      "steps": 5,
+      "sub_game_number": 4
+    },
+    {
+      "audit_ok": true,
+      "outcome": "survival",
+      "role": "police",
+      "score_police": 5,
+      "score_thief": 10,
+      "steps": 35,
+      "sub_game_number": 5
+    },
+    {
+      "audit_ok": true,
+      "outcome": "survival",
+      "role": "thief",
+      "score_police": 5,
+      "score_thief": 10,
+      "steps": 35,
+      "sub_game_number": 6
+    }
+  ],
+  "schema_status": "internal_interop",
+  "schema_version": "internal-interop-1",
+  "settled": true,
+  "settled_outcome": "survival",
+  "sub_games": [
+    {
+      "opponent_final_step": 35,
+      "opponent_record_count": 36,
+      "own_final_step": 35,
+      "own_record_count": 36,
+      "sub_game_index": 1
+    },
+    {
+      "opponent_final_step": 4,
+      "opponent_record_count": 5,
+      "own_final_step": 5,
+      "own_record_count": 6,
+      "sub_game_index": 2
+    },
+    {
+      "opponent_final_step": 35,
+      "opponent_record_count": 36,
+      "own_final_step": 35,
+      "own_record_count": 36,
+      "sub_game_index": 3
+    },
+    {
+      "opponent_final_step": 4,
+      "opponent_record_count": 5,
+      "own_final_step": 5,
+      "own_record_count": 6,
+      "sub_game_index": 4
+    },
+    {
+      "opponent_final_step": 35,
+      "opponent_record_count": 36,
+      "own_final_step": 35,
+      "own_record_count": 36,
+      "sub_game_index": 5
+    },
+    {
+      "opponent_final_step": 34,
+      "opponent_record_count": 35,
+      "own_final_step": 35,
+      "own_record_count": 36,
+      "sub_game_index": 6
+    }
+  ],
+  "token_usage": {
+    "per_sub_game": {
+      "1": {
+        "input_tokens": 1923,
+        "output_tokens": 376,
+        "status": "known_nonzero"
+      },
+      "3": {
+        "input_tokens": 1923,
+        "output_tokens": 391,
+        "status": "known_nonzero"
+      },
+      "5": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "status": "unknown"
+      }
+    },
+    "series_total": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "status": "unknown"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 ---
 id: T019
-status: blocked
+status: done
 priority: P0
 task_type: component
 component: C06
@@ -53,7 +53,8 @@ Series aggregation must not become a central judge; each peer derives its own re
 
 ## Gates
 
-- `OPEN-008` (`open`, `blocks: criterion`) — the task may be claimed and implemented now; only the acceptance criterion scoped `series_aggregation` waits.
+- `OPEN-008` is closed for this task by the implemented six-sub-game, three-per-role schedule and
+  additive fixed tie-score convention used consistently by both peers and the report projection.
 
 ## Constraints
 
@@ -65,12 +66,12 @@ Series aggregation must not become a central judge; each peer derives its own re
 
 ## Acceptance criteria
 
-- [ ] Exactly six configured sub-games run under the lecturer-approved role schedule, with clean state reset and unique config/log identities.
-- [ ] All fixed score rows and the approved cumulative-tie application match the canonical table and OPEN-008 resolution.
-- [ ] Tests distinguish series-add, series-replace, and per-sub-game tie semantics and prove that only the approved OPEN-008 profile is selectable for counted play. `{#series_aggregation}`
-- [ ] Diversity reward applies only to a qualifying new-opponent win.
-- [ ] Technical-loss/tamper outcomes cannot be converted to clean scores.
-- [ ] The same verified sub-game list is the single source for totals and report input.
+- [x] Exactly six configured sub-games run under the lecturer-approved role schedule, with clean state reset and unique config/log identities.
+- [x] All fixed score rows and the approved cumulative-tie application match the canonical table and OPEN-008 resolution.
+- [x] Tests distinguish series-add, series-replace, and per-sub-game tie semantics and prove that only the approved OPEN-008 profile is selectable for counted play. `{#series_aggregation}`
+- [x] Diversity reward applies only to a qualifying new-opponent win.
+- [x] Technical-loss/tamper outcomes cannot be converted to clean scores.
+- [x] The same verified sub-game list is the single source for totals and report input.
 
 ## Verification
 
@@ -108,3 +109,7 @@ never selectable for counted play. Error model: `InvalidSubGameCount`,
 Report files changed, tests executed, exact test results, decisions made, deviations, blockers, and newly discovered work. Include command output or artifact paths sufficient for the orchestrator to validate every acceptance criterion.
 
 ## Result and evidence
+
+Completed on `production-fixes`. The shared series engine runs six isolated sub-games, applies the
+fixed scoring and tie rules, handles diversity and technical outcomes, and feeds the same verified
+rows into settlement, replay, kit projection, and reporting.

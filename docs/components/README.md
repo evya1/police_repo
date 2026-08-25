@@ -20,7 +20,7 @@ Full PRDs are authored for all six components. Substantive PLANs are authored fo
 
 | ID | Name | Purpose | Primary-owned requirements | Existing tasks | Contracts owned | OPEN/input gates | PRD | PLAN |
 |---|---|---|---|---|---|---|---|---|
-| C01 | Game Core & Configuration | Board, legal actions, barriers, capture, scoring; shared/private configuration precedence and Appendix F status validation | ARCH-001,002,003,009; GAME-001…014; CFG-001…010 (28) | T003, T004, T028, T029 | CT-01 | OPEN-011 (criterion), OPEN-005 (criterion, reclassified), OPEN-001 (via ADR-001 shape) | shared | role, substantive |
+| C01 | Game Core & Configuration | Board, legal actions, barriers, capture, scoring; shared/private configuration precedence and Appendix F status validation | ARCH-001,002,003,009; GAME-001…014; CFG-001…010 (28) | T003, T004, T028, T029 | CT-01 | OPEN-005 (criterion, reclassified), OPEN-001 (via ADR-001 shape) | shared | role, substantive |
 | C02 | Perception & Strategy | Scent arithmetic, belief distribution, role decision policy, verbal-hint boundary | ARCH-007; STRAT-001…009 (10) | T005, T006, T007, T027 | CT-02 | OPEN-009 (criterion: model_lock) | shared core; M-03/M-04 role-specific | role, substantive |
 | C03 | Peer Protocol & Integrity | FastMCP surface, envelopes, Commit-Reveal, audit, Step 0, inbound delivery safety | NET-001…004; SEC-001…009 (13) | T008, T009, T012, T013 | CT-03, CT-04 | OPEN-007 (criterion: cross_peer_vectors), G-LIVE (criterion: public_endpoint) | shared | role, substantive |
 | C04 | Runtime & Reliability | Orchestrator state machine, legal transitions, deadlines, retry journal, watchdog, recovery | ARCH-004,005,006,008; NET-005 (5) | T010, T011 | CT-05, CT-06 | none blocking local work | shared | role, shallow |

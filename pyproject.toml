@@ -6,6 +6,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
   "fastmcp>=3.4,<4",
+  "google-api-python-client>=2.187,<3",
+  "google-auth-httplib2>=0.3,<1",
+  "google-auth-oauthlib>=1.2,<2",
 ]
 
 [project.scripts]
@@ -31,6 +34,9 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--tb=short -q --cov --cov-report=term-missing --cov-fail-under=85"
+markers = [
+  "live_openrouter: opt-in real OpenRouter smoke test (never run in normal CI)",
+]
 
 [tool.coverage.run]
 branch = false

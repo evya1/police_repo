@@ -29,7 +29,8 @@ REPORT-001…013 (independent automatic sending, official recipient, send-only O
 
 - At the end of every legal game, each team independently and automatically sends a separate final report via Gmail API to the official recipient (REPORT-001, REPORT-002), using `gmail.send`-only OAuth scope with local-only `credentials.json`/`token.json` (REPORT-003, REPORT-004).
 - The report is a uniform, signed, machine-readable JSON attachment — never plaintext (REPORT-005) — using the four official artifact filenames and a common identifier (REPORT-006, REPORT-007), including repository links, per-sub-game Git commit, and token totals (REPORT-008).
-- Both teams agree on the result and send consistent separate reports (REPORT-009); the missing/conflicting-report sanction stays blocked pending OPEN-004.
+- Both teams agree on the result and send consistent separate reports (REPORT-009); missing or
+  conflicting evidence is preserved and reporting is refused.
 - Sending is protected by a Token Bucket rate limiter (REPORT-010), a DOS detector that can lock the pipeline (REPORT-011), HTTP 429 backoff rather than blind retry (REPORT-012), and ideally a daily quota manager (REPORT-013).
 - A counted series against one opponent contains exactly six sub-games (LEAGUE-001); at least two counted matches against different teams and no more than ten total are required (LEAGUE-002); only one match per opponent counts (LEAGUE-003); each team accurately declares its prior counted-match count (LEAGUE-004); a new-opponent win earns the fixed diversity reward of 10 (LEAGUE-005); a cumulative tie gives 2 to each side (LEAGUE-006); hardware/version/token evidence is provided for lecturer-side fairness normalization without inventing a local formula (LEAGUE-007).
 
@@ -54,7 +55,8 @@ Four signed JSON artifacts per the official schema (once OPEN-001 resolves); a s
 ## Failure cases
 
 - Gmail 429/quota exhaustion: Gatekeeper backoff/queue or explicit unsent failure, never a blind retry.
-- Missing or conflicting report from the opponent: sanction stays blocked pending OPEN-004; automatic scoring of the conflict is refused until then.
+- Missing or conflicting report from the opponent: preserve the evidence and refuse automatic
+  scoring or transmission.
 - A declared prior-match count found false: disqualification per LEAGUE-004.
 
 ## Edge cases

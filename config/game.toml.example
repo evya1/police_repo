@@ -16,7 +16,7 @@ seed = 42
 
 [game]
 group_name = "ZeroOne"
-group_id = "ZeroOne1"
+group_id = "ZeroOne0"
 # Publication-intended member identifiers only. Never legal names or government identifiers.
 members = ["id-1001", "id-1002"]
 # BOTH repositories, declared by both peers (App. E rule 49).
@@ -30,12 +30,16 @@ turn_timeout_seconds = 180
 
 [llm]
 # The move is ALWAYS decided in Python. The language model touches the verbal layer only.
-model = "template"                              # template = zero tokens, the default
+provider = "template"                           # template | openrouter
+model = "inclusionai/ling-3.0-flash"             # required only when openrouter is enabled
+provider_slug = "novita"
 step_deadline_seconds = 30
+max_output_tokens = 32
+every_n_steps = 1
 
 [email]
-# App. F table 20: the one address the agent's automated reports may target.
-recipient = "rmisegal+uoh26finalgame@gmail.com"
+# Placeholder report address -- override with the real league address before a counted run.
+recipient = "example@example.com"
 # "dry-run" composes the message and writes it to the bundle's outbox without sending.
 # A real send additionally requires an explicit human authorisation flag.
 mode = "dry-run"

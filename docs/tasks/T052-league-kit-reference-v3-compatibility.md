@@ -230,37 +230,5 @@ commit stays `INVALID`, both unchanged from T033's pre-existing distinction.
 sub-game 2 sanctions only sub-game 2; sub-game 3, given fresh runtime state, settles cleanly
 right after.
 
-**Provenance audit finding (orchestrator, before approval):** inspected the restored
-`origin/llm-provider` branch (Police tip `f4509da`; Thief tip `856c46c`; neither merged nor
-cherry-picked). Confirmed this task's adapter correctly avoids that branch's central mistake
-(replacing the internal flat sealed record with the nested kit shape *globally*, in
-`turnseal.py`/`audit.py` — ADR-011 explicitly forbids this). One tracked, unresolved item carried
-forward: whether an explicit `position` field is needed on our own outbound wire record
-(`wire/session.py`, outside this task's write set) for the kit's own physics checker to parse our
-position reliably — the old branch's team added this after an observed interop failure. K1's
-contract tests exercise canonical-JSON/signature/UID vectors only, not live position-parsing by
-the kit's own checker, so this remains open for K1/K2 live-run evidence, not implemented
-preemptively.
-
 **Deviations:** none from the task packet's design. `sdk.py`'s change (wiring
 `negotiated_subgame_driver` into `create_peer`) is in the declared write set.
-
-**Remaining:** the Thief port already landed (see Thief's own T052 result section) and shared
-`common/*.py` parity is verified byte-identical; the `position`-field question above was closed
-by T054 (explicit sealed `position` preferred by live audit physics); still open: K1's remaining
-PROMOTED surfaces beyond canonical-JSON vectors (MCP handler enqueue-without-blocking), and the
-K2 live runs themselves (T022). (orchestrator, 2026-08-23)
-
-A provenance audit of the restored `origin/llm-provider` branch (Police tip `f4509da`, unique
-commits `ed13ca1`/`d2ae021`/`f4509da`; not merged, not cherry-picked, inspected read-only) found
-one unresolved, tracked gap: that branch's `common/transport/audit_physics.py` change preferred
-an explicit `payload["position"]` list over parsing the `state` string, and its `wire/session.py`
-change added `"position": list(engine.position)` to our own outbound turn record — added, per
-that branch's own commit message, specifically to fix an observed incompatibility with the kit.
-The current tree does not embed `position` on outbound records; it relies solely on `state`-string
-parsing being legible to the kit's own reference physics parser. This must be verified empirically
-at K1 (local contract conformance against the kit's own vectors) rather than guessed: if K1 or a
-live K2 run shows the kit's checker cannot recover our position from `state` alone, add an
-explicit `position` field to the outbound wire record (mirroring the old branch's fix, but through
-this task's adapter boundary, not by replacing the internal record shape). Do not implement this
-preemptively without that evidence.

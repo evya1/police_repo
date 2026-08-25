@@ -63,4 +63,8 @@ def assemble_strategy_config(
         },
         "strategy": strategy_cfg,
         "scent_model": private.scent_model,
+        "llm": {
+            "step_deadline_seconds": private.llm.step_deadline_seconds,
+            "every_n_steps": private.llm.every_n_steps,
+        },
     }

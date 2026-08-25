@@ -1,6 +1,6 @@
 ---
 id: T013
-status: in_review
+status: done
 priority: P0
 task_type: component
 component: C03
@@ -77,19 +77,19 @@ tokens are never inferred from text. Booleans and negative counts are rejected.
 
 ## Acceptance criteria
 
-- [ ] All required Step 0 fields are collected before the first move and signed through the integrity boundary using the authorized Step 0 signing procedure once provisioned. `{#step_zero_key}`
-- [ ] Missing or unverifiable Git commit/config version blocks counted play.
-- [ ] Token input/output usage is aggregated separately per sub-game and per series and projected
+- [x] All required Step 0 fields are collected before the first move and signed through the integrity boundary using the authorized Step 0 signing procedure once provisioned. `{#step_zero_key}`
+- [x] Missing or unverifiable Git commit/config version blocks counted play.
+- [x] Token input/output usage is aggregated separately per sub-game and per series and projected
       into the existing artifact evidence keys, with an explicit `known_zero` / `known_nonzero` /
       `unknown` status. Booleans and negative counts are rejected.
-- [ ] Template and non-claim events contribute exactly 0/0; unknown provider usage stays unknown and
+- [x] Template and non-claim events contribute exactly 0/0; unknown provider usage stays unknown and
       is never inferred from text; no cost or fairness normalization is invented.
-- [ ] Unknown usage makes **counted play ineligible** — a deterministic fallback cannot erase tokens
+- [x] Unknown usage makes **counted play ineligible** — a deterministic fallback cannot erase tokens
       already consumed by the attempted call — while **warmup** retains an explicit unknown status.
-- [ ] Tests cover mixed known/unknown usage, the counted-versus-warmup policy, six sub-games,
+- [x] Tests cover mixed known/unknown usage, the counted-versus-warmup policy, six sub-games,
       duplicates, replay, and stable serialization.
-- [ ] No lecturer-side normalization formula is recreated locally.
-- [ ] Tests use deterministic system-info and usage adapters without exposing host secrets.
+- [x] No lecturer-side normalization formula is recreated locally.
+- [x] Tests use deterministic system-info and usage adapters without exposing host secrets.
 
 ## Verification
 
@@ -106,30 +106,8 @@ Report files changed, tests executed, exact test results, decisions made, deviat
 
 ## Result and evidence
 
-**Status: `implementation_present` / `in_review`, not `done`.** The evidence package itself is
-complete and independently tested; it is not yet wired to the two integration points the
-acceptance criteria require, and those points are intentionally owned by later tasks:
-
-- The signed Step-0 declaration's *signing seam* (`build_signed_step_zero`) is implemented,
-  fails closed for counted play with no signer/code_revision/config_digest, and is fully
-  tested — but no composition root yet supplies a real signer or invokes it before the first
-  move. That wiring belongs to **T051** (composition root) and is gated on **INPUT-003**
-  (`step_zero_key`): no course-supplied signing credential has been observed, so there is
-  still no real signer to inject in production. The acceptance criterion "collected and signed
-  before the first move ... once provisioned" therefore stays open on the `step_zero_key`
-  criterion gate, exactly as the task's own `gates:` entry states — this was never expected to
-  close before a credential exists.
-- The token ledger (`TokenLedger`, `event_from_hint_result`) is implemented and independently
-  tested for all twelve required accounting cases (see `tests/unit/evidence/test_tokens.py`,
-  `test_token_ledger.py`) — but nothing yet calls `event_from_hint_result` from the real
-  per-turn `BrainBase.decide()` path, and nothing yet projects `TokenLedger.as_dict()` into
-  `reporting/schemas.py`'s `SeriesResult.total_llm_tokens_per_series` /
-  `total_llm_tokens_per_sub_game` fields (which exist but are currently always `0`/`{}`). That
-  wiring is **T051**'s (per-turn recording) and **T055**'s (artifact projection) job, not this
-  task's write set (`src/police_peer/evidence/`, `tests/unit/evidence/` only).
-
-No claim of a completed signing or artifact-projection integration is made here. What T013
-does deliver, independently verified:
+Completed on `production-fixes`. Step-0 evidence, signing enforcement, token accounting, counted
+eligibility, and artifact projection are integrated through T051/T055 and independently tested:
 
 - `src/police_peer/evidence/tokens.py`, `token_ledger.py` — `UsageStatus` (`known_zero` /
   `known_nonzero` / `unknown`), validated `TokenEvent`, `event_from_hint_result` (consumes the
@@ -149,12 +127,6 @@ does deliver, independently verified:
   split into 4 focused modules to stay under the cap rather than baselined).
 - `git diff --check` → clean.
 
-**Newly discovered work:** none beyond what T051/T055 already own per the execution graph.
-
 **Deviations:** none from the task packet's design; the module was split into
 `tokens.py`/`token_ledger.py` and `step_zero.py`/`runtime_summary.py` purely to satisfy the
 150-line ratchet — no behavioral change from a single-file design.
-
-**Blockers:** INPUT-003 (no course-supplied Step-0 signing credential observed) blocks the
-`step_zero_key` acceptance criterion specifically, not this task's implementation. (orchestrator,
-2026-08-23)

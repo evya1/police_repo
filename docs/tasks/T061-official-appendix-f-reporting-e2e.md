@@ -2,7 +2,7 @@
 artifact: task
 id: T061
 title: Adopt official Appendix-F reporting and prove the production warm-up
-status: in_progress
+status: done
 priority: P0
 task_type: integration
 optional: false
@@ -41,6 +41,7 @@ write_set:
   - docs/spec/OPEN_QUESTIONS.md
   - docs/tasks/T061-official-appendix-f-reporting-e2e.md
   - scripts/validate_official_artifacts.py
+  - scripts/smoke_replay_integration.py
   - src/police_peer/reporting/gmail.py
   - src/police_peer/cli.py
   - src/police_peer/evidence/identity_source.py
@@ -76,9 +77,9 @@ two-process FastMCP runner.
 
 ## Acceptance criteria
 
-- [ ] All four builders use the official v1.1 outward shape without placeholder evidence.
-- [ ] Six configs, six logs, one declaration, and one result validate atomically.
-- [ ] Git, token, timestamps, links, scores, and agreement are checked end to end.
-- [ ] Outward timestamps use `Asia/Jerusalem` regardless of the machine timezone.
-- [ ] Gmail dry-run attaches the exact published result bytes.
-- [ ] A fresh two-process warm-up produces valid official bundles for both peers.
+- [x] All four builders use the official v1.1 outward shape without placeholder evidence.
+- [x] Six configs, six logs, one declaration, and one result validate atomically.
+- [x] Git, token, timestamps, links, scores, and agreement are checked end to end.
+- [x] Outward timestamps use `Asia/Jerusalem` regardless of the machine timezone.
+- [x] Gmail dry-run attaches the exact published result bytes.
+- [x] A fresh two-process warm-up produces valid official bundles for both peers.

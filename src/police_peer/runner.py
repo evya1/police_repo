@@ -13,10 +13,7 @@ from common.domain.scoring import Role
 from common.transport.loopback import Inboxes
 from common.transport.mcp_client import McpChannel, edge_answers
 from common.transport.mcp_server import serve_background
-from police_peer.evidence.token_ledger import (
-    CountedPlayIneligibleError,
-    assert_counted_eligible,
-)
+from police_peer.evidence.token_ledger import CountedPlayIneligibleError, assert_counted_eligible
 from police_peer.league.readiness import CountedPlayNotReadyError
 from police_peer.league.runtime_evidence import prepare_runtime_evidence
 from police_peer.reporting.replay_bundle import publish_replay_bundle as _publish_replay_bundle
@@ -93,9 +90,7 @@ def run_one_peer(
             logger.error("Peer URL %s unreachable within %ss", peer_url, connect_timeout)
             return 7
 
-        budgets = Budgets(
-            turn_timeout=turn_timeout, connect_timeout=connect_timeout, poll_interval=poll_interval,
-        )
+        budgets = Budgets(turn_timeout, connect_timeout, poll_interval)
         channel = McpChannel(peer_url, inboxes, timeout=turn_timeout)
 
         facade = create_peer(
@@ -135,7 +130,10 @@ def run_one_peer(
                     if result.settled:
                         publish_replay_bundle(artifacts_dir, result)
                 return 2
-        agreement = settle(channel, result, our_group=group_id, budget=turn_timeout)
+        agreement = settle(
+            channel, result, our_group=group_id, budget=turn_timeout,
+            token_ledger=runtime.token_ledger, identity=runtime.identity, mode=mode,
+        )
 
         kit_result_path = None
         if artifacts_dir:
@@ -149,6 +147,7 @@ def run_one_peer(
                         artifacts_dir, result, our_group=group_id, mode=mode,
                         confirmed=agreement.agreed, identity=runtime.identity,
                         opponent_identity=result.opponent_identity,
+                        shared_config=raw_config, agreement=agreement,
                     )
 
         if mode == "counted" and not agreement.agreed:

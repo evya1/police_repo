@@ -6,17 +6,12 @@ match-level files never do. Keeping the grammar in one module means the projecti
 ``kit_documents`` and any future official-schema adapter agree on names by construction
 rather than by convention.
 
-``SCHEMA_PROFILE`` is deliberately explicit: the official templates are an unresolved
-external input (INPUT-001), so every document states the profile it was built against and
-none of them claims official compliance.
+The outward documents use the instructor reference's Appendix-F schema version 1.1.
 """
 
 from __future__ import annotations
 
-#: The interoperability profile these documents target. Never "official".
-SCHEMA_PROFILE = "league-kit-reference-v3"
-
-#: Envelope schema version, matching the profile's own artifacts.
+#: Appendix-F outward schema version from the pinned instructor reference.
 SCHEMA_VERSION = "1.1"
 
 _LINKS_REMARK = (
@@ -67,7 +62,6 @@ def base_block(game_id: str, game_uid: str, github: dict | None = None) -> dict:
     """Return the envelope every artifact of one match shares."""
     return {
         "schema_version": SCHEMA_VERSION,
-        "schema_profile": SCHEMA_PROFILE,
         "game_id": game_id,
         "game_uid": game_uid,
         "links": links_block(game_id, github),

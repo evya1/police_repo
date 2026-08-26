@@ -49,6 +49,9 @@ class AgreementOutcome:
     agreed: bool
     reason: str
     their_sha: str | None = None
+    rows: list[dict] | None = None
+    final_result: dict | None = None
+    tokens_by_sub_game: dict[int, dict[str, int]] | None = None
 
 
 def build_proposal(game_id: str, game_uid: str, final_result: dict, rows: list[dict]):

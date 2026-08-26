@@ -38,8 +38,9 @@ _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 #: The keys that ride the greeting. Everything an opponent needs to name us truthfully in
 #: their own declaration, and nothing they would have to take on trust.
 GREETING_KEYS = (
-    "group_id", "group_name", "repos", "mcp_servers", "llm_model",
-    "hardware_spec_sha256", "github_commit", "counted_games_played", "code_version",
+    "group_id", "group_name", "members", "repos", "mcp_servers", "llm_model",
+    "hardware_spec", "hardware_spec_sha256", "github_commit", "counted_games_played",
+    "code_version", "signature",
 )
 
 
@@ -137,8 +138,8 @@ def verify_group_block(block: dict) -> bool:
 
 
 def identity_greeting_block(identity: GroupIdentity) -> dict:
-    """The subset that rides the greeting. Hardware travels as a digest, never as a spec."""
-    block = _unsigned_block(identity)
+    """The signed declaration block needed for the opponent's official report."""
+    block = group_block(identity)
     return {k: block[k] for k in GREETING_KEYS}
 
 

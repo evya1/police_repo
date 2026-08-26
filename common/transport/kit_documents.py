@@ -1,28 +1,28 @@
 """Pure builders for the four kit submission artifacts (CT-07, ADR-012).
 
-This module is a PROJECTION of evidence that is already sealed. It performs no I/O, reads no
-clock, and -- the point of the whole design -- never hashes a game payload. Our internal
-records already carry commitments that reproduce under the kit's own construction; the only
-thing that ever differed was the SHAPE. So records arrive here already wrapped by
-``league_kit_envelope.wrap_outbound_records`` and are passed through untouched.
+This pure projection receives already sealed evidence and never re-hashes a game payload.
+Records arrive wrapped by ``league_kit_envelope.wrap_outbound_records`` and pass through.
 
 ``config_sha256`` is the one hash computed here, and it is over the negotiated terms rather
 than over any game payload -- an identifier for the agreed physics, not a re-commitment.
 
-Nothing is defaulted that a caller might not know. An absent timestamp, commit or opponent
-field is OMITTED rather than filled with a placeholder: the kit's checker tolerates unknown
-and missing keys, and it does not tolerate a lie. The ``league`` block is the sharpest case --
-an armed counted/uncounted marker on a run that was not counted is a false declaration under
-App. E rules 37-38, so it is never defaulted, only carried when the caller states it.
+Mandatory evidence is never defaulted. The optional ``league`` block is carried only when
+the caller explicitly declares it.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 
 from common.transport.canonical import canonical_bytes
 from common.transport.kit_names import base_block
 from common.transport.kit_records import KitDocumentError, build_summary, check_records
+
+DECLARATION_SCHEMA = "Appendix-F static declaration for the complete six-sub-game series."
+CONFIG_SCHEMA = "Appendix-F agreed configuration for one sub-game."
+LOG_SCHEMA = "Appendix-F per-sub-game cryptographic game log."
+RESULT_SCHEMA = "Appendix-F final result for the complete six-sub-game series."
 
 __all__ = [
     "KitDocumentError", "build_config", "build_declaration", "build_log", "build_result",
@@ -48,6 +48,9 @@ def build_declaration(
     game_uid: str,
     groups: list[dict],
     num_sub_games: int,
+    timezone: str,
+    game_started_at: str,
+    game_ended_at: str,
     max_tokens_per_game: int | None = None,
     step_zero: dict | None = None,
     league: dict | None = None,
@@ -57,9 +60,12 @@ def build_declaration(
     if len(groups) != 2:
         raise KitDocumentError(f"a declaration names exactly two groups, got {len(groups)}")
     doc = {
+        "_schema": DECLARATION_SCHEMA,
         **base_block(game_id, game_uid, github),
         "declaration_type": "pre_game_declaration",
-        "report_type": "declaration",
+        "timezone": timezone,
+        "game_started_at": game_started_at,
+        "game_ended_at": game_ended_at,
         "num_sub_games": num_sub_games,
         "groups": {"group_1": groups[0], "group_2": groups[1]},
     }
@@ -84,12 +90,17 @@ def build_config(
     Carrying the terms inline is what lets a checker RE-DERIVE the game_uid rather than merely
     confirm it is self-consistent -- the failure mode a uid built from a wider object survives.
     """
+    shared = {k: v for k, v in terms.items() if k not in {
+        "_schema", "schema_version", "game_id", "game_uid", "sub_game_number",
+        "links", "config_name", "config_sha256",
+    }}
     doc = {
+        "_schema": CONFIG_SCHEMA,
+        **shared,
         **base_block(game_id, game_uid, github),
         "sub_game_number": sub_game_number,
         "config_name": f"config_{game_id}_g{sub_game_number:02d}.json",
-        "terms": terms,
-        "config_sha256": _terms_digest(terms),
+        "config_sha256": _terms_digest(shared),
     }
     return _with_optional(doc, league)
 
@@ -108,8 +119,8 @@ def build_log(
 ) -> dict:
     """Build one sub-game's log from records that are ALREADY sealed and wrapped."""
     doc = {
+        "_schema": LOG_SCHEMA,
         **base_block(game_id, game_uid, github),
-        "sub_game_number": sub_game_number,
         "summary": summary,
         "records": check_records(records, "own"),
     }
@@ -117,6 +128,12 @@ def build_log(
         doc["opponent_records"] = check_records(opponent_records, "opponent")
     if opponent_committed_steps is not None:
         doc["opponent_committed_steps"] = sorted(opponent_committed_steps)
+    doc["mutual_agreement"] = {
+        "sha256": hashlib.sha256(
+            json.dumps(doc["records"], sort_keys=True, ensure_ascii=False).encode()
+        ).hexdigest(),
+        "confirmed": bool(summary.get("audit", {}).get("passed")),
+    }
     return _with_optional(doc, league)
 
 
@@ -133,8 +150,10 @@ def build_result(
 ) -> dict:
     """Build the final series result -- the one artifact that is emailed."""
     doc = {
+        "_schema": RESULT_SCHEMA,
         **base_block(game_id, game_uid, github),
         "report_type": "final_game_result",
+        "timezone": "Asia/Jerusalem",
         "groups": list(groups),
         "num_sub_games": len(sub_games),
         "sub_games": sub_games,

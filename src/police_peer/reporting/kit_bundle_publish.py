@@ -7,6 +7,7 @@ from pathlib import Path
 
 from common.transport.atomic_publish import Checkpoint, SelfVerifyError, publish_atomic
 from common.transport.canonical import commit as recompute_commit
+from common.transport.kit_bundle_validation import validate_official_bundle
 from common.transport.series import SeriesResult
 
 
@@ -22,6 +23,7 @@ def _self_verify(staging: Path) -> None:
                     problems.append(f"{path.name} {half}[{index}] does not reproduce its commit")
     if problems:
         raise SelfVerifyError("; ".join(problems[:6]))
+    validate_official_bundle(staging)
 
 
 def publish_kit_bundle(

@@ -69,7 +69,7 @@ def result_row(
         "steps": row.steps,
         "tokens": dict(tokens),
         "score": scores,
-        "log_files": {our_group: log_file},
+        "log_files": {our_group: log_file, opponent_group: log_file},
         "audit": {"log_verified": bool(row.audit_ok), "tampered": row.outcome is Outcome.TAMPER_FORFEIT},
     }
     if github_commit:

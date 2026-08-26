@@ -13,6 +13,8 @@ from common.domain.scoring import Role
 from common.transport.loopback import Inboxes
 from common.transport.mcp_client import McpChannel, edge_answers
 from common.transport.mcp_server import serve_background
+from common.transport.negotiate import counter_signed_reply_builder
+from common.transport.terms import project_terms
 from police_peer.evidence.token_ledger import CountedPlayIneligibleError, assert_counted_eligible
 from police_peer.league.readiness import CountedPlayNotReadyError
 from police_peer.league.runtime_evidence import prepare_runtime_evidence
@@ -69,6 +71,12 @@ def run_one_peer(
         logger.error("Startup refused before transport startup: %s", exc)
         return 2
     inboxes = Inboxes()
+    reply_terms = project_terms(raw_config, private.__dict__)
+    reply_terms["num_games"] = 6
+    inboxes.agreement_reply = counter_signed_reply_builder(
+        terms=reply_terms, group_id=group_id, natural_role=role,
+        identity_block=runtime.greeting_identity,
+    )
     serve_background(
         inboxes,
         host=listen_host,
@@ -80,11 +88,13 @@ def run_one_peer(
     try:
         deadline = time.monotonic() + connect_timeout
         connected = False
+        probe_delay = 0.2
         while time.monotonic() < deadline:
             if edge_answers(peer_url, timeout=0.5):
                 connected = True
                 break
-            time.sleep(0.05)
+            time.sleep(probe_delay)
+            probe_delay = min(2.0, probe_delay * 1.5)
 
         if not connected:
             logger.error("Peer URL %s unreachable within %ss", peer_url, connect_timeout)
@@ -92,6 +102,12 @@ def run_one_peer(
 
         budgets = Budgets(turn_timeout, connect_timeout, poll_interval)
         channel = McpChannel(peer_url, inboxes, timeout=turn_timeout)
+        configure_endpoints = getattr(channel, "configure_peer_endpoints", None)
+        if configure_endpoints is not None:
+            configure_endpoints(
+                police_url=private.endpoints.opponent_police_url or peer_url,
+                thief_url=private.endpoints.opponent_thief_url or peer_url,
+            )
 
         facade = create_peer(
             config_path=shared_config,

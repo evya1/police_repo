@@ -31,6 +31,15 @@ class PeerUnreachableError(Exception):
     """Raised when the opponent cannot be reached, even after one re-establish."""
 
 
+class ProtocolRefusedError(Exception):
+    """Raised when the MCP transport answered but the remote operation was refused."""
+
+    def __init__(self, tool: str, response: object) -> None:
+        self.tool = tool
+        self.response = response
+        super().__init__(f"peer refused {tool}: {response}")
+
+
 class McpChannel:
     """A ``PeerChannel`` that reaches the opponent over FastMCP HTTP.
 
@@ -74,12 +83,20 @@ class McpChannel:
             self._loop.call_soon_threadsafe(self._loop.stop)
         self._loop_thread.join(timeout=5.0)
 
-    def _connect(self) -> None:
+    def _connect(self, *, timeout: float | None = None) -> None:
         """Open (or reopen) the held session to the opponent."""
         from fastmcp import Client
 
+        attempt_timeout = self.timeout if timeout is None else timeout
         client = Client(self.peer_url)
-        self._submit(client.__aenter__(), timeout=self.timeout)
+        try:
+            self._submit(client.__aenter__(), timeout=attempt_timeout)
+        except Exception:
+            # A timed-out __aenter__ can own an HTTP session even though it never
+            # reached the assignment below.  Close that attempt before retrying.
+            with contextlib.suppress(Exception):
+                self._submit(client.__aexit__(None, None, None), timeout=5.0)
+            raise
         self._client = client
 
     def _teardown(self) -> None:
@@ -92,11 +109,29 @@ class McpChannel:
     def _call(self, tool: str, args: dict) -> dict:
         async def _invoke() -> dict:
             result = await self._client.call_tool(tool, args)
-            return dict(result.data) if getattr(result, "data", None) is not None else {"ok": True}
+            data = getattr(result, "data", None)
+            return dict(data) if isinstance(data, dict) else {"ok": True}
+
+        def _refusal(value: object) -> bool:
+            if not isinstance(value, dict):
+                return False
+            status = value.get("status") or value.get("result") or value.get("outcome")
+            if isinstance(status, dict):
+                return _refusal(status)
+            if isinstance(status, str) and status.upper() in {
+                "REFUSED", "REJECTED", "DENIED", "ERROR",
+            }:
+                return True
+            return value.get("accepted") is False or value.get("ok") is False
 
         deadline = time.monotonic() + self.timeout
         try:
-            return self._submit(_invoke(), timeout=self.timeout)
+            response = self._submit(_invoke(), timeout=self.timeout)
+            if _refusal(response):
+                raise ProtocolRefusedError(tool, response)
+            return response
+        except ProtocolRefusedError:
+            raise
         except Exception:  # noqa: BLE001 — re-establish once, within the same deadline
             # A turn/audit redelivered by the retry is absorbed by the at-least-once inbox
             # (FR-32/33/34), so a duplicate is safe even though delivery is not exactly-once.
@@ -107,14 +142,58 @@ class McpChannel:
                     f"peer at {self.peer_url} timed out; no time to retry"
                 ) from None
             try:
+                time.sleep(min(0.5, max(0.0, remaining / 4)))
                 self._connect()
-                return self._submit(_invoke(), timeout=max(0.1, deadline - time.monotonic()))
+                response = self._submit(_invoke(), timeout=max(0.1, deadline - time.monotonic()))
+                if _refusal(response):
+                    raise ProtocolRefusedError(tool, response)
+                return response
+            except ProtocolRefusedError:
+                raise
             except PeerUnreachableError:
                 raise
             except Exception as exc:  # noqa: BLE001
                 raise PeerUnreachableError(
                     f"peer at {self.peer_url} unreachable after re-establish: {exc}"
                 ) from exc
+
+    def configure_peer_endpoints(self, *, police_url: str, thief_url: str) -> None:
+        """Install the opponent's role endpoints for the alternating series."""
+        self._opponent_urls = {"police": police_url, "thief": thief_url}
+
+    def select_for_role(self, our_role) -> None:
+        """Dial the complementary-role endpoint with closed, bounded retries.
+
+        The opponent may be between sub-games while we switch endpoints.  Keep
+        our background listener alive during that boundary instead of letting
+        one slow MCP ``__aenter__`` consume the whole turn budget and terminate
+        the counted runner.
+        """
+        role = getattr(our_role, "value", str(our_role))
+        opponent_role = "thief" if role == "police" else "police"
+        target = getattr(self, "_opponent_urls", {}).get(opponent_role)
+        if not target or target == self.peer_url:
+            return
+        self._teardown()
+        self.peer_url = target
+        deadline = time.monotonic() + self.timeout
+        delay = 0.5
+        last_error: Exception | None = None
+        while (remaining := deadline - time.monotonic()) > 0:
+            try:
+                self._connect(timeout=min(10.0, remaining))
+                return
+            except Exception as exc:  # noqa: BLE001 -- retry transient boundary failures
+                last_error = exc
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                time.sleep(min(delay, remaining))
+                delay = min(5.0, delay * 2.0)
+        raise PeerUnreachableError(
+            f"peer at {self.peer_url} did not accept an MCP session during role transition: "
+            f"{last_error}"
+        ) from last_error
 
     # --- outbound (PeerChannel) -------------------------------------------------------------
     def send_agreement(self, message: dict) -> dict:
@@ -149,15 +228,22 @@ class McpChannel:
 
 
 def edge_answers(url: str, timeout: float = 2.0) -> bool:
-    """True once anything HTTP answers at the URL.
+    """True once the peer MCP edge answers as live, False while it is still down.
 
-    ``406`` is the healthy answer for an MCP edge probed with a browser-shaped
-    GET, but any status proves a listener is up (FR-9).
+    Health contract for the reference-v3 reserved ngrok domains:
+
+    * plain browser-shaped GET -> ``406`` (an SSE probe -> ``400``): LIVE
+    * ``502`` (or any 5xx): edge/tunnel answers, but the peer behind it has NOT
+      started yet. Keep waiting; never treat it as connected.
+
+    Only an HTTP answer below 500 proves the peer process is up (FR-9); a 5xx is
+    the tunnel answering for a dead upstream.
     """
     try:
         with urllib.request.urlopen(urllib.request.Request(url, method="GET"), timeout=timeout):
             return True
-    except urllib.error.HTTPError:
-        return True
+    except urllib.error.HTTPError as exc:
+        # 406/400 mean live; 502 means "our peers not started" -> keep waiting.
+        return exc.code < 500
     except (urllib.error.URLError, OSError):
         return False

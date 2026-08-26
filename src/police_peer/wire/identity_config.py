@@ -38,10 +38,12 @@ class GameIdentity:
 
 @dataclass(frozen=True, slots=True)
 class Endpoints:
-    """From `[network]`: the port we serve and the one thing we know about the opponent."""
+    """From `[network]`: local listener and role-specific opponent endpoints."""
 
     my_port: int = 0
     opponent_url: str = ""
+    opponent_police_url: str = ""
+    opponent_thief_url: str = ""
     public_url: str = ""
     turn_timeout_seconds: float | None = None
 
@@ -99,6 +101,8 @@ def load_endpoints(toml_data: dict) -> Endpoints:
     return Endpoints(
         my_port=int(block.get("my_port", 0) or 0),
         opponent_url=str(block.get("opponent_url", "")),
+        opponent_police_url=str(block.get("opponent_police_url", "")),
+        opponent_thief_url=str(block.get("opponent_thief_url", "")),
         public_url=str(block.get("public_url", "")),
         turn_timeout_seconds=float(timeout) if timeout is not None else None,
     )

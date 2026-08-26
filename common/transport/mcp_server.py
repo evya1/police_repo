@@ -41,6 +41,9 @@ def build_server(inboxes: Inboxes, *, name: str = "peer") -> Any:
     def negotiate(message: dict) -> dict:
         """Accept a negotiation greeting / signed terms and enqueue it."""
         inboxes.agreements.append(message)
+        reply = getattr(inboxes, "agreement_reply", None)
+        if reply is not None:
+            return reply(message)
         return {"ok": True}
 
     @mcp.tool

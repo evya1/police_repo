@@ -23,7 +23,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from common.domain.scoring import Role, role_for
 from common.transport.ids import game_id, game_uid, terms_signature
+from common.transport.integrity import new_nonce
 from common.transport.refusals import Refused
 from common.transport.terms import TERMS_KEYS
 
@@ -85,6 +87,53 @@ def our_greeting(
         if locks.get(family) is not None:
             greeting[key] = locks[family]
     return greeting
+
+
+def counter_signed_reply_builder(
+    *, terms: dict, group_id: str, natural_role: Role,
+    locks: dict[str, str] | None = None, identity_block: dict | None = None,
+):
+    """Build the optional rich return value used by interoperability peers.
+
+    The normal symmetric greeting is still sent independently.  This additive
+    response lets a caller record the same signed contract directly from the
+    ``negotiate`` tool result.  A nonce is stable per sub-game so an at-least-once
+    retry cannot manufacture conflicting counter-signatures.
+    """
+    nonces: dict[int, str] = {}
+
+    def reply(raw: dict) -> dict:
+        theirs = raw.get("terms") if isinstance(raw, dict) else None
+        nonce = raw.get("nonce") if isinstance(raw, dict) else None
+        signature = raw.get("signature") if isinstance(raw, dict) else None
+        sub_game = raw.get("sub_game_number") if isinstance(raw, dict) else None
+        if not isinstance(sub_game, int) or not 1 <= sub_game <= 6:
+            return {"status": "refused", "accepted": False, "ok": False,
+                    "reason": "sub_game_number must be an integer from 1 through 6"}
+        if theirs != terms:
+            return {"status": "refused", "accepted": False, "ok": False,
+                    "reason": "terms do not match our configured 14-key contract"}
+        if not isinstance(nonce, str) or terms_signature(theirs, nonce) != signature:
+            return {"status": "refused", "accepted": False, "ok": False,
+                    "reason": "incoming terms signature does not verify"}
+
+        our_role = role_for(natural_role, sub_game)
+        if raw.get("role") == our_role.value:
+            return {"status": "refused", "accepted": False, "ok": False,
+                    "reason": f"role collision: both peers declared {our_role.value}"}
+
+        greeting = our_greeting(
+            terms=terms,
+            nonce=nonces.setdefault(sub_game, new_nonce()),
+            group_id=group_id,
+            role=our_role.value,
+            sub_game_number=sub_game,
+            locks=locks,
+            identity_block=identity_block,
+        )
+        return {"status": "accepted", "accepted": True, "ok": True, **greeting}
+
+    return reply
 
 
 def verify_greeting(raw: dict, our_terms: dict, our_group_id: str,

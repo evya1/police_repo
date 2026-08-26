@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from common.domain.scoring import Outcome, Role, settled_outcome
+from common.domain.scoring import Outcome, Role, role_for, settled_outcome
 from common.transport import replay_evidence as _replay_evidence
 from common.transport.opponent_pin import OpponentPin
 from common.transport.replay_evidence import SubgameDriver, SubgameReplayEvidence
@@ -132,9 +132,14 @@ class PeerFacade:
 
     def run(self) -> SeriesResult:
         """Run a full six-sub-game series. Return the result."""
+        select_endpoint = getattr(self.channel, "select_for_role", None)
+        if select_endpoint is not None:
+            select_endpoint(role_for(self.config.natural_role, 1))
         self._exchange_greeting()
         evidence = _replay_evidence.EvidenceCollector(self._game_id, self._game_uid)
         for sub_game in range(1, 7):
+            if select_endpoint is not None:
+                select_endpoint(role_for(self.config.natural_role, sub_game))
             row = self._subgame_driver(
                 self.channel, self.engine, self.config, sub_game, evidence_sink=evidence.capture
             )

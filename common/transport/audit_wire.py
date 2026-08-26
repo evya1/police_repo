@@ -70,16 +70,16 @@ class KitAuditWire:
         """Nest each already-committed record; declare the producing role as ``sender``.
 
         ``sender`` is the *role* that produced this audit (``police``/``thief``), never the
-        group ID -- the kit reads it as the side of the game, and a group ID there is
-        accepted silently and misattributes the whole half. ``result_claim`` stays the
-        settled outcome string the kit's ``AuditPayload`` expects, never an object. The
-        internal ``nonces`` list is internal arrangement and does not cross to this lane;
-        every nonce is already carried beside the record it belongs to.
+        group ID. The live kit requires ``result_claim`` to carry both the public outcome and
+        the number of committed game steps; the internal ``nonces`` list does not cross.
         """
+        outcome = audit["result_claim"]
+        if outcome == "survival":
+            outcome = "escape"
         return {
             "sender": sender,
             "records": wrap_outbound_records(list(audit["records"])),
-            "result_claim": audit["result_claim"],
+            "result_claim": {"outcome": outcome, "steps": len(audit["records"]) - 1},
         }
 
     def inbound(self, payload: object) -> object:
@@ -94,22 +94,31 @@ class KitAuditWire:
             return None
         if not isinstance(payload, dict):
             raise Refused(
-                "SPAR-A01",
+                "SPAR-N12",
                 f"kit audit is {type(payload).__name__}, not an object",
             )
         for key in ("sender", "records", "result_claim"):
             if key not in payload:
                 raise Refused(
-                    "SPAR-A01",
+                    "SPAR-N12",
                     f"kit audit omits required top-level {key!r}; got {sorted(payload)}",
                 )
         if not isinstance(payload["sender"], str):
-            raise Refused("SPAR-A01", "kit audit 'sender' must be the producing role string")
-        if not isinstance(payload["result_claim"], str):
-            raise Refused("SPAR-A01", "kit audit 'result_claim' must be an outcome string")
+            raise Refused("SPAR-N12", "kit audit 'sender' must be the producing role string")
+        claim = payload["result_claim"]
+        if isinstance(claim, dict):
+            outcome = claim.get("outcome")
+            steps = claim.get("steps")
+            if outcome not in {"capture", "escape"}:
+                raise Refused("SPAR-N12", "kit audit 'result_claim.outcome' must be capture or escape")
+            if type(steps) is not int or steps < 0:
+                raise Refused("SPAR-N12", "kit audit 'result_claim.steps' must be a non-negative int")
+            claim = "survival" if outcome == "escape" else outcome
+        elif not isinstance(claim, str):
+            raise Refused("SPAR-N12", "kit audit 'result_claim' must be an object")
         if not isinstance(payload["records"], list):
-            raise Refused("SPAR-A01", "kit audit 'records' must be a list")
-        return dict(payload, records=unwrap_inbound_records(payload["records"]))
+            raise Refused("SPAR-N12", "kit audit 'records' must be a list")
+        return dict(payload, records=unwrap_inbound_records(payload["records"]), result_claim=claim)
 
 
 #: Wire profile name -> adapter. The composition root resolves one of these once.

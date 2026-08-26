@@ -24,6 +24,10 @@ class Inboxes:
         self.turns: deque[dict] = deque()
         self.audits: deque[dict] = deque()
         self.controls: deque[dict] = deque()
+        # Optional live-wire compatibility responder.  The professor's mailbox
+        # contract needs only {"ok": true}; some league peers additionally use
+        # the immediate tool result as their counter-signature evidence.
+        self.agreement_reply = None
 
     def drain(self) -> None:
         for q in (self.agreements, self.turns, self.audits, self.controls):

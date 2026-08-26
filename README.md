@@ -93,7 +93,8 @@ No credentials are required for tests, local loopback play, replay, or audit ver
 
 ## Running a local match
 
-This public-SDK smoke command composes both roles over an in-memory loopback, runs all six subgames, publishes internal and reference-kit bundles, reloads them, and verifies the replay:
+This public-SDK smoke command composes both roles over an in-memory loopback, runs all six
+subgames, and verifies the internal replay bundle:
 
 ```sh
 LOCAL_ARTIFACTS="$(mktemp -d)"
@@ -104,7 +105,9 @@ uv run python scripts/smoke_replay_integration.py \
   --json
 ```
 
-For a two-process FastMCP run, start the Police and Thief commands documented in [`docs/CLI.md`](docs/CLI.md) from their respective repositories.
+For the production two-process warm-up and official 14-file output, follow
+[Official Appendix-F reporting](docs/reporting/official-appendix-f.md). Valid official files
+appear under `<artifacts>/official/<game_uid>/`; replay and outbox data remain separate.
 
 ## Running against an external peer
 

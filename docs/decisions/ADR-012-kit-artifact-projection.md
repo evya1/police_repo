@@ -5,11 +5,19 @@ status: accepted
 date: 2026-08-24
 owners: orchestrator
 related_requirements: [REPORT-005, REPORT-006, REPORT-007, OBS-006, SEC-005, SEC-006]
-related_tasks: [T053, T056]
+related_tasks: [T053, T056, T061]
 supersedes:
 ---
 
 # ADR-012 — The kit bundle is a projection, not a second emission path
+
+## 2026-08-26 official-schema amendment
+
+The authoritative book v3.0.0 and pinned instructor reference at commit
+`960499fd5e8777b4929625f5d8fdcf2ab4677b54` resolve INPUT-001 for the outward boundary.
+T061 replaces `league-kit-reference-v3` with official schema version 1.1 and publishes under
+`<artifacts>/official/<game_uid>/`. The projection remains the only outward architecture;
+sealed evidence and the internal replay bundle remain unchanged.
 
 ## Context
 

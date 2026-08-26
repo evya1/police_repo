@@ -51,14 +51,14 @@ class OpenRouterClient:
         *,
         api_key: str,
         model: str,
-        provider_slug: str,
+        provider_slug: str | None = None,
         base_url: str = DEFAULT_BASE_URL,
         max_output_tokens: int = 32,
         clock: Callable[[], float] = time.monotonic,
         opener: Callable[..., Any] = urllib.request.urlopen,
     ) -> None:
-        if not api_key or not model or not provider_slug:
-            raise ValueError("OpenRouter credentials, model, and provider slug are required")
+        if not api_key or not model:
+            raise ValueError("OpenRouter credentials and model are required")
         if not 1 <= max_output_tokens <= MAX_OUTPUT_TOKENS:
             raise ValueError(f"max_output_tokens must be between 1 and {MAX_OUTPUT_TOKENS}")
         self._api_key = api_key
@@ -73,19 +73,20 @@ class OpenRouterClient:
     def complete(self, prompt: str, *, deadline: float | None) -> RawCompletion:
         """Send one bounded request and return the provider's untrusted raw fields."""
         timeout = self._remaining_timeout(deadline)
-        payload = {
+        payload: dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": self.max_output_tokens,
             "temperature": 0,
             "reasoning": {"enabled": False},
-            "provider": {
+        }
+        if self.provider_slug:
+            payload["provider"] = {
                 "only": [self.provider_slug],
                 "allow_fallbacks": False,
                 "require_parameters": True,
                 "data_collection": "deny",
-            },
-        }
+            }
         request = urllib.request.Request(
             self._url,
             data=json.dumps(payload, separators=(",", ":")).encode("utf-8"),
@@ -142,7 +143,7 @@ class OpenRouterClient:
             raise OpenRouterMalformedResponseError("OpenRouter returned a malformed response") from exc
         return RawCompletion(
             text=text,
-            provider=body.get("provider") or self.provider_slug,
+            provider=body.get("provider") or self.provider_slug or "OpenRouter",
             model=body.get("model") or self.model,
             input_tokens=usage.get("prompt_tokens") if usage is not None else None,
             output_tokens=usage.get("completion_tokens") if usage is not None else None,

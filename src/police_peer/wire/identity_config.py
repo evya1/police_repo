@@ -11,11 +11,9 @@ filled-in declaration to run. Counted play is where the missing pieces are refus
 and that refusal lives in the composition root rather than here -- a config loader that
 raised on an unset team name would make local development impossible for no safety gain.
 
-Two defaults are deliberate rather than convenient:
-
-* `email.recipient` defaults to a non-secret placeholder. A live recipient must be supplied
-  in private configuration or as a runtime CLI override.
-* `email.mode` defaults to `dry-run`. Sending is opt-in, twice over (see the reporting root).
+Two defaults are deliberate rather than convenient: `email.recipient` is the official
+v3.0.0 reporting destination, while `email.mode` is `dry-run`. Sending remains opt-in,
+twice over (see the reporting root).
 """
 
 from __future__ import annotations
@@ -24,8 +22,8 @@ from dataclasses import dataclass, field
 
 from common.config import ConfigError
 
-#: Placeholder report address (override with the real league address in private config).
-LECTURER_REPORT_ADDRESS = "example@example.com"
+#: Official counted-report destination from project book v3.0.0.
+LECTURER_REPORT_ADDRESS = "rmisegal+uoh26finalgame@gmail.com"
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,7 +52,7 @@ class LlmSettings:
 
     provider: str = "template"
     model: str = "template"
-    provider_slug: str = ""
+    provider_slug: str | None = None
     step_deadline_seconds: float = 30.0
     max_output_tokens: int = 32
     every_n_steps: int = 1
@@ -113,7 +111,8 @@ def load_llm_settings(toml_data: dict) -> LlmSettings:
         raise ConfigError("[llm] must be a TOML table")
     provider = str(block.get("provider", "template")).strip().lower()
     model = str(block.get("model", "template")).strip()
-    provider_slug = str(block.get("provider_slug", "")).strip()
+    raw_provider_slug = block.get("provider_slug")
+    provider_slug = str(raw_provider_slug).strip() or None if raw_provider_slug is not None else None
     try:
         deadline = float(block.get("step_deadline_seconds", 30.0))
         max_tokens = int(block.get("max_output_tokens", 32))
@@ -124,8 +123,6 @@ def load_llm_settings(toml_data: dict) -> LlmSettings:
         raise ConfigError("[llm].provider must be 'template' or 'openrouter'")
     if provider == "openrouter" and (not model or model == "template"):
         raise ConfigError("[llm].model is required when provider='openrouter'")
-    if provider == "openrouter" and not provider_slug:
-        raise ConfigError("[llm].provider_slug is required when provider='openrouter'")
     if not 0 < deadline <= 60:
         raise ConfigError("[llm].step_deadline_seconds must be in (0, 60]")
     if not 1 <= max_tokens <= 3200:

@@ -1,4 +1,4 @@
-"""One opt-in, cost-bounded request through the production OpenRouter composition."""
+"""One opt-in, token-bounded request through the production OpenRouter composition."""
 
 from __future__ import annotations
 
@@ -16,16 +16,9 @@ from police_peer.strategy.hints import HintWriter
 from police_peer.wire.identity_config import LlmSettings
 from police_peer.wire.llm_composition import compose_text_provider
 
-MODEL = "inclusionai/ling-3.0-flash"
-PROVIDER = "novita"
+MODEL = "deepseek/deepseek-v4-flash-0731:nitro"
 MAX_INPUT_TOKENS = 99
 MAX_OUTPUT_TOKENS = 8
-INPUT_USD_PER_TOKEN = 0.021 / 1_000_000
-OUTPUT_USD_PER_TOKEN = 0.063 / 1_000_000
-MAX_ESTIMATED_COST = (
-    MAX_INPUT_TOKENS * INPUT_USD_PER_TOKEN
-    + MAX_OUTPUT_TOKENS * OUTPUT_USD_PER_TOKEN
-)
 
 pytestmark = [
     pytest.mark.live_openrouter,
@@ -37,11 +30,10 @@ pytestmark = [
 ]
 
 
-def test_one_cheap_production_composition_request() -> None:
+def test_one_bounded_production_composition_request() -> None:
     model = os.environ.get("OPENROUTER_SMOKE_MODEL", MODEL)
-    provider_slug = os.environ.get("OPENROUTER_SMOKE_PROVIDER", PROVIDER)
-    assert (model, provider_slug) == (MODEL, PROVIDER), "unpriced smoke override refused"
-    assert MAX_ESTIMATED_COST < 0.0001
+    provider_slug = os.environ.get("OPENROUTER_SMOKE_PROVIDER") or None
+    assert (model, provider_slug) == (MODEL, None), "unapproved smoke override refused"
     settings = LlmSettings(
         "openrouter", model, provider_slug, 30.0, MAX_OUTPUT_TOKENS, 1,
     )
@@ -63,5 +55,5 @@ def test_one_cheap_production_composition_request() -> None:
         "input_tokens": reply.usage.input_tokens,
         "output_tokens": reply.usage.output_tokens,
         "request_count": client.request_count,
-        "maximum_estimated_cost_usd": MAX_ESTIMATED_COST,
+        "maximum_output_tokens": MAX_OUTPUT_TOKENS,
     }, sort_keys=True))

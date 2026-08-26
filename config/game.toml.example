@@ -31,15 +31,15 @@ turn_timeout_seconds = 180
 [llm]
 # The move is ALWAYS decided in Python. The language model touches the verbal layer only.
 provider = "template"                           # template | openrouter
-model = "inclusionai/ling-3.0-flash"             # required only when openrouter is enabled
-provider_slug = "novita"
+model = "deepseek/deepseek-v4-flash-0731:nitro" # required only when openrouter is enabled
+# provider_slug = "novita"                      # optional explicit provider pin; omit for Nitro
 step_deadline_seconds = 30
 max_output_tokens = 32
 every_n_steps = 1
 
 [email]
-# Placeholder report address -- override with the real league address before a counted run.
-recipient = "example@example.com"
+# Official counted-report destination from project book v3.0.0.
+recipient = "rmisegal+uoh26finalgame@gmail.com"
 # "dry-run" composes the message and writes it to the bundle's outbox without sending.
 # A real send additionally requires an explicit human authorisation flag.
 mode = "dry-run"

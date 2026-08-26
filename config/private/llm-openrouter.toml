@@ -9,8 +9,8 @@
 # OPENROUTER_BASE_URL defaults to https://openrouter.ai/api/v1.
 [llm]
 provider = "openrouter"          # template | openrouter
-model = "inclusionai/ling-3.0-flash"
-provider_slug = "novita"
+model = "deepseek/deepseek-v4-flash-0731:nitro"
+# provider_slug = "novita"  # optional explicit pin; omit so Nitro selects a healthy provider
 step_deadline_seconds = 30.0
 max_output_tokens = 10
 every_n_steps = 1

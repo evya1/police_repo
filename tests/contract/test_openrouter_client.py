@@ -47,11 +47,14 @@ def _body(*, usage: object = ...) -> dict:
     return body
 
 
-def _client(opener, *, clock=lambda: 100.0, max_tokens: int = 8) -> OpenRouterClient:
+def _client(
+    opener, *, clock=lambda: 100.0, max_tokens: int = 8,
+    model: str = "requested/model", provider_slug: str | None = "novita",
+) -> OpenRouterClient:
     return OpenRouterClient(
         api_key=_CREDENTIAL,
-        model="requested/model",
-        provider_slug="novita",
+        model=model,
+        provider_slug=provider_slug,
         max_output_tokens=max_tokens,
         clock=clock,
         opener=opener,
@@ -79,6 +82,20 @@ def test_success_extracts_actual_routing_and_usage_and_pins_request() -> None:
     }
     assert seen["timeout"] == 5.0
     assert _CREDENTIAL not in seen["request"].data.decode()
+
+
+def test_nitro_without_provider_slug_omits_provider_routing() -> None:
+    seen = {}
+
+    def open_(request, *, timeout):
+        seen.update(request=request, timeout=timeout)
+        return _Response(_body())
+
+    _client(
+        open_, model="deepseek/deepseek-v4-flash-0731:nitro", provider_slug=None,
+    ).complete("safe prompt", deadline=None)
+    payload = json.loads(seen["request"].data)
+    assert "provider" not in payload
 
 
 def test_missing_usage_stays_unknown() -> None:

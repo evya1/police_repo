@@ -163,3 +163,20 @@ def test_counter_signed_reply_matches_live_interop_vector(monkeypatch) -> None:
     assert result["sub_game_number"] == 1
     assert result["role"] == "thief"
     assert reply(incoming)["nonce"] == result["nonce"]
+
+
+def test_counter_signed_reply_accepts_zero_as_read_only_probe() -> None:
+    terms = TestOurGreeting()._terms()
+    reply = counter_signed_reply_builder(
+        terms=terms, group_id="ZeroOne0", natural_role=Role.THIEF,
+    )
+    incoming = our_greeting(
+        terms=terms, nonce="a" * 32, group_id="aviayeli",
+        role="police", sub_game_number=0,
+    )
+
+    result = reply(incoming)
+
+    assert result["accepted"] is True
+    assert result["sub_game_number"] == 0
+    assert result["role"] == "thief"

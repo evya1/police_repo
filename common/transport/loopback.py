@@ -28,6 +28,10 @@ class Inboxes:
         # contract needs only {"ok": true}; some league peers additionally use
         # the immediate tool result as their counter-signature evidence.
         self.agreement_reply = None
+        # Set by the outbound channel immediately before disclosing our audit.
+        # The server may return the same reveal to peers that consume audit
+        # evidence from the synchronous tool result as well as the symmetric push.
+        self.audit_reply = None
 
     def drain(self) -> None:
         for q in (self.agreements, self.turns, self.audits, self.controls):

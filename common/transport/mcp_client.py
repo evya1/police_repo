@@ -157,9 +157,12 @@ class McpChannel:
                     f"peer at {self.peer_url} unreachable after re-establish: {exc}"
                 ) from exc
 
-    def configure_peer_endpoints(self, *, police_url: str, thief_url: str) -> None:
+    def configure_peer_endpoints(
+        self, *, police_url: str, thief_url: str, transition_timeout: float | None = None,
+    ) -> None:
         """Install the opponent's role endpoints for the alternating series."""
         self._opponent_urls = {"police": police_url, "thief": thief_url}
+        self._transition_timeout = transition_timeout or self.timeout
 
     def select_for_role(self, our_role) -> None:
         """Dial the complementary-role endpoint with closed, bounded retries.
@@ -176,7 +179,7 @@ class McpChannel:
             return
         self._teardown()
         self.peer_url = target
-        deadline = time.monotonic() + self.timeout
+        deadline = time.monotonic() + getattr(self, "_transition_timeout", self.timeout)
         delay = 0.5
         last_error: Exception | None = None
         while (remaining := deadline - time.monotonic()) > 0:
@@ -203,6 +206,9 @@ class McpChannel:
         return self._call("receive_turn", {"message": message})
 
     def send_audit(self, payload: dict) -> dict:
+        # Publish the exact reveal before making the symmetric outbound call so
+        # a simultaneous inbound submit_audit can receive it in its tool result.
+        self.inboxes.audit_reply = payload
         return self._call("submit_audit", {"payload": payload})
 
     def send_control(self, message: dict) -> dict:

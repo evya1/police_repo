@@ -109,11 +109,14 @@ class KitAuditWire:
         if isinstance(claim, dict):
             outcome = claim.get("outcome")
             steps = claim.get("steps")
-            if outcome not in {"capture", "escape"}:
-                raise Refused("SPAR-N12", "kit audit 'result_claim.outcome' must be capture or escape")
+            if outcome not in {"capture", "escape", "survival"}:
+                raise Refused(
+                    "SPAR-N12",
+                    "kit audit 'result_claim.outcome' must be capture, escape, or survival",
+                )
             if type(steps) is not int or steps < 0:
                 raise Refused("SPAR-N12", "kit audit 'result_claim.steps' must be a non-negative int")
-            claim = "survival" if outcome == "escape" else outcome
+            claim = "survival" if outcome in {"escape", "survival"} else outcome
         elif not isinstance(claim, str):
             raise Refused("SPAR-N12", "kit audit 'result_claim' must be an object")
         if not isinstance(payload["records"], list):

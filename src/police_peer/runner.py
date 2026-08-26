@@ -107,6 +107,7 @@ def run_one_peer(
             configure_endpoints(
                 police_url=private.endpoints.opponent_police_url or peer_url,
                 thief_url=private.endpoints.opponent_thief_url or peer_url,
+                transition_timeout=connect_timeout,
             )
 
         facade = create_peer(

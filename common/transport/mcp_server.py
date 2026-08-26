@@ -27,6 +27,26 @@ from common.transport.loopback import Inboxes
 TOOL_NAMES = ("negotiate", "receive_turn", "submit_audit", "receive_control")
 
 
+def _handle_negotiate(inboxes: Inboxes, message: dict) -> dict:
+    """Validate/countersign a greeting and enqueue only real accepted sub-games."""
+    reply = getattr(inboxes, "agreement_reply", None)
+    if reply is not None:
+        response = reply(message)
+        if message.get("sub_game_number") == 0 or response.get("accepted") is False:
+            return response
+        inboxes.agreements.append(message)
+        return response
+    inboxes.agreements.append(message)
+    return {"ok": True}
+
+
+def _handle_audit(inboxes: Inboxes, payload: dict) -> dict:
+    """Enqueue their reveal and return ours when it has already been published."""
+    inboxes.audits.append(payload)
+    reply = getattr(inboxes, "audit_reply", None)
+    return reply if isinstance(reply, dict) else {"ok": True}
+
+
 def build_server(inboxes: Inboxes, *, name: str = "peer") -> Any:
     """Construct the FastMCP app with the four tools bound to ``inboxes``.
 
@@ -40,11 +60,7 @@ def build_server(inboxes: Inboxes, *, name: str = "peer") -> Any:
     @mcp.tool
     def negotiate(message: dict) -> dict:
         """Accept a negotiation greeting / signed terms and enqueue it."""
-        inboxes.agreements.append(message)
-        reply = getattr(inboxes, "agreement_reply", None)
-        if reply is not None:
-            return reply(message)
-        return {"ok": True}
+        return _handle_negotiate(inboxes, message)
 
     @mcp.tool
     def receive_turn(message: dict) -> dict:
@@ -55,8 +71,7 @@ def build_server(inboxes: Inboxes, *, name: str = "peer") -> Any:
     @mcp.tool
     def submit_audit(payload: dict) -> dict:
         """Accept an end-of-game audit reveal and enqueue it. Note: ``payload``."""
-        inboxes.audits.append(payload)
-        return {"ok": True}
+        return _handle_audit(inboxes, payload)
 
     @mcp.tool
     def receive_control(message: dict) -> dict:

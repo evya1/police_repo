@@ -107,9 +107,9 @@ def counter_signed_reply_builder(
         nonce = raw.get("nonce") if isinstance(raw, dict) else None
         signature = raw.get("signature") if isinstance(raw, dict) else None
         sub_game = raw.get("sub_game_number") if isinstance(raw, dict) else None
-        if not isinstance(sub_game, int) or not 1 <= sub_game <= 6:
+        if not isinstance(sub_game, int) or not 0 <= sub_game <= 6:
             return {"status": "refused", "accepted": False, "ok": False,
-                    "reason": "sub_game_number must be an integer from 1 through 6"}
+                    "reason": "sub_game_number must be an integer from 0 through 6"}
         if theirs != terms:
             return {"status": "refused", "accepted": False, "ok": False,
                     "reason": "terms do not match our configured 14-key contract"}
@@ -117,7 +117,14 @@ def counter_signed_reply_builder(
             return {"status": "refused", "accepted": False, "ok": False,
                     "reason": "incoming terms signature does not verify"}
 
-        our_role = role_for(natural_role, sub_game)
+        if sub_game == 0:
+            their_role = raw.get("role")
+            if their_role not in {Role.POLICE.value, Role.THIEF.value}:
+                return {"status": "refused", "accepted": False, "ok": False,
+                        "reason": "probe role must be police or thief"}
+            our_role = Role.THIEF if their_role == Role.POLICE.value else Role.POLICE
+        else:
+            our_role = role_for(natural_role, sub_game)
         if raw.get("role") == our_role.value:
             return {"status": "refused", "accepted": False, "ok": False,
                     "reason": f"role collision: both peers declared {our_role.value}"}

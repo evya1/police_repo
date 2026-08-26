@@ -66,7 +66,6 @@ def result_row(
         "result": row.outcome.value,
         "winner_group": winner,
         "tie": tie,
-        "steps": row.steps,
         "tokens": dict(tokens),
         "score": scores,
         "log_files": {our_group: log_file, opponent_group: log_file},

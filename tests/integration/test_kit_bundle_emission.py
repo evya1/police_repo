@@ -20,6 +20,10 @@ from police_peer.reporting.kit_bundle import publish_kit_bundle
 from police_peer.sdk import Budgets, create_peer
 
 POLICE, THIEF = "kit-police", "kit-thief"
+HARDWARE = {
+    "cpu_type": "Example CPU", "cpu_freq_mhz": 2400.0, "cpu_cores": 2,
+    "ram_gb": 4.0, "gpu_model": None, "vram_gb": None,
+}
 
 
 def _identity(group: str, commit: str) -> dict:
@@ -27,7 +31,7 @@ def _identity(group: str, commit: str) -> dict:
         group_id=group, group_name=group, members=(f"{group}-member",),
         repos={"cop": "https://example.invalid/cop", "thief": "https://example.invalid/thief"},
         mcp_servers={"cop": "http://127.0.0.1:8101/mcp", "thief": "http://127.0.0.1:8102/mcp"},
-        llm_model="template", hardware_spec={"os": "Linux", "cpu_cores": 2},
+        llm_model="template", hardware_spec=HARDWARE,
         github_commit=commit, counted_games_played=0, code_version="1.0.0",
     ))
 
@@ -151,6 +155,11 @@ def test_declaration_and_result_agree_on_the_series_length(bundle):
     declaration = next(d for n, d in every.items() if n.startswith("declaration_"))
     result = next(d for n, d in every.items() if n.startswith("result_"))
     assert declaration["num_sub_games"] == result["num_sub_games"] == 6
+    assert all(len(group["signature"]) == 64 for group in declaration["groups"].values())
+    assert all(
+        set(group["hardware_spec"]) == set(HARDWARE)
+        for group in declaration["groups"].values()
+    )
 
 
 def test_every_logged_sub_game_appears_in_the_result(bundle):

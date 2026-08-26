@@ -51,8 +51,11 @@ One flat directory, `<artifacts>/official/<game_uid>/`, holding exactly 14 files
 - A zeroed sub-game is credited to nobody: `tie: false`, `winner_group: null`.
 - An opponent game count we cannot observe is `null` (unclaimed), never `0`.
 - The `league` posture block is never defaulted; a warm-up never arms the league fields.
-- Every document declares the official outward `schema_version: "1.1"` and an Appendix-F
-  `_schema`; the obsolete `league-kit-reference-v3` label is forbidden.
+- Every document declares the official outward `schema_version: "1.1"` and carries the pinned
+  reference's full explanatory `_schema`; the obsolete `league-kit-reference-v3` label is
+  forbidden.
+- Declaration signatures are bare 64-character SHA-256 values over sorted-key JSON, matching
+  the official v1.1 helper; hardware uses exactly its six official fields.
 - Declaration, log-summary, and result timestamps use `Asia/Jerusalem`, independent of host
   timezone. Sealed event timestamps remain immutable inside commitment payloads.
 - Every result row carries both real 40-character Git commits, both truthful token totals,

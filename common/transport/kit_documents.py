@@ -16,13 +16,14 @@ import hashlib
 import json
 
 from common.transport.canonical import canonical_bytes
+from common.transport.kit_artifact_schemas import (
+    CONFIG_SCHEMA,
+    DECLARATION_SCHEMA,
+    LOG_SCHEMA,
+    RESULT_SCHEMA,
+)
 from common.transport.kit_names import base_block
 from common.transport.kit_records import KitDocumentError, build_summary, check_records
-
-DECLARATION_SCHEMA = "Appendix-F static declaration for the complete six-sub-game series."
-CONFIG_SCHEMA = "Appendix-F agreed configuration for one sub-game."
-LOG_SCHEMA = "Appendix-F per-sub-game cryptographic game log."
-RESULT_SCHEMA = "Appendix-F final result for the complete six-sub-game series."
 
 __all__ = [
     "KitDocumentError", "build_config", "build_declaration", "build_log", "build_result",
@@ -129,6 +130,7 @@ def build_log(
     if opponent_committed_steps is not None:
         doc["opponent_committed_steps"] = sorted(opponent_committed_steps)
     doc["mutual_agreement"] = {
+        "opponent_group_id": summary["opponent_group_id"],
         "sha256": hashlib.sha256(
             json.dumps(doc["records"], sort_keys=True, ensure_ascii=False).encode()
         ).hexdigest(),

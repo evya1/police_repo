@@ -15,8 +15,11 @@ from __future__ import annotations
 SCHEMA_VERSION = "1.1"
 
 _LINKS_REMARK = (
-    "match-level files are named <kind>_<game_id>.json; per-sub-game files carry _g<NN>. "
-    "All four share one game_uid, which is what joins them."
+    "These are logical roles, NOT fixed filenames. Each actual file name MUST be derived from "
+    "the game_id so that files from different games are never mixed. Match-level files "
+    "(declaration, result) are named <role>_<game_id>.json; per-sub-game files (config, log) "
+    "are named <role>_<game_id>_g<NN>.json where <NN> is the sub_game_number. The names below "
+    "are examples for game_id=S01R02-team07-vs-team13."
 )
 
 

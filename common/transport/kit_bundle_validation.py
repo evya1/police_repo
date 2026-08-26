@@ -28,6 +28,9 @@ _GROUP_FIELDS = {
     "group_id", "group_name", "members", "repos", "mcp_servers", "llm_model",
     "hardware_spec", "hardware_spec_sha256", "github_commit", "code_version", "signature",
 }
+_HARDWARE_FIELDS = {
+    "cpu_type", "cpu_freq_mhz", "cpu_cores", "ram_gb", "gpu_model", "vram_gb",
+}
 
 
 def _is_israel_time(value: object) -> bool:
@@ -82,6 +85,8 @@ def validate_official_bundle(root: Path | str) -> dict:
         raise SelfVerifyError("declaration series limits are incomplete")
     if not all(set(group) >= _GROUP_FIELDS for group in groups):
         raise SelfVerifyError("declaration identity metadata is incomplete")
+    if not all(set(group.get("hardware_spec", {})) == _HARDWARE_FIELDS for group in groups):
+        raise SelfVerifyError("declaration hardware metadata does not match official v1.1")
     if not all(verify_group_block(group) for group in groups):
         raise SelfVerifyError("declaration group signature failed")
     if not all(_SHA40.fullmatch(group.get("github_commit", "")) for group in groups):
@@ -95,6 +100,11 @@ def validate_official_bundle(root: Path | str) -> dict:
             raise SelfVerifyError(f"config g{number:02d} hash failed")
         log = _load(directory / log_name(game_id, number))
         summary = log.get("summary", {})
+        if "winner_group" in summary or "winner_role" not in summary:
+            raise SelfVerifyError(f"log g{number:02d} winner role is not official v1.1")
+        agreement = log.get("mutual_agreement", {})
+        if agreement.get("opponent_group_id") != summary.get("opponent_group_id"):
+            raise SelfVerifyError(f"log g{number:02d} opponent agreement identity mismatch")
         if summary.get("timezone") != "Asia/Jerusalem" or not all(
             _is_israel_time(summary.get(key)) for key in ("started_at", "ended_at")
         ):

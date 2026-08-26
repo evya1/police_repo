@@ -130,8 +130,17 @@ def test_every_document_declares_the_official_v11_schema():
     ]
     for doc in built:
         assert doc["schema_version"] == "1.1"
-        assert doc["_schema"].startswith("Appendix-F")
+        assert len(doc["_schema"]) > 200
         assert "schema_profile" not in doc
+
+
+def test_log_uses_the_official_winner_role_and_agreement_identity():
+    summary = a_summary()
+    summary["winner_role"] = "police"
+    summary.pop("winner_group")
+    doc = docs.build_log(**IDS, sub_game_number=1, summary=summary, records=[wrapped(1)])
+    assert doc["summary"]["winner_role"] == "police"
+    assert doc["mutual_agreement"]["opponent_group_id"] == "b"
 
 
 def test_shapes_match_the_pinned_kit_bundle(kit_declaration, kit_config, kit_log, kit_result):

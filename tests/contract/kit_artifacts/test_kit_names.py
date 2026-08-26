@@ -55,6 +55,7 @@ def test_github_links_are_omitted_when_unknown_and_carried_when_given():
 
 def test_links_name_all_four_kinds(kit_game_id):
     links = names.links_block(kit_game_id)
+    assert links["_remark"].startswith("These are logical roles")
     assert links["declaration"] == f"declaration_{kit_game_id}.json"
     assert links["result"] == f"result_{kit_game_id}.json"
     assert links["config"] == f"config_{kit_game_id}_g<NN>.json"

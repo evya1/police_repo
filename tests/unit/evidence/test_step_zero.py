@@ -16,7 +16,10 @@ from police_peer.evidence.step_zero import (
     verify_signed_step_zero,
 )
 
-_RUNTIME = RuntimeSummary(os_name="Linux", python_version="3.12.3", cpu_count=4, architecture="x86_64")
+_RUNTIME = RuntimeSummary(
+    cpu_type="Example CPU", cpu_freq_mhz=2400.0, cpu_cores=4, ram_gb=16.0,
+    gpu_model=None, vram_gb=None,
+)
 
 
 def _declaration(
@@ -57,9 +60,11 @@ class TestCollectRuntimeSummary:
     def test_returns_secret_free_summary(self) -> None:
         summary = collect_runtime_summary()
         payload = summary.as_dict()
-        assert payload["cpu_count"] >= 0
-        assert isinstance(payload["os_name"], str)
-        assert isinstance(payload["python_version"], str)
+        assert set(payload) == {
+            "cpu_type", "cpu_freq_mhz", "cpu_cores", "ram_gb", "gpu_model", "vram_gb",
+        }
+        assert payload["cpu_cores"] >= 0
+        assert isinstance(payload["cpu_type"], str)
         for forbidden in ("home", "user", "/root", "\\Users"):
             assert forbidden not in str(payload).lower() or forbidden == "user"
 

@@ -49,6 +49,13 @@ def summary(evidence, row, *, number: int, ours: str, theirs: str, winner: str |
         opponent_group=theirs, result=row.outcome.value, winner_group=winner,
         steps=row.steps, audit=audit,
     )
+    winner_role = None
+    if winner == ours:
+        winner_role = row.role.value
+    elif winner == theirs:
+        winner_role = "thief" if row.role.value == "police" else "police"
+    result["winner_role"] = winner_role
+    result.pop("winner_group")
     result.update({
         "timezone": "Asia/Jerusalem", "started_at": start.isoformat(),
         "ended_at": end.isoformat(), "duration_seconds": max(0.0, (end - start).total_seconds()),

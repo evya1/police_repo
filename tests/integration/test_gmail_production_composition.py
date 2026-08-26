@@ -9,7 +9,6 @@ from pathlib import Path
 import pytest
 
 from common.config import ConfigError
-from common.transport.canonical import canonical_bytes
 from common.transport.kit_consensus import mutual_agreement
 from common.transport.kit_documents import build_result
 from common.transport.kit_names import result_name
@@ -63,9 +62,12 @@ def _published_result(root: Path, *, confirmed: bool = True) -> tuple[Path, dict
             "winner_group": groups[0],
             "tie": False,
             "steps": 1,
+            "started_at": f"2026-08-26T12:{number:02d}:00+03:00",
+            "ended_at": f"2026-08-26T12:{number:02d}:01+03:00",
+            "github_commit": {groups[0]: "a" * 40, groups[1]: "b" * 40},
             "tokens": {groups[0]: 0, groups[1]: 0},
             "score": {groups[0]: 100, groups[1]: 0},
-            "log_files": {groups[0]: f"log_{game_id}_g{number:02d}.json"},
+            "log_files": dict.fromkeys(groups, f"log_{game_id}_g{number:02d}.json"),
             "audit": {"log_verified": True, "tampered": False},
         }
         for number in range(1, 7)
@@ -96,7 +98,7 @@ def test_dry_run_uses_friend_sender_and_writes_local_outbox(tmp_path: Path) -> N
     message = BytesParser(policy=policy.default).parsebytes((outbox / "message.eml").read_bytes())
     (attachment,) = message.iter_attachments()
     assert attachment.get_filename() == path.name
-    assert attachment.get_payload(decode=True) == canonical_bytes(document)
+    assert attachment.get_payload(decode=True) == path.read_bytes()
     assert receipt.gmail_api_contacted is False
     assert receipt.gmail_api_accepted is False
     assert gatekeeper.lanes == ["reporting"]
@@ -130,7 +132,6 @@ def test_explicit_live_mode_accepts_the_official_recipient(tmp_path: Path) -> No
         service_client=service,
     )
     assert reporter.recipient == LECTURER_REPORT_ADDRESS
-    assert service.resource.body is None
 
 
 def test_send_requires_authorization_and_confirmed_result(tmp_path: Path) -> None:

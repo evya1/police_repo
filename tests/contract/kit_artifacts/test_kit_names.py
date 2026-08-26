@@ -39,12 +39,12 @@ def test_single_digit_sub_games_are_padded_not_bare():
     assert names.log_name("a-vs-b", 9).endswith("_g09.json")
 
 
-def test_base_block_carries_the_join_keys_and_declares_its_profile():
+def test_base_block_carries_join_keys_and_official_schema_version():
     block = names.base_block("a-vs-b", "uid-1")
     assert block["game_id"] == "a-vs-b"
     assert block["game_uid"] == "uid-1"
-    assert block["schema_profile"] == "league-kit-reference-v3"
-    assert "official" not in block["schema_profile"]
+    assert block["schema_version"] == "1.1"
+    assert "schema_profile" not in block
 
 
 def test_github_links_are_omitted_when_unknown_and_carried_when_given():

@@ -20,6 +20,11 @@ KIT_REQUIRED = {
 
 IDS = {"game_id": "a-vs-b", "game_uid": "3f2a6b1c-0000-4000-8000-000000000001"}
 TERMS = {"board_size": 7, "max_steps": 35, "num_games": 6}
+TIMES = {
+    "timezone": "Asia/Jerusalem",
+    "game_started_at": "2026-08-26T12:00:00+03:00",
+    "game_ended_at": "2026-08-26T12:10:00+03:00",
+}
 
 
 def wrapped(step: int) -> dict:
@@ -37,7 +42,7 @@ def a_summary() -> dict:
 
 def test_declaration_carries_the_required_keys():
     doc = docs.build_declaration(
-        **IDS, groups=[{"group_id": "a"}, {"group_id": "b"}], num_sub_games=6
+        **IDS, groups=[{"group_id": "a"}, {"group_id": "b"}], num_sub_games=6, **TIMES
     )
     assert KIT_REQUIRED["declaration"] <= set(doc)
     assert doc["groups"]["group_1"]["group_id"] == "a"
@@ -46,14 +51,14 @@ def test_declaration_carries_the_required_keys():
 
 def test_declaration_refuses_anything_but_two_groups():
     with pytest.raises(KitDocumentError, match="exactly two groups"):
-        docs.build_declaration(**IDS, groups=[{"group_id": "a"}], num_sub_games=6)
+        docs.build_declaration(**IDS, groups=[{"group_id": "a"}], num_sub_games=6, **TIMES)
 
 
 def test_config_carries_required_keys_and_digests_its_own_terms():
     doc = docs.build_config(**IDS, sub_game_number=3, terms=TERMS)
     assert KIT_REQUIRED["config"] <= set(doc)
     assert doc["sub_game_number"] == 3
-    assert doc["terms"] == TERMS
+    assert all(doc[key] == value for key, value in TERMS.items())
     assert doc["config_sha256"] == hashlib.sha256(canonical_bytes(TERMS)).hexdigest()
 
 
@@ -94,7 +99,9 @@ def test_result_carries_the_required_keys():
 def test_the_league_posture_block_is_never_defaulted():
     """An armed counted/uncounted marker on a run nobody described is a false declaration."""
     for doc in (
-        docs.build_declaration(**IDS, groups=[{"group_id": "a"}, {"group_id": "b"}], num_sub_games=6),
+        docs.build_declaration(
+            **IDS, groups=[{"group_id": "a"}, {"group_id": "b"}], num_sub_games=6, **TIMES
+        ),
         docs.build_config(**IDS, sub_game_number=1, terms=TERMS),
         docs.build_log(**IDS, sub_game_number=1, summary=a_summary(), records=[wrapped(1)]),
         docs.build_result(**IDS, groups=["a", "b"], sub_games=[], final_result={}),
@@ -106,21 +113,25 @@ def test_the_league_posture_block_is_never_defaulted():
 
 def test_unknown_optionals_are_omitted_rather_than_nulled():
     doc = docs.build_declaration(
-        **IDS, groups=[{"group_id": "a"}, {"group_id": "b"}], num_sub_games=6
+        **IDS, groups=[{"group_id": "a"}, {"group_id": "b"}], num_sub_games=6, **TIMES
     )
     assert "max_tokens_per_game" not in doc
     assert "step_zero" not in doc
 
 
-def test_every_document_declares_its_profile_and_claims_nothing_official():
+def test_every_document_declares_the_official_v11_schema():
     built = [
-        docs.build_declaration(**IDS, groups=[{"group_id": "a"}, {"group_id": "b"}], num_sub_games=6),
+        docs.build_declaration(
+            **IDS, groups=[{"group_id": "a"}, {"group_id": "b"}], num_sub_games=6, **TIMES
+        ),
         docs.build_config(**IDS, sub_game_number=1, terms=TERMS),
         docs.build_log(**IDS, sub_game_number=1, summary=a_summary(), records=[wrapped(1)]),
         docs.build_result(**IDS, groups=["a", "b"], sub_games=[], final_result={}),
     ]
     for doc in built:
-        assert doc["schema_profile"] == "league-kit-reference-v3"
+        assert doc["schema_version"] == "1.1"
+        assert doc["_schema"].startswith("Appendix-F")
+        assert "schema_profile" not in doc
 
 
 def test_shapes_match_the_pinned_kit_bundle(kit_declaration, kit_config, kit_log, kit_result):

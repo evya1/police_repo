@@ -109,11 +109,12 @@ def test_the_config_digest_is_the_canonical_hash_of_the_terms():
 # --- what rides the wire -------------------------------------------------------------------
 
 
-def test_the_greeting_subset_carries_a_hardware_digest_never_the_spec():
+def test_the_greeting_carries_the_complete_signed_identity():
     block = identity_greeting_block(an_identity())
     assert set(block) == set(GREETING_KEYS)
-    assert "hardware_spec" not in block, "an opponent cannot verify our RAM"
+    assert block["hardware_spec"] == HARDWARE
     assert block["hardware_spec_sha256"] == hardware_digest(HARDWARE)
+    assert verify_group_block(block)
 
 
 def test_an_opponent_that_declares_nothing_is_not_a_fault():

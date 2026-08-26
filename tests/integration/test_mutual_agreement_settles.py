@@ -10,8 +10,10 @@ import pytest
 from common.domain.scoring import Role
 from common.transport.kit_agreement import build_proposal, proposal_wire
 from common.transport.kit_consensus import consensus_scope, consensus_sha256
+from common.transport.kit_identity import GroupIdentity, identity_greeting_block
 from common.transport.loopback import pair
 from common.transport.series import PeerFacade, SeriesResult
+from police_peer.evidence.token_ledger import TokenLedger
 from police_peer.reporting.settlement import settle, settlement_rows
 from police_peer.sdk import Budgets, create_peer
 from police_peer.wire.result_agreement import exchange
@@ -20,13 +22,28 @@ CONFIG = Path(__file__).resolve().parents[2] / "config" / "game.json"
 GROUP_A, GROUP_B = "settle-a", "settle-b"
 
 
+def _identity(group: str, commit: str) -> GroupIdentity:
+    return GroupIdentity(
+        group_id=group, group_name=group, members=(f"{group}-member",),
+        repos={"cop": "https://example.invalid/cop", "thief": "https://example.invalid/thief"},
+        mcp_servers={"cop": "http://127.0.0.1:8101/mcp", "thief": "http://127.0.0.1:8102/mcp"},
+        llm_model="template", hardware_spec={"os": "Linux"}, github_commit=commit,
+        counted_games_played=0, code_version="1.0.0",
+    )
+
+
 def _run_pair(name_a: str, name_b: str) -> tuple[SeriesResult, SeriesResult, object, object]:
     channel_a, channel_b = pair(name_a, name_b)
     budgets = Budgets(turn_timeout=10.0, connect_timeout=10.0, poll_interval=0.005)
-    police = create_peer(CONFIG, channel=channel_a, role=Role.POLICE, group_id=name_a,
-                         budgets=budgets)
-    thief = create_peer(CONFIG, channel=channel_b, role=Role.THIEF, group_id=name_b,
-                        budgets=budgets)
+    police_id, thief_id = _identity(name_a, "a" * 40), _identity(name_b, "b" * 40)
+    police = create_peer(
+        CONFIG, channel=channel_a, role=Role.POLICE, group_id=name_a, budgets=budgets,
+        identity_block=identity_greeting_block(police_id),
+    )
+    thief = create_peer(
+        CONFIG, channel=channel_b, role=Role.THIEF, group_id=name_b, budgets=budgets,
+        identity_block=identity_greeting_block(thief_id),
+    )
     out: dict[str, SeriesResult] = {}
     errors: list[Exception] = []
 
@@ -58,12 +75,19 @@ def test_both_peers_reach_agreement_on_a_clean_series(settled_pair):
 
     outcomes: dict[str, object] = {}
 
-    def settle_one(name, result, channel, our_group):
-        outcomes[name] = settle(channel, result, our_group=our_group, budget=2.0)
+    def settle_one(name, result, channel, our_group, identity):
+        outcomes[name] = settle(
+            channel, result, our_group=our_group, budget=2.0,
+            token_ledger=TokenLedger(), identity=identity,
+        )
 
     threads = [
-        threading.Thread(target=settle_one, args=("p", p_result, channel_a, GROUP_A)),
-        threading.Thread(target=settle_one, args=("t", t_result, channel_b, GROUP_B)),
+        threading.Thread(
+            target=settle_one, args=("p", p_result, channel_a, GROUP_A, _identity(GROUP_A, "a" * 40))
+        ),
+        threading.Thread(
+            target=settle_one, args=("t", t_result, channel_b, GROUP_B, _identity(GROUP_B, "b" * 40))
+        ),
     ]
     for t in threads:
         t.start()

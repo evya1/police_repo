@@ -89,7 +89,7 @@ class GmailKitReporter:
             idempotency_store=FileIdempotencyStore(self.artifact_root / "state" / state_name),
         )
         response = sender.send_kit_result(
-            game_uid=game_uid, result=document, filename=result_path.name,
+            game_uid=game_uid, result_bytes=result_path.read_bytes(), filename=result_path.name,
         )
         accepted = capture is None and bool(response.get("id"))
         if capture is None and not accepted:

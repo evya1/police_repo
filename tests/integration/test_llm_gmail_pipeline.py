@@ -9,7 +9,6 @@ from email.parser import BytesParser
 from pathlib import Path
 
 from common.domain.scoring import Role
-from common.transport.canonical import canonical_bytes
 from common.transport.kit_consensus import mutual_agreement
 from common.transport.kit_documents import build_result
 from common.transport.kit_names import result_name
@@ -64,9 +63,12 @@ def _result_document(tokens: int) -> dict:
                 "sub_game_number": number,
                 "roles": {groups[0]: "police", groups[1]: "thief"},
                 "result": "capture", "winner_group": groups[0], "tie": False, "steps": 1,
+                "started_at": f"2026-08-26T12:{number:02d}:00+03:00",
+                "ended_at": f"2026-08-26T12:{number:02d}:01+03:00",
+                "github_commit": {groups[0]: "a" * 40, groups[1]: "b" * 40},
                 "tokens": {groups[0]: tokens if number == 1 else 0, groups[1]: 0},
                 "score": {groups[0]: 100, groups[1]: 0},
-                "log_files": {groups[0]: f"log_{game_id}_g{number:02d}.json"},
+                "log_files": dict.fromkeys(groups, f"log_{game_id}_g{number:02d}.json"),
                 "audit": {"log_verified": True, "tampered": False},
             }
         )
@@ -106,6 +108,6 @@ def test_llm_usage_reaches_agreed_result_and_reporting_lane(tmp_path: Path) -> N
     persisted = path.read_text(encoding="utf-8") + (outbox / "receipt.json").read_text()
     assert document["final_result"]["tokens_total_series"]["group-a"] == 21
     assert gatekeeper.lanes == ["llm", "reporting"]
-    assert attachment.get_payload(decode=True) == canonical_bytes(document)
+    assert attachment.get_payload(decode=True) == path.read_bytes()
     assert receipt.gmail_api_contacted is False
     assert completion.wording not in persisted and "unit-only-credential" not in persisted

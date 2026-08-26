@@ -17,7 +17,7 @@ def initialize_git_repository(path: Path) -> Path:
 
 def track(repo: Path, *relative_paths: str) -> None:
     """Add selected paths to the temporary repository index."""
-    subprocess.run(["git", "-C", str(repo), "add", "--", *relative_paths], check=True)
+    subprocess.run(["git", "-C", str(repo), "add", "-f", "--", *relative_paths], check=True)
 
 
 def captured_main(function: Callable[[list[str]], int], arguments: list[str]) -> tuple[int, str]:

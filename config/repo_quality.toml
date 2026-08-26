@@ -55,7 +55,10 @@ secret_allowed_paths = [".env.example"]
 secret_banned_names = [
   ".env", "credentials.json", "token.json", "service-account.json",
 ]
-secret_banned_globs = [".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "id_rsa", "id_ed25519"]
+secret_banned_globs = [
+  ".env.*", "*credentials*.json", "*token*.json",
+  "*.pem", "*.key", "*.p12", "*.pfx", "id_rsa", "id_ed25519",
+]
 
 workflow_dirs = [".github/workflows"]
 workflow_allowed_write_permissions = []

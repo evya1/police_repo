@@ -16,7 +16,7 @@ from common.transport.kit_names import result_name
 from common.transport.kit_settlement import series_final
 from police_peer.reporting.gmail import DuplicateSendError
 from police_peer.wire.gmail_composition import compose_gmail_reporter
-from police_peer.wire.identity_config import EmailSettings
+from police_peer.wire.identity_config import LECTURER_REPORT_ADDRESS, EmailSettings
 
 
 class _GatekeeperSpy:
@@ -120,6 +120,17 @@ def test_live_mode_reaches_gmail_compatible_client_once(tmp_path: Path) -> None:
     assert gatekeeper.lanes == ["reporting"]
     with pytest.raises(DuplicateSendError):
         reporter.report(path)
+
+
+def test_explicit_live_mode_accepts_the_official_recipient(tmp_path: Path) -> None:
+    gatekeeper, service = _GatekeeperSpy(), _Service()
+    reporter = compose_gmail_reporter(
+        EmailSettings(LECTURER_REPORT_ADDRESS, "send"), tmp_path, gatekeeper,
+        authorize_send=True, environment={"GMAIL_SENDER_EMAIL": "sender@example.invalid"},
+        service_client=service,
+    )
+    assert reporter.recipient == LECTURER_REPORT_ADDRESS
+    assert service.resource.body is None
 
 
 def test_send_requires_authorization_and_confirmed_result(tmp_path: Path) -> None:

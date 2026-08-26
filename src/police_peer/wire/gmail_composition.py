@@ -18,7 +18,7 @@ from common.transport.kit_result_validation import (
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.infra.gmail_oauth import build_gmail_service
 from police_peer.reporting.gmail import GMAIL_SEND_SCOPE, FileIdempotencyStore, GmailSender
-from police_peer.wire.identity_config import LECTURER_REPORT_ADDRESS, EmailSettings
+from police_peer.wire.identity_config import EmailSettings
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,8 +126,6 @@ def compose_gmail_reporter(
     if settings.mode == "send":
         if not authorize_send:
             raise ConfigError("live Gmail mode requires --authorize-email-send")
-        if target == LECTURER_REPORT_ADDRESS:
-            raise ConfigError("live Gmail mode requires a non-placeholder recipient")
         if not sender:
             raise ConfigError("GMAIL_SENDER_EMAIL is required for live Gmail mode")
         client_value = str(env.get("GMAIL_OAUTH_CLIENT_FILE", "")).strip()

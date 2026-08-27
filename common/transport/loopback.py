@@ -1,7 +1,7 @@
 """Both peers in one process, over the same four-tool surface as the wire.
 
 This is not a mock. It is the same message dicts, the same tool names, the same
-``{"ok": True}`` returns; only the hop is a function call. That is what lets the entire series —
+the same replies; only the hop is a function call. That is what lets the entire series —
 handshake, six sub-games, mutual audits, artifacts — run in CI with **no dependencies installed**,
 and it is why the fault injector in ``faults.py`` can prove the receiver contract without a
 network to be flaky.
@@ -14,6 +14,9 @@ take ``message``; ``submit_audit`` takes ``payload``.
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Mapping
+
+from common.transport.tool_replies import accepted_audit_response
 
 
 class Inboxes:
@@ -58,6 +61,10 @@ class LoopbackPeer:
 
     def submit_audit(self, payload: dict) -> dict:
         self.inboxes.audits.append(payload)
+        reply = self.inboxes.audit_reply
+        required = {"sender", "records", "result_claim"}
+        if isinstance(reply, Mapping) and required <= reply.keys():
+            return accepted_audit_response(reply)
         return {"ok": True}
 
     def receive_control(self, message: dict) -> dict:
@@ -80,6 +87,7 @@ class LoopbackTransport:
         return self.theirs.receive_turn(message)
 
     def send_audit(self, payload: dict) -> dict:
+        self.ours.inboxes.audit_reply = payload
         return self.theirs.submit_audit(payload)
 
     def send_control(self, message: dict) -> dict:

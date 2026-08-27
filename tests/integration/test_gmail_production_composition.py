@@ -10,7 +10,7 @@ import pytest
 
 from common.config import ConfigError
 from common.transport.kit_consensus import mutual_agreement
-from common.transport.kit_documents import build_result
+from common.transport.kit_documents import build_result, official_final_result
 from common.transport.kit_names import result_name
 from common.transport.kit_settlement import series_final
 from police_peer.reporting.gmail import DuplicateSendError
@@ -61,7 +61,6 @@ def _published_result(root: Path, *, confirmed: bool = True) -> tuple[Path, dict
             "result": "capture",
             "winner_group": groups[0],
             "tie": False,
-            "steps": 1,
             "started_at": f"2026-08-26T12:{number:02d}:00+03:00",
             "ended_at": f"2026-08-26T12:{number:02d}:01+03:00",
             "github_commit": {groups[0]: "a" * 40, groups[1]: "b" * 40},
@@ -72,7 +71,7 @@ def _published_result(root: Path, *, confirmed: bool = True) -> tuple[Path, dict
         }
         for number in range(1, 7)
     ]
-    final = series_final(rows, groups, counted=True)
+    final = official_final_result(series_final(rows, groups, counted=True))
     agreement = mutual_agreement(game_id, final, rows, confirmed=confirmed)
     document = build_result(
         game_id=game_id, game_uid=game_uid, groups=list(groups), sub_games=rows,

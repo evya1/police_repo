@@ -43,29 +43,22 @@ def log_name(game_id: str, sub_game_number: int) -> str:
     return f"log_{game_id}_g{sub_game_number:02d}.json"
 
 
-def links_block(game_id: str, github: dict | None = None) -> dict:
-    """Return the cross-reference block naming all four artifact kinds.
-
-    ``github`` carries the per-group repository links (App. E rule 49) and is omitted
-    entirely when the caller does not know them -- an absent link is never invented.
-    """
-    links = {
+def links_block(game_id: str) -> dict:
+    """Return the exact reference cross-reference block."""
+    return {
         "_remark": _LINKS_REMARK,
         "declaration": declaration_name(game_id),
         "config": f"config_{game_id}_g<NN>.json",
         "log": f"log_{game_id}_g<NN>.json",
         "result": result_name(game_id),
     }
-    if github:
-        links["github"] = github
-    return links
 
 
-def base_block(game_id: str, game_uid: str, github: dict | None = None) -> dict:
+def base_block(game_id: str, game_uid: str) -> dict:
     """Return the envelope every artifact of one match shares."""
     return {
         "schema_version": SCHEMA_VERSION,
         "game_id": game_id,
         "game_uid": game_uid,
-        "links": links_block(game_id, github),
+        "links": links_block(game_id),
     }

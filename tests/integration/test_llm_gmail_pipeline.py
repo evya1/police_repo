@@ -10,7 +10,7 @@ from pathlib import Path
 
 from common.domain.scoring import Role
 from common.transport.kit_consensus import mutual_agreement
-from common.transport.kit_documents import build_result
+from common.transport.kit_documents import build_result, official_final_result
 from common.transport.kit_names import result_name
 from common.transport.kit_settlement import series_final
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
@@ -62,7 +62,7 @@ def _result_document(tokens: int) -> dict:
             {
                 "sub_game_number": number,
                 "roles": {groups[0]: "police", groups[1]: "thief"},
-                "result": "capture", "winner_group": groups[0], "tie": False, "steps": 1,
+                "result": "capture", "winner_group": groups[0], "tie": False,
                 "started_at": f"2026-08-26T12:{number:02d}:00+03:00",
                 "ended_at": f"2026-08-26T12:{number:02d}:01+03:00",
                 "github_commit": {groups[0]: "a" * 40, groups[1]: "b" * 40},
@@ -72,7 +72,7 @@ def _result_document(tokens: int) -> dict:
                 "audit": {"log_verified": True, "tampered": False},
             }
         )
-    final = series_final(rows, groups, counted=True)
+    final = official_final_result(series_final(rows, groups, counted=True))
     return build_result(
         game_id=game_id, game_uid=game_uid, groups=list(groups), sub_games=rows,
         final_result=final,

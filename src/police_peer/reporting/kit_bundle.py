@@ -23,6 +23,7 @@ from common.transport.kit_documents import (
     build_declaration,
     build_log,
     build_result,
+    official_final_result,
 )
 from common.transport.kit_names import config_name, declaration_name, log_name, result_name
 from common.transport.kit_settlement import result_row, series_final
@@ -40,9 +41,6 @@ def build_kit_bundle(
     counted: bool,
     groups: list[dict] | None = None,
     agreed_config: dict | None = None,
-    step_zero: dict | None = None,
-    github: dict | None = None,
-    league: dict | None = None,
     max_tokens_per_game: int | None = None,
     tokens_by_sub_game: dict[int, dict[str, int]] | None = None,
     games_played: dict[str, int | None] | None = None,
@@ -64,6 +62,8 @@ def build_kit_bundle(
         raise SelfVerifyError("official declaration requires two complete signed group blocks")
     if agreed_config is None:
         raise SelfVerifyError("official config requires the complete agreed shared configuration")
+    if not isinstance(max_tokens_per_game, int):
+        raise SelfVerifyError("official declaration requires max_tokens_per_game")
     if not include_tokens or tokens_by_sub_game is None:
         raise SelfVerifyError("official result requires truthful per-sub-game token evidence")
     group_by_id = {group.get("group_id"): group for group in groups}
@@ -74,8 +74,6 @@ def build_kit_bundle(
         raise SelfVerifyError("official result requires both 40-character Git commits")
     game_id, uid = result.game_id, result.game_uid
     ids = {"game_id": game_id, "game_uid": uid}
-    github_links = github or {group: group_by_id[group].get("repos") for group in pair}
-    common = {"league": league, "github": github_links}
 
     files: dict[str, bytes] = {}
     rows: list[dict] = []
@@ -85,7 +83,7 @@ def build_kit_bundle(
         number = evidence.sub_game_index
         row = by_number[number]
         files[config_name(game_id, number)] = document_bytes(
-            build_config(**ids, sub_game_number=number, terms=agreed_config, **common)
+            build_config(**ids, sub_game_number=number, terms=agreed_config)
         )
         token_row = tokens_by_sub_game.get(number)
         if not isinstance(token_row, dict) or set(token_row) != set(pair):
@@ -106,13 +104,8 @@ def build_kit_bundle(
         entry["ended_at"] = log_summary["ended_at"]
         files[log_name(game_id, number)] = document_bytes(
             build_log(
-                **ids, sub_game_number=number, summary=log_summary,
+                **ids, summary=log_summary,
                 records=records(evidence.own_records),
-                opponent_records=(
-                    records(evidence.opponent_records) if evidence.opponent_records else None
-                ),
-                opponent_committed_steps=[s for s, _ in evidence.observed_opponent_commitments],
-                **common,
             )
         )
 
@@ -131,14 +124,15 @@ def build_kit_bundle(
             groups=groups,
             num_sub_games=len(rows), max_tokens_per_game=max_tokens_per_game,
             timezone="Asia/Jerusalem", game_started_at=min(starts), game_ended_at=max(ends),
-            step_zero=step_zero, **common,
         )
     )
+    official_final = official_final_result(final)
     files[result_name(game_id)] = document_bytes(
         build_result(
-            **ids, groups=list(pair), sub_games=rows, final_result=final,
-            mutual_agreement=mutual_agreement(game_id, final, rows, confirmed=confirmed),
-            **common,
+            **ids, groups=list(pair), sub_games=rows, final_result=official_final,
+            mutual_agreement=mutual_agreement(
+                game_id, official_final, rows, confirmed=confirmed
+            ),
         )
     )
     return files

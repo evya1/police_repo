@@ -144,8 +144,8 @@ def test_the_config_digest_in_the_bundle_matches_the_config(series, official_arg
     )
     config = json.loads(next(bundle.glob("config_*.json")).read_text(encoding="utf-8"))
     overlay = {
-        "_schema", "schema_version", "game_id", "game_uid", "sub_game_number",
-        "links", "config_name", "config_sha256", "league",
+        "_schema", "game_id", "game_uid", "sub_game_number", "links", "config_name",
+        "config_sha256",
     }
     shared = {key: value for key, value in config.items() if key not in overlay}
     assert config["config_sha256"] == hashlib.sha256(canonical_bytes(shared)).hexdigest()

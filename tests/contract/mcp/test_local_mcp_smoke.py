@@ -115,6 +115,51 @@ def test_tools_listed_over_http(two_peers) -> None:
     assert "receive_control" in names
 
 
+@pytest.mark.parametrize("receiver_role", ["police", "thief"])
+def test_submit_audit_returns_published_local_audit_over_http(
+    two_peers, receiver_role: str,
+) -> None:
+    """The live FastMCP result exposes the exact accepted-audit contract."""
+    police_ch, thief_ch, _, _ = two_peers
+    caller = thief_ch if receiver_role == "police" else police_ch
+    receiver = police_ch if receiver_role == "police" else thief_ch
+    local_audit = {
+        "sender": receiver_role,
+        "records": [{"payload": {"step": 1}, "nonce": "local", "commit": "c"}],
+        "result_claim": {"outcome": "capture", "steps": 1},
+        "private_note": "must-not-leak",
+    }
+    opponent_audit = {
+        "sender": "thief" if receiver_role == "police" else "police",
+        "records": [],
+        "result_claim": {"outcome": "capture", "steps": 1},
+    }
+    receiver.inboxes.audit_reply = local_audit
+
+    async def _submit():
+        return await caller._client.call_tool("submit_audit", {"payload": opponent_audit})
+
+    result = caller._submit(_submit())
+    expected = {
+        "status": "accepted",
+        "accepted": True,
+        "ok": True,
+        "sender": local_audit["sender"],
+        "records": local_audit["records"],
+        "result_claim": local_audit["result_claim"],
+    }
+    assert result.data == expected
+    assert set(result.data) == {
+        "status",
+        "accepted",
+        "ok",
+        "sender",
+        "records",
+        "result_claim",
+    }
+    assert list(receiver.inboxes.audits) == [opponent_audit]
+
+
 def test_argument_asymmetry_over_http(two_peers) -> None:
     """TC-02: submit_audit called with `message` (not `payload`) is a schema error over HTTP."""
     police_ch, _, _, _ = two_peers

@@ -30,7 +30,6 @@ def summary(evidence, row, *, number: int, ours: str, theirs: str, winner: str |
     """Build one kit log summary from sealed evidence and its settled ledger row."""
     audit = {
         "passed": bool(row.audit_ok),
-        "skipped": False,
         "verified_steps": len(evidence.own_records),
         "failed_steps": [],
     }

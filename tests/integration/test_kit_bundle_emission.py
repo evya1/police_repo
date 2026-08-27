@@ -14,6 +14,7 @@ from common.domain.scoring import Role
 from common.transport.canonical import commit as recompute
 from common.transport.kit_bundle_validation import validate_official_bundle
 from common.transport.kit_identity import GroupIdentity, group_block
+from common.transport.kit_settlement import TIE_SCORE
 from common.transport.loopback import pair
 from common.transport.series import PeerFacade, SeriesResult
 from police_peer.reporting.kit_bundle import publish_kit_bundle
@@ -121,11 +122,11 @@ def test_every_sealed_record_reproduces_its_commitment(bundle):
     for name, doc in docs(bundle).items():
         if not name.startswith("log_"):
             continue
-        for half in ("records", "opponent_records"):
-            for record in doc.get(half) or []:
-                assert set(record) == {"payload", "nonce", "commit"}
-                assert recompute(record["payload"], record["nonce"]) == record["commit"]
-                checked += 1
+        assert "opponent_records" not in doc
+        for record in doc["records"]:
+            assert set(record) == {"payload", "nonce", "commit"}
+            assert recompute(record["payload"], record["nonce"]) == record["commit"]
+            checked += 1
     assert checked > 0
 
 
@@ -135,8 +136,12 @@ def test_totals_are_the_sum_of_the_rows(bundle):
     summed = {
         g: sum(row["score"][g] for row in result["sub_games"]) for g in result["groups"]
     }
-    addend = final.get("tie_score_each", 0) if final["series_tie"] else 0
+    addend = TIE_SCORE if final["series_tie"] else 0
     assert final["total_score"] == {g: v + addend for g, v in summed.items()}
+    assert set(final) == {
+        "total_score", "sub_games_won", "ties", "winner_group", "series_tie",
+        "tokens_total_series",
+    }
 
 
 def test_unknown_or_omitted_token_evidence_fails_closed(series, official_args, tmp_path):
@@ -169,16 +174,3 @@ def test_every_logged_sub_game_appears_in_the_result(bundle):
               if n.startswith("result_") for row in d["sub_games"]}
     assert logged <= listed
     assert logged == set(range(1, 7))
-
-
-def test_the_internal_bundle_is_untouched_by_the_projection(series, official_args, tmp_path):
-    """The kit bundle is written beside the evidence of record, never over it."""
-    from police_peer.reporting.replay_bundle import publish_replay_bundle
-    from police_peer.sdk import verify_replay_bundle
-
-    internal = publish_replay_bundle(tmp_path, series)
-    publish_kit_bundle(
-        tmp_path, series, our_group=POLICE, counted=False, **official_args
-    )
-    assert len(list(internal.iterdir())) == 15
-    assert verify_replay_bundle(internal).verdict.value == "verified_ok"

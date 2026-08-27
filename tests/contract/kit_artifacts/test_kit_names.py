@@ -47,10 +47,10 @@ def test_base_block_carries_join_keys_and_official_schema_version():
     assert "schema_profile" not in block
 
 
-def test_github_links_are_omitted_when_unknown_and_carried_when_given():
-    assert "github" not in names.links_block("a-vs-b")
-    repos = {"g1": {"cop": "https://example.invalid/c"}}
-    assert names.links_block("a-vs-b", repos)["github"] == repos
+def test_links_have_no_non_reference_fields():
+    assert set(names.links_block("a-vs-b")) == {
+        "_remark", "declaration", "config", "log", "result",
+    }
 
 
 def test_links_name_all_four_kinds(kit_game_id):

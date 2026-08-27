@@ -24,8 +24,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from common.domain.scoring import Role, role_for
+from common.transport.greetings import GreetingFactory, NegotiationContext
+from common.transport.greetings import our_greeting as our_greeting
 from common.transport.ids import game_id, game_uid, terms_signature
-from common.transport.integrity import new_nonce
 from common.transport.refusals import Refused
 from common.transport.terms import TERMS_KEYS
 
@@ -41,54 +42,6 @@ class Agreed:
     terms: dict
 
 
-def our_greeting(
-    terms: dict,
-    nonce: str,
-    group_id: str,
-    role: str,
-    sub_game_number: int,
-    opponent_group: str | None = None,
-    locks: dict[str, str] | None = None, identity_block: dict | None = None,
-) -> dict:
-    """Build our outgoing negotiation greeting.
-
-    Follows FR-20 omission convention: ``None`` fields are omitted from the
-    wire dict (not emitted as null). The ``game_uid`` is omitted on the first
-    sub-game (we don't yet know the opponent), and locks are omitted when not
-    declared.
-    """
-    locks = locks or {}
-    # Derive the uid only when we know the opponent (sub-game 2 onward, or a
-    # configured pairing). Omission never refuses (SPEC section 7.3).
-    uid = (game_uid(terms, group_id, opponent_group)
-           if opponent_group else None)
-
-    # FR-20: omit None fields — they are silence, not explicit nulls.
-    greeting: dict = {
-        "terms": terms,
-        "nonce": nonce,
-        "signature": terms_signature(terms, nonce),
-        "group_id": group_id,
-        "role": role,
-        "sub_game_number": sub_game_number,
-        # The identity block is PURELY ADDITIVE (CT-08). `verify_greeting` never refuses on
-        # anything inside it: an opponent who declares less than we do is not at fault, and a
-        # handshake that broke on an unknown identity key would be a self-inflicted refusal.
-        "identity": {**(identity_block or {}), "group_id": group_id, "role": role},
-    }
-    if uid is not None:
-        greeting["game_uid"] = uid
-    for family, key in (
-        ("scent_model", "scent_model_sha256"),
-        ("wire_shape", "wire_shape_sha256"),
-        ("info_mode", "info_mode_sha256"),
-        ("smell_binding", "smell_binding_sha256"),
-    ):
-        if locks.get(family) is not None:
-            greeting[key] = locks[family]
-    return greeting
-
-
 def counter_signed_reply_builder(
     *, terms: dict, group_id: str, natural_role: Role,
     locks: dict[str, str] | None = None, identity_block: dict | None = None,
@@ -100,7 +53,12 @@ def counter_signed_reply_builder(
     ``negotiate`` tool result.  A nonce is stable per sub-game so an at-least-once
     retry cannot manufacture conflicting counter-signatures.
     """
-    nonces: dict[int, str] = {}
+    greetings = GreetingFactory(NegotiationContext(
+        terms=terms,
+        group_id=group_id,
+        locks=locks,
+        identity_block=identity_block,
+    ))
 
     def reply(raw: dict) -> dict:
         theirs = raw.get("terms") if isinstance(raw, dict) else None
@@ -129,14 +87,9 @@ def counter_signed_reply_builder(
             return {"status": "refused", "accepted": False, "ok": False,
                     "reason": f"role collision: both peers declared {our_role.value}"}
 
-        greeting = our_greeting(
-            terms=terms,
-            nonce=nonces.setdefault(sub_game, new_nonce()),
-            group_id=group_id,
+        greeting = greetings.build(
+            sub_game=sub_game,
             role=our_role.value,
-            sub_game_number=sub_game,
-            locks=locks,
-            identity_block=identity_block,
         )
         return {"status": "accepted", "accepted": True, "ok": True, **greeting}
 

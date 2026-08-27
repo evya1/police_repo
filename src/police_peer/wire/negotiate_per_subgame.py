@@ -23,8 +23,8 @@ from __future__ import annotations
 import time
 
 from common.domain.scoring import role_for
-from common.transport.integrity import new_nonce
-from common.transport.negotiate import our_greeting, verify_greeting
+from common.transport.greetings import GreetingFactory, NegotiationContext
+from common.transport.negotiate import verify_greeting
 from common.transport.opponent_pin import OpponentPin
 from common.transport.refusals import Refused
 from common.transport.replay_evidence import SubgameDriver, default_subgame_driver
@@ -48,33 +48,50 @@ def negotiated_subgame_driver(
     """
     inner_driver = inner or default_subgame_driver(audit_wire)
     pin = opponent_pin if opponent_pin is not None else OpponentPin()
+    greetings: GreetingFactory | None = None
 
     def _driver(channel, engine, config: PeerConfig, sub_game: int, *, evidence_sink=None) -> SeriesRow:
+        nonlocal greetings
         if sub_game > 1:
-            _negotiate_subgame(channel, config, group_id, sub_game, pin)
+            if greetings is None:
+                greetings = GreetingFactory(NegotiationContext(
+                    terms=config.terms,
+                    group_id=group_id,
+                    locks=config.locks,
+                    identity_block=config.identity_block,
+                ))
+            _negotiate_subgame(channel, config, greetings, sub_game, pin)
         return inner_driver(channel, engine, config, sub_game, evidence_sink=evidence_sink)
 
     return _driver
 
 
-def _negotiate_subgame(channel, config: PeerConfig, group_id: str, sub_game: int, pin: OpponentPin) -> None:
+def _negotiate_subgame(
+    channel,
+    config: PeerConfig,
+    greetings: GreetingFactory,
+    sub_game: int,
+    pin: OpponentPin,
+) -> None:
     """Send our per-sub-game greeting, wait for the opponent's, and verify it (FR-13 order),
     then enforce the two checks the common `verify_greeting` deliberately leaves silent:
     complementary role, and opponent-pin stability across the series."""
     role = role_for(config.natural_role, sub_game)
-    greeting = our_greeting(
-        terms=config.terms,
-        nonce=new_nonce(),
-        group_id=group_id,
+    greeting = greetings.build(
+        sub_game=sub_game,
         role=role.value,
-        sub_game_number=sub_game,
         opponent_group=pin.group,
-        locks=config.locks,
-        identity_block=config.identity_block,
     )
     channel.send_agreement(greeting)
     opponent = _await_greeting(channel, config)
-    agreed = verify_greeting(opponent, config.terms, group_id, sub_game, our_locks=config.locks)
+    context = greetings.context
+    agreed = verify_greeting(
+        opponent,
+        context.terms,
+        context.group_id,
+        sub_game,
+        our_locks=context.locks,
+    )
 
     their_role = opponent.get("role")
     if their_role == role.value:

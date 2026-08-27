@@ -140,7 +140,7 @@ class TestOurGreeting:
 
 def test_counter_signed_reply_matches_live_interop_vector(monkeypatch) -> None:
     terms = TestOurGreeting()._terms()
-    monkeypatch.setattr("common.transport.negotiate.new_nonce", lambda: "0" * 32)
+    monkeypatch.setattr("common.transport.greetings.new_nonce", lambda: "0" * 32)
     reply = counter_signed_reply_builder(
         terms=terms, group_id="ZeroOne0", natural_role=Role.THIEF,
     )

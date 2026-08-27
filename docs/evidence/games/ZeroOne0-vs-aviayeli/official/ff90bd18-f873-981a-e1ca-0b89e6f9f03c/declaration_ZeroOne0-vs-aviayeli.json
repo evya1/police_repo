@@ -1,0 +1,72 @@
+{
+  "_schema": "Static declaration for the WHOLE game (the full series of sub-games) between two teams. This is the single home for every field that does NOT change while the sub-games are played: team identity, members, cop/thief repository URLs, MCP server URLs, hardware spec, LLM model, the agreed max-tokens-per-game cap, and the game start/end times. Roles (cop/thief) switch across the sub-games, so no role and no sub_game_number appear here. Both teams sign it and lock it cryptographically before play (book ch5 Step-0). Data that changes per sub-game (github_commit, moves, scores) lives in 3-game-log.json and 4-final-result.json.",
+  "schema_version": "1.1",
+  "declaration_type": "pre_game_declaration",
+  "game_id": "ZeroOne0-vs-aviayeli",
+  "game_uid": "ff90bd18-f873-981a-e1ca-0b89e6f9f03c",
+  "links": {
+    "_remark": "These are logical roles, NOT fixed filenames. Each actual file name MUST be derived from the game_id so that files from different games are never mixed. Match-level files (declaration, result) are named <role>_<game_id>.json; per-sub-game files (config, log) are named <role>_<game_id>_g<NN>.json where <NN> is the sub_game_number. The names below are examples for game_id=S01R02-team07-vs-team13.",
+    "declaration": "declaration_ZeroOne0-vs-aviayeli.json",
+    "config": "config_ZeroOne0-vs-aviayeli_g<NN>.json",
+    "log": "log_ZeroOne0-vs-aviayeli_g<NN>.json",
+    "result": "result_ZeroOne0-vs-aviayeli.json"
+  },
+  "timezone": "Asia/Jerusalem",
+  "game_started_at": "2026-08-27T01:12:41.110982+03:00",
+  "game_ended_at": "2026-08-27T01:39:17.791660+03:00",
+  "num_sub_games": 6,
+  "max_tokens_per_game": 200000,
+  "groups": {
+    "group_1": {
+      "group_id": "ZeroOne0",
+      "group_name": "ZeroOne",
+      "members": [
+        "id-1001",
+        "id-1002"
+      ],
+      "repos": {
+        "cop": "https://github.com/evya1/police_repo",
+        "thief": "https://github.com/evya1/thief_repo"
+      },
+      "mcp_servers": {
+        "cop": "https://9e63-154-61-62-158.ngrok-free.app/mcp",
+        "thief": "https://9e63-154-61-62-158.ngrok-free.app/mcp"
+      },
+      "llm_model": "template",
+      "hardware_spec": {
+        "cpu_type": "Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz",
+        "cpu_freq_mhz": 3311.516,
+        "cpu_cores": 4,
+        "ram_gb": 31.21,
+        "gpu_model": null,
+        "vram_gb": null
+      },
+      "signature": "cb48f2420380f9c7fb140a9aae5a427090936941a17a6c26703287ed57d6b858"
+    },
+    "group_2": {
+      "group_id": "aviayeli",
+      "group_name": "aviayeli",
+      "members": [
+        "Avi Ayeli"
+      ],
+      "repos": {
+        "cop": "https://github.com/aviayeli/zero-trust-cop",
+        "thief": "https://github.com/aviayeli/zero-trust-thief"
+      },
+      "mcp_servers": {
+        "cop": "https://luxury-pregnancy-wilder.ngrok-free.dev/mcp",
+        "thief": "https://cardinal-shell-moistness.ngrok-free.dev/mcp"
+      },
+      "llm_model": null,
+      "hardware_spec": {
+        "cpu_type": "11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz",
+        "cpu_freq_mhz": null,
+        "cpu_cores": 4,
+        "ram_gb": 7,
+        "gpu_model": null,
+        "vram_gb": 0
+      },
+      "signature": "c13e09e0acf25bc8224202b63a4579abf75fbd6a02f4ceecc04e86138fce0722"
+    }
+  }
+}

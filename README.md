@@ -7,7 +7,7 @@
 [![CI](https://github.com/evya1/police_repo/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/evya1/police_repo/actions/workflows/ci.yml)
 [![License: Educational Use EULA](https://img.shields.io/badge/License-Educational_Use_EULA-8A2BE2)](LICENSE)
 
-**Course:** [Final Project](docs/PRD.md) · **Group:** [`ZeroOne0`](docs/evidence/games/ZeroOne0-vs-bestteam/game.json) · **Sibling:** [Thief repository](https://github.com/evya1/thief_repo)
+**Course:** [Final Project](docs/PRD.md) · **Group:** [`ZeroOne0`](docs/evidence/games/ZeroOne0-vs-aviayeli/README.md) · **Sibling:** [Thief repository](https://github.com/evya1/thief_repo)
 
 | Live GUI — local truth and belief | Replay GUI — verified result |
 | --------------------------------- | ---------------------------- |
@@ -28,13 +28,15 @@ uv run pytest
 DEMO_ROOT="$(mktemp -d)"
 uv run python scripts/smoke_replay_integration.py \
   --config config/game.json --artifact-root "$DEMO_ROOT" --json
+uv run python scripts/validate_official_artifacts.py \
+  docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c
 uv run python scripts/replay_gui.py \
   docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3 --verify-only
 uv run python scripts/replay.py \
   docs/evidence/games/ZeroOne0-vs-bestteam/internal-replay/a42b2bb2-2312-c679-5e69-fa3d5ea0aad9 --json
 ```
 
-Expected: Ruff and pytest pass; the loopback result is settled with `replay_verdict: verified_ok`; Replay GUI verification reports `verified_ok`; the audit reports six verified subgames and zero tampered subgames.
+Expected: Ruff and pytest pass; the loopback result is settled with `replay_verdict: verified_ok`; the submitted Avi bundle validates; Replay GUI verification reports `verified_ok`; the audit reports six verified subgames and zero tampered subgames.
 
 ## What the agent does
 
@@ -178,39 +180,41 @@ uv run python scripts/check_replay_parity.py \
 
 Exit `0` means verified; replay verification distinguishes illegal, invalid/incomplete, and tampered evidence with dedicated nonzero statuses.
 
-## Confirmed match results
+## Submitted match result
 
-The canonical completed game artifact is [`game.json`](docs/evidence/games/ZeroOne0-vs-bestteam/game.json).
+The selected final league report and its full evidence index are documented in
+[`docs/evidence/games/ZeroOne0-vs-aviayeli/README.md`](docs/evidence/games/ZeroOne0-vs-aviayeli/README.md).
 
 | Field | Confirmed value |
 | --- | --- |
-| Game ID | `ZeroOne0-vs-bestteam` |
-| Game UID | `a42b2bb2-2312-c679-5e69-fa3d5ea0aad9` |
+| Game ID | `ZeroOne0-vs-aviayeli` |
+| Game UID | `ff90bd18-f873-981a-e1ca-0b89e6f9f03c` |
 | Mode | `counted` |
-| Opponent | `bestteam` |
-| Match time | 2026-08-24, approximately 22:31–22:44 |
+| Opponent | `aviayeli` |
 | Natural role | Police |
-| Series | Six completed subgames; settled `true` |
-| Audit | `audit_ok: true` in every subgame |
-| Roles | ZeroOne0 Police in 1, 3, 5; Thief in 2, 4, 6 |
-| Final score | ZeroOne0 35 — bestteam 75 |
+| Series | Six completed subgames; mutual agreement confirmed |
+| Roles | ZeroOne0 Thief in 1, 3, 5; Police in 2, 4, 6 |
+| Final score | ZeroOne0 40 — aviayeli 60 |
+| Counted-night consensus | `c39d331ce8c45e30823baf2aeae58053020836542aa6e14d584fa2a58af23ee6` |
+| Full post-game settlement | `5077306a3703467941ce7593bcf805a022c9f162588acc4f3feca97a045b0373` |
 
-This completed external series contains real play by ZeroOne0 in both Police and Thief roles. Replay verification checks 309 sealed records: six verified subgames, zero tampered.
+The Gmail API acknowledged the single selected ZeroOne0 result attachment. The
+older completed series against `bestteam` remains available as
+[additional historical match evidence](docs/evidence/games/ZeroOne0-vs-bestteam/README.md);
+it is not presented as the selected final-report submission.
 
 ## Evidence and submission artifacts
 
 | Evidence | Repository path |
 | --- | --- |
-| Canonical game artifact | [`game.json`](docs/evidence/games/ZeroOne0-vs-bestteam/game.json) |
-| Match configuration/agreement | [`config/matches/ZeroOne0-vs-bestteam-20260824.json`](config/matches/ZeroOne0-vs-bestteam-20260824.json) |
-| Declaration/identity evidence | [`declaration_ZeroOne0-vs-bestteam.json`](docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3/declaration_ZeroOne0-vs-bestteam.json) |
-| Six per-subgame configurations | [`kit-reference-v3/`](docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3/) |
-| Six logs and transcript records | [`kit-reference-v3/`](docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3/) |
-| Result and agreement evidence | [`result_ZeroOne0-vs-bestteam.json`](docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3/result_ZeroOne0-vs-bestteam.json) |
-| Immutable replay and manifest | [`internal-replay/a42b2bb2-2312-c679-5e69-fa3d5ea0aad9/`](docs/evidence/games/ZeroOne0-vs-bestteam/internal-replay/a42b2bb2-2312-c679-5e69-fa3d5ea0aad9/) |
-| Audit/reporting provenance | [`provenance.json`](docs/evidence/games/ZeroOne0-vs-bestteam/provenance.json) |
+| Submitted match evidence index | [`ZeroOne0-vs-aviayeli/README.md`](docs/evidence/games/ZeroOne0-vs-aviayeli/README.md) |
+| Declaration/identity evidence | [`declaration_ZeroOne0-vs-aviayeli.json`](docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c/declaration_ZeroOne0-vs-aviayeli.json) |
+| Six per-subgame configurations | [`official/ff90bd18.../`](docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c/) |
+| Six logs and transcript records | [`official/ff90bd18.../`](docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c/) |
+| Appendix-F result | [`result_ZeroOne0-vs-aviayeli.json`](docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c/result_ZeroOne0-vs-aviayeli.json) |
+| Exact submitted attachment | [`submission-email/result_ZeroOne0-vs-aviayeli.json`](docs/evidence/games/ZeroOne0-vs-aviayeli/submission-email/result_ZeroOne0-vs-aviayeli.json) |
+| Additional historical match | [`ZeroOne0-vs-bestteam/`](docs/evidence/games/ZeroOne0-vs-bestteam/) |
 | GUI proof | [Live](docs/assets/live-gui.png) · [Replay](docs/assets/replay-gui-verified.png) |
-| Match evidence index | [`docs/evidence/games/ZeroOne0-vs-bestteam/README.md`](docs/evidence/games/ZeroOne0-vs-bestteam/README.md) |
 
 Reporting composition, validation, settlement, replay publication, and Gmail delivery are documented under [`docs/reporting/`](docs/reporting/).
 
@@ -235,13 +239,14 @@ The suite enforces Ruff, 85% aggregate coverage, documentation presence, local M
 - [x] Completed Police implementation and production FastMCP wiring
 - [x] Completed local-truth Live GUI and verified Replay GUI
 - [x] Completed Commit-Reveal, replay, audit, and tamper rejection
-- [x] Completed six-subgame counted external match against `bestteam`
+- [x] Completed and submitted the selected six-subgame counted series against `aviayeli`
+- [x] Preserved the validated 14-file bundle and exact submitted attachment
 - [x] Completed reporting, agreement, declaration, and artifact integration
 - [x] Completed tests, coverage, documentation, links, and quality gates
 - [x] Confirmed group code `ZeroOne0` and sibling repository
-- [x] Merged release on `master` with annotated `v1.0-submission` tag
+- [ ] Publish a final annotated submission tag after this evidence commit
 
-The exact tagged commit is the submission release. No generated credentials, private identifiers, or secret material are part of the repository.
+The final annotated tag will identify the exact submission release. No generated credentials, private email addresses, OAuth material, or secret material are part of the repository.
 
 ## Repository structure
 

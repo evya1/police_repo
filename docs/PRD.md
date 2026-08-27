@@ -2,10 +2,10 @@
 artifact: prd
 id: PRD-FINAL-P2P
 status: draft
-version: 0.5
+version: 0.6
 owner: project-team
 source_spec_version: "3.0.0"
-updated: 2026-08-16
+updated: 2026-08-27
 ---
 
 # Product Requirements: Distributed Police/Thief System
@@ -107,7 +107,7 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 - SC-005: Failure tests show each network wait is bounded and Watchdog recovery preserves usable evidence.
 - SC-006: Live GUIs expose only local truth; Replay navigates both directions and verifies every step.
 - SC-007: Each team sends a schema-valid signed JSON result independently through `gmail.send`, protected by rate limiting and DOS lockout; live sending occurs only at an explicit human gate.
-- SC-008: At least two counted matches against different teams are documented, with no more than one counted match per opponent and no more than ten overall.
+- SC-008: At least two officially declared counted results against different teams are documented, with no more than one submitted result per opponent and no more than ten submitted results overall. Additional counted-mode rehearsals may be played against the same opponent but remain outside the official record.
 - SC-009: Both repositories pass Ruff, tests, at least 85% coverage, repository audits, secret checks, and the 150-code-line threshold at submission.
 - SC-010: Both submission READMEs contain only real screenshots/results and link to one another; the annotated `v1.0-submission` tags resolve to the reported commits.
 - SC-011: A `component`-typed task's declared `context_files` fully suffice for implementation, verified by `scripts/check_planning_graph.py` finding zero missing-context issues across all 29 tasks in both repositories.
@@ -159,5 +159,6 @@ Quality requirements are QR-001..019 (19 criteria). Their authority labels are p
 | 0.3 | 2026-08-15 | draft | Adopted two-level planning: moved mechanism-level detail out to component/mechanism PRDs, added G-007/NG-009/US-008/SC-011, narrowed OPEN-005's implementation-side scope. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
 | 0.4 | 2026-08-16 | accepted profile | Recorded the selected runtime interoperability profile (`reference-v3`, `subtractive_chebyshev_v1`, `belief`, unbound smell) with `multiplicative_book_v1` additionally supported. No requirement was added, removed, or normatively changed | Orchestrator edit |
 | 0.5 | 2026-08-16 | draft | Reconciled documented state with verified implementation; recorded the runtime baseline (PLANQ-002), artifact, canonical-serialization, Step-0, series, and scent operational conventions; corrected the OPEN-006 signing-key assumption and the OPEN-010 confirmation point; recorded the verification ladder. No requirement was added, removed, or normatively changed, so no Change Request applies | Orchestrator edit, still pre-approval |
+| 0.6 | 2026-08-27 | approved clarification | Applied INPUT-011/CR-001: repeated counted-mode rehearsals against one opponent are permitted, while only one result per opponent may be declared and submitted. Added explicit evidence-isolation/non-replacement constraints. | Course instructor clarification, relayed and approved by the project operator |
 
 After approval, every material behavior/scope change requires a Change Request naming affected requirement IDs, source/authority, impact, approval, and resulting PRD version, followed by PLAN/task reconciliation.

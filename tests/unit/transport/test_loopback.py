@@ -58,6 +58,13 @@ class TestLoopbackPeer:
         assert result == {"ok": True}
         assert len(peer.inboxes.audits) == 1
 
+    def test_submit_audit_exact_retry_is_absorbed(self) -> None:
+        peer = LoopbackPeer("A")
+        payload = {"sender": "police", "records": [], "result_claim": {"outcome": "capture"}}
+        peer.submit_audit(payload)
+        peer.submit_audit(dict(payload))
+        assert list(peer.inboxes.audits) == [payload]
+
     def test_submit_audit_returns_published_local_audit_contract(self) -> None:
         peer = LoopbackPeer("A")
         peer.inboxes.audit_reply = {

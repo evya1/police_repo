@@ -1,3 +1,4 @@
+import threading
 from copy import deepcopy
 
 import pytest
@@ -82,6 +83,50 @@ def test_audit_before_local_publication_uses_acknowledgment_fallback() -> None:
     assert opponent_audit == opponent_before
     assert list(inboxes.audits) == [opponent_audit]
     assert inboxes.audits[0] is opponent_audit
+
+
+def test_production_audit_handler_absorbs_exact_retry() -> None:
+    inboxes = Inboxes()
+    opponent_audit = {
+        "sender": "police",
+        "records": [],
+        "result_claim": {"outcome": "capture", "steps": 1},
+    }
+    _handle_audit(inboxes, opponent_audit)
+    _handle_audit(inboxes, deepcopy(opponent_audit))
+    assert list(inboxes.audits) == [opponent_audit]
+
+
+def test_concurrent_submit_audit_calls_enqueue_exactly_once() -> None:
+    """FastMCP runs sync handlers on worker threads, so audits can race.
+
+    A barrier starts every caller simultaneously; whatever the interleaving,
+    the exact-duplicate audit must be enqueued exactly once per round.
+    """
+    inboxes = Inboxes()
+    opponent_audit = {
+        "sender": "police",
+        "records": [],
+        "result_claim": {"outcome": "capture", "steps": 1},
+    }
+    callers, rounds = 8, 25
+    for _ in range(rounds):
+        barrier = threading.Barrier(callers)
+
+        def call(start: threading.Barrier = barrier) -> None:
+            start.wait()
+            response = _handle_audit(inboxes, deepcopy(opponent_audit))
+            assert isinstance(response, dict)
+
+        threads = [threading.Thread(target=call) for _ in range(callers)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        assert len(inboxes.audits) == 1
+        inboxes.drain()
+    assert not inboxes.audits
+    assert not inboxes._seen_audits
 
 
 def test_outbound_audit_is_published_before_network_call() -> None:

@@ -13,9 +13,11 @@ take ``message``; ``submit_audit`` takes ``payload``.
 
 from __future__ import annotations
 
+import threading
 from collections import deque
 from collections.abc import Mapping
 
+from common.transport.canonical import canonical_bytes
 from common.transport.tool_replies import accepted_audit_response
 
 
@@ -35,10 +37,27 @@ class Inboxes:
         # The server may return the same reveal to peers that consume audit
         # evidence from the synchronous tool result as well as the symmetric push.
         self.audit_reply = None
+        self._seen_audits: set[bytes] = set()
+        # FastMCP dispatches sync tool handlers onto worker threads, so two
+        # concurrent submit_audit calls can interleave here. The lock makes
+        # deduplicate-or-enqueue one indivisible step for every caller.
+        self._audit_lock = threading.Lock()
+
+    def enqueue_audit(self, payload: dict) -> bool:
+        """Enqueue one exact audit once; absorb at-least-once redelivery."""
+        fingerprint = canonical_bytes(payload)
+        with self._audit_lock:
+            if fingerprint in self._seen_audits:
+                return False
+            self._seen_audits.add(fingerprint)
+            self.audits.append(payload)
+            return True
 
     def drain(self) -> None:
-        for q in (self.agreements, self.turns, self.audits, self.controls):
-            q.clear()
+        with self._audit_lock:
+            for q in (self.agreements, self.turns, self.audits, self.controls):
+                q.clear()
+            self._seen_audits.clear()
 
 
 class LoopbackPeer:
@@ -60,7 +79,7 @@ class LoopbackPeer:
         return {"ok": True}
 
     def submit_audit(self, payload: dict) -> dict:
-        self.inboxes.audits.append(payload)
+        self.inboxes.enqueue_audit(payload)
         reply = self.inboxes.audit_reply
         required = {"sender", "records", "result_claim"}
         if isinstance(reply, Mapping) and required <= reply.keys():

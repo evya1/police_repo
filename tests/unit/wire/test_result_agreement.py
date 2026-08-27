@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import threading
 
-from common.transport.kit_agreement import build_proposal, proposal_wire
+from common.transport.kit_agreement import build_proposal, evaluate, proposal_wire
 from common.transport.loopback import pair
 from police_peer.evidence.token_ledger import TokenLedger
 from police_peer.wire.result_agreement import exchange, exchange_token_evidence
@@ -38,6 +38,16 @@ def test_two_peers_that_settled_differently_do_not_agree():
     outcome = exchange(ours, proposal(), budget=1.0)
     assert not outcome.agreed
     assert "consensus digests differ" in outcome.reason
+
+
+def test_matching_digest_for_wrong_or_missing_game_identifiers_does_not_agree():
+    ours = proposal()
+    messages = (
+        dict(proposal_wire(ours), game_id="wrong-game"),
+        {key: value for key, value in proposal_wire(ours).items() if key != "game_id"},
+        {key: value for key, value in proposal_wire(ours).items() if key != "game_uid"},
+    )
+    assert all(not evaluate(ours, message).agreed for message in messages)
 
 
 def test_a_silent_opponent_times_out_to_non_agreement():

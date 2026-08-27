@@ -48,7 +48,7 @@ def _handle_audit(inboxes: Inboxes, payload: dict) -> dict:
     A call arriving before local publication receives the reference-compatible
     ``{"ok": True}`` acknowledgment; it never receives a fabricated or echoed audit.
     """
-    inboxes.audits.append(payload)
+    inboxes.enqueue_audit(payload)
     reply = getattr(inboxes, "audit_reply", None)
     return accepted_audit_response(reply) if isinstance(reply, Mapping) else {"ok": True}
 

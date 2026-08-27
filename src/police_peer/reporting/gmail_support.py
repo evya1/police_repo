@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
+import os
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Protocol, runtime_checkable
@@ -35,6 +37,15 @@ class DuplicateSendError(GmailError):
     """Raised when attempting to resend an already-reported series result."""
 
 
+class GmailTransmissionUncertainError(GmailError):
+    """A provider-side send attempt may have begun; its outcome is unknown.
+
+    Raised when ``users.messages.send`` raised after transmission started, or
+    returned without a message id. The idempotency claim MUST be retained so
+    no automatic retry can duplicate the lecturer email.
+    """
+
+
 @runtime_checkable
 class IdempotencyStore(Protocol):
     """Record sent game report IDs across process restarts."""
@@ -42,6 +53,10 @@ class IdempotencyStore(Protocol):
     def mark_sent(self, game_uid: str) -> None: ...
 
     def is_sent(self, game_uid: str) -> bool: ...
+
+    def claim(self, game_uid: str) -> bool: ...
+
+    def release(self, game_uid: str) -> None: ...
 
 
 class FileIdempotencyStore:
@@ -62,6 +77,32 @@ class FileIdempotencyStore:
 
     def is_sent(self, game_uid: str) -> bool:
         return game_uid in self._load()
+
+    def _claim_path(self, game_uid: str) -> Path:
+        digest = hashlib.sha256(game_uid.encode("utf-8")).hexdigest()
+        return self.file_path.with_name(f"{self.file_path.name}.{digest}.claim")
+
+    def claim(self, game_uid: str) -> bool:
+        """Atomically reserve one external transmission across processes."""
+        if self.is_sent(game_uid):
+            return False
+        self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            descriptor = os.open(
+                self._claim_path(game_uid), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600,
+            )
+        except FileExistsError:
+            return False
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(game_uid)
+        if self.is_sent(game_uid):
+            self.release(game_uid)
+            return False
+        return True
+
+    def release(self, game_uid: str) -> None:
+        """Release a reservation after a definite pre-acceptance failure."""
+        self._claim_path(game_uid).unlink(missing_ok=True)
 
     def mark_sent(self, game_uid: str) -> None:
         sent = self._load()

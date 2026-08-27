@@ -11,6 +11,7 @@ from police_peer.reporting.gmail_support import (
     FileIdempotencyStore,
     GmailClientNotConfiguredError,
     GmailError,
+    GmailTransmissionUncertainError,
     IdempotencyStore,
     InvalidScopeError,
     build_email_message,
@@ -20,8 +21,8 @@ from police_peer.reporting.gmail_support import (
 __all__ = [
     "GMAIL_SEND_SCOPE", "AttachmentMissingError", "DraftSubstitutionError",
     "DuplicateSendError", "FileIdempotencyStore", "GmailClientNotConfiguredError",
-    "GmailError", "GmailSender", "IdempotencyStore", "InvalidScopeError",
-    "build_email_message", "validate_oauth_scope",
+    "GmailError", "GmailSender", "GmailTransmissionUncertainError", "IdempotencyStore",
+    "InvalidScopeError", "build_email_message", "validate_oauth_scope",
 ]
 
 
@@ -54,9 +55,6 @@ class GmailSender:
         subject: str | None = None,
         body: str = "Automated Police/Thief series report attached.",
     ) -> dict[str, Any]:
-        if self.idempotency_store.is_sent(game_uid):
-            raise DuplicateSendError(f"Report for game_uid '{game_uid}' has already been transmitted.")
-
         if self._client is None:
             raise GmailClientNotConfiguredError("Gmail service client is not configured.")
 
@@ -73,6 +71,8 @@ class GmailSender:
             body=body,
             attachments=artifacts,
         )
+        if not self.idempotency_store.claim(game_uid):
+            raise DuplicateSendError(f"Report for game_uid '{game_uid}' has already been transmitted.")
 
         def _raw_send() -> dict[str, Any]:
             # Disallow draft substitutions
@@ -83,9 +83,31 @@ class GmailSender:
                 messages_res = users_res.messages()
             except Exception as exc:
                 raise DraftSubstitutionError("Cannot use drafts API for report transmission.") from exc
-            return messages_res.send(userId="me", body={"raw": raw_b64}).execute()
+            request = messages_res.send(userId="me", body={"raw": raw_b64})
+            try:
+                return request.execute()
+            except Exception as exc:
+                # The request may already be on the wire; its outcome is unknown.
+                # Classify as a hard failure so the Gatekeeper never re-attempts
+                # the non-idempotent users.messages.send operation.
+                raise GmailTransmissionUncertainError(
+                    "Gmail transmission started but its outcome is unknown"
+                ) from exc
 
-        result = self.gatekeeper.execute(_raw_send)
+        try:
+            result = self.gatekeeper.execute(_raw_send)
+            if not isinstance(result, dict) or not result.get("id"):
+                raise GmailTransmissionUncertainError("Gmail API did not acknowledge the message")
+        except GmailTransmissionUncertainError:
+            # Fail closed: once a provider-side attempt may have begun, retain
+            # the claim so no automatic duplicate send can ever follow.
+            raise
+        except Exception:
+            # Definite pre-transmission failure (admission refusal, client
+            # construction): the provider never saw a request, so the claim
+            # may be safely released for a later retry.
+            self.idempotency_store.release(game_uid)
+            raise
         self.idempotency_store.mark_sent(game_uid)
         return result
 
@@ -99,9 +121,6 @@ class GmailSender:
         subject: str | None = None,
     ) -> dict[str, Any]:
         """Send the exact already-published result bytes as the single JSON attachment."""
-        if self.idempotency_store.is_sent(game_uid):
-            raise DuplicateSendError(f"Report for game_uid '{game_uid}' has already been transmitted.")
-
         if self._client is None:
             raise GmailClientNotConfiguredError("Gmail service client is not configured.")
 
@@ -122,6 +141,8 @@ class GmailSender:
             body=body,
             attachments=[(filename, result_bytes)],
         )
+        if not self.idempotency_store.claim(game_uid):
+            raise DuplicateSendError(f"Report for game_uid '{game_uid}' has already been transmitted.")
 
         def _raw_send() -> dict[str, Any]:
             users_res = self._client.users() if hasattr(self._client, "users") else self._client
@@ -131,8 +152,30 @@ class GmailSender:
                 messages_res = users_res.messages()
             except Exception as exc:
                 raise DraftSubstitutionError("Cannot use drafts API for report transmission.") from exc
-            return messages_res.send(userId="me", body={"raw": raw_b64}).execute()
+            request = messages_res.send(userId="me", body={"raw": raw_b64})
+            try:
+                return request.execute()
+            except Exception as exc:
+                # The request may already be on the wire; its outcome is unknown.
+                # Classify as a hard failure so the Gatekeeper never re-attempts
+                # the non-idempotent users.messages.send operation.
+                raise GmailTransmissionUncertainError(
+                    "Gmail transmission started but its outcome is unknown"
+                ) from exc
 
-        result_dict = self.gatekeeper.execute(_raw_send)
+        try:
+            result_dict = self.gatekeeper.execute(_raw_send)
+            if not isinstance(result_dict, dict) or not result_dict.get("id"):
+                raise GmailTransmissionUncertainError("Gmail API did not acknowledge the message")
+        except GmailTransmissionUncertainError:
+            # Fail closed: once a provider-side attempt may have begun, retain
+            # the claim so no automatic duplicate send can ever follow.
+            raise
+        except Exception:
+            # Definite pre-transmission failure (admission refusal, client
+            # construction): the provider never saw a request, so the claim
+            # may be safely released for a later retry.
+            self.idempotency_store.release(game_uid)
+            raise
         self.idempotency_store.mark_sent(game_uid)
         return result_dict

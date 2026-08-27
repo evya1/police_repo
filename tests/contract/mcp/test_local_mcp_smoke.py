@@ -107,9 +107,9 @@ def test_tools_listed_over_http(two_peers) -> None:
     police_ch, _, _, _ = two_peers
 
     async def _list():
-        return await police_ch._client.list_tools()
+        return await police_ch._session.client.list_tools()
 
-    tools = police_ch._submit(_list())
+    tools = police_ch._session.submit(_list())
     names = {t.name for t in tools}
     assert names == set(TOOL_NAMES), f"expected {TOOL_NAMES}, got {sorted(names)}"
     assert "receive_control" in names
@@ -137,9 +137,11 @@ def test_submit_audit_returns_published_local_audit_over_http(
     receiver.inboxes.audit_reply = local_audit
 
     async def _submit():
-        return await caller._client.call_tool("submit_audit", {"payload": opponent_audit})
+        return await caller._session.client.call_tool(
+            "submit_audit", {"payload": opponent_audit}
+        )
 
-    result = caller._submit(_submit())
+    result = caller._session.submit(_submit())
     expected = {
         "status": "accepted",
         "accepted": True,
@@ -166,7 +168,9 @@ def test_argument_asymmetry_over_http(two_peers) -> None:
 
     async def _bad():
         # submit_audit's parameter is `payload`; sending `message` must be rejected.
-        return await police_ch._client.call_tool("submit_audit", {"message": {"x": 1}})
+        return await police_ch._session.client.call_tool(
+            "submit_audit", {"message": {"x": 1}}
+        )
 
     with pytest.raises(Exception):  # noqa: B017 — any FastMCP validation error is acceptable
-        police_ch._submit(_bad())
+        police_ch._session.submit(_bad())

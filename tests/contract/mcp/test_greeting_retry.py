@@ -38,14 +38,15 @@ class _RecordingClient:
 def test_subgame_two_retry_reconnects_and_resends_exact_greeting(two_peers) -> None:
     police_ch, thief_ch, _, _ = two_peers
     attempted: list[dict] = []
-    police_ch._client = _RecordingClient(police_ch._client, attempted, fail_sg2=True)
-    connect = police_ch._connect
+    session = police_ch._session
+    session.client = _RecordingClient(session.client, attempted, fail_sg2=True)
+    connect = session.connect
 
     def reconnect(*, timeout: float | None = None) -> None:
         connect(timeout=timeout)
-        police_ch._client = _RecordingClient(police_ch._client, attempted, fail_sg2=False)
+        session.client = _RecordingClient(session.client, attempted, fail_sg2=False)
 
-    police_ch._connect = reconnect
+    session.connect = reconnect
     config = json.loads(Path("config/game.json").read_text(encoding="utf-8"))
     police = create_peer(
         config, channel=police_ch, role=Role.POLICE, group_id="retry-police",

@@ -1,13 +1,4 @@
-"""End-to-end series engine over a PeerChannel.
-
-The top of the tree: a full six-sub-game series that drives handshake, strict
-thief-first alternation, at-least-once turn delivery, and a real three-layer mutual
-audit over any PeerChannel (loopback for CI, FastMCP for production). The engine is
-role-agnostic: it takes the natural role and the channel and derives the per-sub-game
-role via ``role_for``. A failed audit settles the sub-game ``TAMPER_FORFEIT`` — both
-sides zeroed, no repair path (FR-29). The per-sub-game turn loop lives in
-``subgame.py`` (150-logical-line cap).
-"""
+"""Role-agnostic six-sub-game engine over any ``PeerChannel`` implementation."""
 
 from __future__ import annotations
 
@@ -32,26 +23,17 @@ class Budgets(Protocol):
     poll_interval: float
 
 
+@dataclass(eq=False, repr=False, slots=True)
 class PeerConfig:
     """Configuration injected into the series engine."""
 
-    def __init__(
-        self,
-        natural_role: Role,
-        budgets: Budgets,
-        terms: dict,
-        seed: int = 0,
-        locks: dict[str, str] | None = None,
-        mode: str = "warmup",
-        identity_block: dict | None = None,
-    ) -> None:
-        self.natural_role = natural_role
-        self.budgets = budgets
-        self.terms = terms
-        self.seed = seed
-        self.locks = locks
-        self.mode = mode
-        self.identity_block = identity_block
+    natural_role: Role
+    budgets: Budgets
+    terms: dict
+    seed: int = 0
+    locks: dict[str, str] | None = None
+    mode: str = "warmup"
+    identity_block: dict | None = None
 
 
 @dataclass

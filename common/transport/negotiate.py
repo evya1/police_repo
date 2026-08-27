@@ -1,30 +1,16 @@
-"""The pre-game gate, and refusals a stranger can act on without asking us.
+"""Verify an inbound pre-game greeting in the fixed FR-13 order.
 
-Every refusal here names *which* thing is wrong, because the difference decides
-whose side the fix is on and how long it takes to find. The distinction that
-cost a real team two hours:
-
-* **terms absent** — a greeting carrying no ``terms`` at all is a differently-
-  shaped wire arriving under a reference wire. A wire-shape fault on the
-  **sender's** side.
-* **terms differing** — both sides speak this wire and their constitutions
-  disagree. A config fault, and the diff says which key.
-
-They look identical if you only report "handshake failed".
-
-The verification order is fixed (FR-13): terms present → 14 keys →
-value-equality → signature re-verify → locked-model comparison → pairing
-(same ``sub_game_number``, **complementary** ``role``) → declared ``game_uid``.
-A stranger MAY be refused with a diagnosis; a refusal MUST travel as a
-``receive_control`` message (FR-8, FR-13).
+Refusals distinguish wire-shape faults from value disagreements so the remote
+team can act on them without asking us for private state.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from common.domain.scoring import Role, role_for
-from common.transport.greetings import NegotiationContext, SeriesGreetingSession
+from common.transport.greeting_reply import (
+    counter_signed_reply_builder as counter_signed_reply_builder,
+)
 from common.transport.greetings import our_greeting as our_greeting
 from common.transport.ids import game_id, game_uid, terms_signature
 from common.transport.refusals import Refused
@@ -40,60 +26,6 @@ class Agreed:
     opponent_group: str
     opponent_role: str | None
     terms: dict
-
-
-def counter_signed_reply_builder(
-    *, terms: dict, group_id: str, natural_role: Role,
-    locks: dict[str, str] | None = None, identity_block: dict | None = None,
-):
-    """Build the optional rich return value used by interoperability peers.
-
-    The normal symmetric greeting is still sent independently.  This additive
-    response lets a caller record the same signed contract directly from the
-    ``negotiate`` tool result.  A nonce is stable per sub-game so an at-least-once
-    retry cannot manufacture conflicting counter-signatures.
-    """
-    greetings = SeriesGreetingSession(NegotiationContext(
-        terms=terms,
-        group_id=group_id,
-        locks=locks,
-        identity_block=identity_block,
-    ))
-
-    def reply(raw: dict) -> dict:
-        theirs = raw.get("terms") if isinstance(raw, dict) else None
-        nonce = raw.get("nonce") if isinstance(raw, dict) else None
-        signature = raw.get("signature") if isinstance(raw, dict) else None
-        sub_game = raw.get("sub_game_number") if isinstance(raw, dict) else None
-        if not isinstance(sub_game, int) or not 0 <= sub_game <= 6:
-            return {"status": "refused", "accepted": False, "ok": False,
-                    "reason": "sub_game_number must be an integer from 0 through 6"}
-        if theirs != terms:
-            return {"status": "refused", "accepted": False, "ok": False,
-                    "reason": "terms do not match our configured 14-key contract"}
-        if not isinstance(nonce, str) or terms_signature(theirs, nonce) != signature:
-            return {"status": "refused", "accepted": False, "ok": False,
-                    "reason": "incoming terms signature does not verify"}
-
-        if sub_game == 0:
-            their_role = raw.get("role")
-            if their_role not in {Role.POLICE.value, Role.THIEF.value}:
-                return {"status": "refused", "accepted": False, "ok": False,
-                        "reason": "probe role must be police or thief"}
-            our_role = Role.THIEF if their_role == Role.POLICE.value else Role.POLICE
-        else:
-            our_role = role_for(natural_role, sub_game)
-        if raw.get("role") == our_role.value:
-            return {"status": "refused", "accepted": False, "ok": False,
-                    "reason": f"role collision: both peers declared {our_role.value}"}
-
-        greeting = greetings.build(
-            sub_game=sub_game,
-            role=our_role.value,
-        )
-        return {"status": "accepted", "accepted": True, "ok": True, **greeting}
-
-    return reply
 
 
 def verify_greeting(raw: dict, our_terms: dict, our_group_id: str,

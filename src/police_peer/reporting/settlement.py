@@ -16,6 +16,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from common.transport.kit_agreement import AgreementOutcome, build_proposal
+from common.transport.kit_documents import official_final_result
 from common.transport.kit_identity import GroupIdentity, group_block
 from common.transport.kit_names import result_name
 from common.transport.kit_settlement import result_row, series_final
@@ -94,7 +95,9 @@ def settle(
         result, our_group=our_group, tokens_by_sub_game=tokens,
         github_commit=commits, counted=mode == "counted", games_played=games_played,
     )
-    proposal = build_proposal(result.game_id, result.game_uid, final, rows)
+    proposal = build_proposal(
+        result.game_id, result.game_uid, official_final_result(final), rows
+    )
     outcome = exchange(channel, proposal, budget=budget)
     logger.info("Result agreement: agreed=%s (%s)", outcome.agreed, outcome.reason)
     return replace(outcome, rows=rows, final_result=final, tokens_by_sub_game=tokens)

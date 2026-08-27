@@ -10,6 +10,7 @@ import pytest
 from common.domain.scoring import Role
 from common.transport.kit_agreement import build_proposal, proposal_wire
 from common.transport.kit_consensus import consensus_scope, consensus_sha256
+from common.transport.kit_documents import official_final_result
 from common.transport.kit_identity import GroupIdentity, identity_greeting_block
 from common.transport.loopback import pair
 from common.transport.series import PeerFacade, SeriesResult
@@ -96,6 +97,15 @@ def test_both_peers_reach_agreement_on_a_clean_series(settled_pair):
 
     assert outcomes["p"].agreed, outcomes["p"].reason
     assert outcomes["t"].agreed, outcomes["t"].reason
+    for outcome, result in ((outcomes["p"], p_result), (outcomes["t"], t_result)):
+        expected = consensus_sha256(
+            consensus_scope(
+                result.game_id,
+                official_final_result(outcome.final_result),
+                outcome.rows,
+            )
+        )
+        assert outcome.their_sha == expected
 
 
 def test_both_sides_derive_a_byte_identical_consensus_digest(settled_pair):

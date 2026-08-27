@@ -268,8 +268,8 @@ The final annotated tag will identify the exact submission release. No generated
 ## AI Usage
 
 > [!IMPORTANT]
-> ### Total AI / LLM Cost — **$675.37**
-> **OpenRouter:** $40.87 · **Claude Code:** $410.76 · **Codex:** $223.73 estimated
+> ### Total AI / LLM Cost — **$679.43**
+> **OpenRouter:** $44.94 · **Claude Code:** $410.76 · **Codex:** $223.73 estimated
 >
 > Sanitized aggregate project usage only — no secrets, credentials, personal identifiers, session IDs, request IDs, UUIDs, usernames, or private metadata are published.
 
@@ -279,24 +279,24 @@ The final annotated tag will identify the exact submission release. No generated
   <img alt="Aggregated OpenRouter, Claude Code, and Codex usage and cost" src="docs/assets/ai-usage-light.svg">
 </picture>
 
-This dashboard combines the frozen OpenRouter and Claude Code baseline with a sanitized aggregate of completed Codex sessions. Only aggregate categories and calendar-day buckets are published.
+This dashboard combines aggregated OpenRouter activity, the frozen Claude Code baseline, and a sanitized aggregate of completed Codex sessions. Only aggregate categories and calendar-day buckets are published.
 
 ### Reconciliation
 
 | Metric | Aggregate |
 | --- | ---: |
-| Total AI / LLM cost | **$675.37** |
-| OpenRouter reported spend | $40.87 |
+| Total AI / LLM cost | **$679.43** |
+| OpenRouter spend | $44.94 |
 | Claude Code accounted spend | $410.76 |
 | Claude Code source-reported spend | $251.20 |
 | Codex API list-price estimate | $223.73 |
-| OpenRouter requests | 4,142 |
+| OpenRouter requests | 4,501 |
 | Claude Code sessions | 18 |
 | Codex sessions | 14 |
-| Combined non-cache input / prompt tokens | 318,631,659 |
-| Combined non-cache output / completion tokens | 4,657,926 |
+| Combined non-cache input / prompt tokens | 335,778,463 |
+| Combined non-cache output / completion tokens | 4,839,697 |
 
-OpenRouter covers calendar days `2026-08-17` through `2026-08-21`. Codex covers completed session data from `2026-08-24` through `2026-08-25`. No Claude Code date range was inferred. Requests and sessions remain separate activity units.
+OpenRouter activity: `2026-08-17` through `2026-08-27` across 7 calendar-day buckets. Codex covers completed session data from `2026-08-24` through `2026-08-25`. No Claude Code date range was inferred. Requests and sessions remain separate activity units.
 
 ### Claude Code model summary
 
@@ -328,25 +328,25 @@ Codex sessions are deduplicated by private session linkage, but only aggregate c
 
 | Model | Provider | Requests | Prompt tokens | Completion tokens | Total reported cost | Share of cost |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| [Google: Gemini 3.7 Flash](https://openrouter.ai/google/gemini-3.7-flash) | Google | 3,077 | 249,543,651 | 1,613,321 | $23.81 | 58.23% |
-| [Z.ai: GLM 5.2](https://openrouter.ai/z-ai/glm-5.2) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a>, <a href="https://openrouter.ai/provider/crusoe"><img src="docs/assets/providers/crusoe.png" width="16" alt=""> Crusoe</a>, <a href="https://openrouter.ai/provider/decart"><img src="docs/assets/providers/decart.png" width="16" alt=""> Decart</a>, <a href="https://openrouter.ai/provider/friendli"><img src="docs/assets/providers/friendli.png" width="16" alt=""> Friendli</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/siliconflow"><img src="docs/assets/providers/siliconflow.svg" width="16" alt=""> SiliconFlow</a>, <a href="https://openrouter.ai/provider/streamlake"><img src="docs/assets/providers/streamlake.png" width="16" alt=""> StreamLake</a> | 447 | 37,572,921 | 517,421 | $9.25 | 22.63% |
-| [DeepSeek: DeepSeek V4 Pro 0813](https://openrouter.ai/deepseek/deepseek-v4-pro-0813) | <a href="https://openrouter.ai/provider/alibaba"><img src="docs/assets/providers/alibaba.png" width="16" alt=""> Alibaba Cloud Int.</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/parasail"><img src="docs/assets/providers/parasail.png" width="16" alt=""> Parasail</a>, <a href="https://openrouter.ai/provider/siliconflow"><img src="docs/assets/providers/siliconflow.svg" width="16" alt=""> SiliconFlow</a>, <a href="https://openrouter.ai/provider/together"><img src="docs/assets/providers/together.png" width="16" alt=""> Together</a> | 242 | 12,337,550 | 366,486 | $4.35 | 10.62% |
-| [Google: Gemini 3.1 Pro Preview](https://openrouter.ai/google/gemini-3.1-pro-preview) | Google | 76 | 3,382,625 | 28,152 | $2.14 | 5.21% |
-| [DeepSeek: DeepSeek V4 Pro 0423](https://openrouter.ai/deepseek/deepseek-v4-pro) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a> | 53 | 1,587,579 | 32,999 | $0.87 | 2.11% |
-| [Google: Gemini 2.5 Pro](https://openrouter.ai/google/gemini-2.5-pro) | Google | 18 | 205,051 | 4,663 | $0.26 | 0.62% |
-| [DeepSeek: DeepSeek V4 Flash 0731](https://openrouter.ai/deepseek/deepseek-v4-flash-0731) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a>, <a href="https://openrouter.ai/provider/digitalocean"><img src="docs/assets/providers/digitalocean.png" width="16" alt=""> DigitalOcean</a>, <a href="https://openrouter.ai/provider/fireworks"><img src="docs/assets/providers/fireworks.png" width="16" alt=""> Fireworks</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/morph"><img src="docs/assets/providers/morph.jpg" width="16" alt=""> Morph</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/relace"><img src="docs/assets/providers/relace.png" width="16" alt=""> Relace</a> | 163 | 4,066,925 | 90,406 | $0.14 | 0.33% |
-| [MoonshotAI: Kimi K2.6](https://openrouter.ai/moonshotai/kimi-k2.6) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a>, <a href="https://openrouter.ai/provider/decart"><img src="docs/assets/providers/decart.png" width="16" alt=""> Decart</a> | 8 | 100,584 | 826 | $0.03 | 0.07% |
-| Other (15 models) | Multiple providers | 58 | 324,312 | 2,837 | $0.07 | 0.17% |
+| [Google: Gemini 3.7 Flash](https://openrouter.ai/google/gemini-3.7-flash) | Google | 3,077 | 249,543,651 | 1,613,321 | $23.81 | 52.96% |
+| [Z.ai: GLM 5.2](https://openrouter.ai/z-ai/glm-5.2) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a>, <a href="https://openrouter.ai/provider/crusoe"><img src="docs/assets/providers/crusoe.png" width="16" alt=""> Crusoe</a>, <a href="https://openrouter.ai/provider/decart"><img src="docs/assets/providers/decart.png" width="16" alt=""> Decart</a>, <a href="https://openrouter.ai/provider/friendli"><img src="docs/assets/providers/friendli.png" width="16" alt=""> Friendli</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/siliconflow"><img src="docs/assets/providers/siliconflow.svg" width="16" alt=""> SiliconFlow</a>, <a href="https://openrouter.ai/provider/streamlake"><img src="docs/assets/providers/streamlake.png" width="16" alt=""> StreamLake</a> | 447 | 37,572,921 | 517,421 | $9.25 | 20.58% |
+| [DeepSeek: DeepSeek V4 Pro 0813](https://openrouter.ai/deepseek/deepseek-v4-pro-0813) | <a href="https://openrouter.ai/provider/alibaba"><img src="docs/assets/providers/alibaba.png" width="16" alt=""> Alibaba Cloud Int.</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/parasail"><img src="docs/assets/providers/parasail.png" width="16" alt=""> Parasail</a>, <a href="https://openrouter.ai/provider/siliconflow"><img src="docs/assets/providers/siliconflow.svg" width="16" alt=""> SiliconFlow</a>, <a href="https://openrouter.ai/provider/together"><img src="docs/assets/providers/together.png" width="16" alt=""> Together</a> | 291 | 16,184,856 | 438,093 | $4.83 | 10.74% |
+| [Google: Gemini 3.1 Pro Preview](https://openrouter.ai/google/gemini-3.1-pro-preview) | Google | 76 | 3,382,625 | 28,152 | $2.14 | 4.74% |
+| z-ai/glm-5.3-20260816 | Z.AI | 90 | 5,947,835 | 44,830 | $1.86 | 4.13% |
+| anthropic/claude-4.5-haiku-20251001 | Amazon Bedrock | 144 | 4,369,961 | 33,791 | $0.97 | 2.15% |
+| [DeepSeek: DeepSeek V4 Pro 0423](https://openrouter.ai/deepseek/deepseek-v4-pro) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a> | 53 | 1,587,579 | 32,999 | $0.87 | 1.92% |
+| anthropic/claude-4.8-opus-fast-20260528 | Anthropic | 14 | 211,650 | 4,426 | $0.69 | 1.52% |
+| Other (18 models) | Multiple providers | 309 | 7,466,924 | 125,849 | $0.57 | 1.26% |
 
 > Claude Code includes four sessions that source-reported $0.00. The Opus 4.8 list-price equivalent is included in accounted spend; one $15.65 multi-model session remains unallocated rather than assigning its cost to a model without evidence.
 
 > Totals are calculated from full-precision values before public dollar amounts are rounded to two decimal places.
 
-Regenerate with a private input kept outside the repository:
+Regenerate with private inputs kept outside the repository:
 
 ```bash
 python scripts/generate_usage_dashboard.py \
-  --openrouter-input openrouter_activity.csv \
+  --openrouter-input /private/openrouter-baseline.csv /private/openrouter-increment.csv \
   --claude-input data/claude-code-usage-aggregate.json \
   --codex-input data/codex-usage-aggregate.json \
   --output-dir docs/assets \

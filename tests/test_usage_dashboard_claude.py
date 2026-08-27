@@ -59,12 +59,12 @@ class ClaudeTests(unittest.TestCase):
     def test_combined_totals(self) -> None:
         claude = load_claude(self.aggregate_path)
         codex = load_codex(self.codex_path)
-        openrouter = {"cost": Decimal("40.874392"), "prompt": 309_121_198, "completion": 2_657_111}
+        openrouter = {"cost": Decimal("44.938573"), "prompt": 326_268_002, "completion": 2_838_882}
         self.assertEqual(
             combined_totals(openrouter, claude, codex),
-            {"cost": Decimal("675.3687136"), "input": 318_631_659, "output": 4_657_926},
+            {"cost": Decimal("679.4328946"), "input": 335_778_463, "output": 4_839_697},
         )
-        self.assertEqual(Decimal("675.3687136").quantize(Decimal("0.01")), Decimal("675.37"))
+        self.assertEqual(Decimal("679.4328946").quantize(Decimal("0.01")), Decimal("679.43"))
 
 
 if __name__ == "__main__":

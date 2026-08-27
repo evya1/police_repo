@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 from collections import defaultdict
+from collections.abc import Iterable
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -10,6 +11,7 @@ from typing import TextIO
 from usage_dashboard_data import DashboardError, parse_count, parse_money
 
 OPENROUTER_COLUMNS = (
+    "generation_id",
     "created_at",
     "cost_total",
     "tokens_prompt",
@@ -20,16 +22,16 @@ OPENROUTER_COLUMNS = (
     "provider_name",
 )
 EXPECTED_OPENROUTER = {
-    "requests": 4142,
-    "cost": Decimal("40.874392"),
-    "prompt": 309_121_198,
-    "completion": 2_657_111,
-    "reasoning": 1_508_969,
-    "cached": 268_300_143,
+    "requests": 4501,
+    "cost": Decimal("44.938573"),
+    "prompt": 326_268_002,
+    "completion": 2_838_882,
+    "reasoning": 1_609_603,
+    "cached": 282_377_796,
     "first_day": "2026-08-17",
-    "last_day": "2026-08-21",
-    "model_count": 23,
-    "provider_count": 21,
+    "last_day": "2026-08-27",
+    "model_count": 26,
+    "provider_count": 25,
 }
 
 
@@ -55,8 +57,9 @@ def _empty_aggregate() -> dict[str, object]:
     }
 
 
-def _read_rows(handle: TextIO) -> dict[str, object]:
-    result = _empty_aggregate()
+def _read_rows(
+    handle: TextIO, result: dict[str, object], seen: dict[str, tuple[object, ...]]
+) -> None:
     rows = csv.reader(handle)
     header = next(rows)
     if len(header) != len(set(header)) or not set(OPENROUTER_COLUMNS) <= set(header):
@@ -74,6 +77,16 @@ def _read_rows(handle: TextIO) -> dict[str, object]:
         }
         model = values["model_permaslug"].strip() or "Unknown model"
         provider = values["provider_name"].strip() or "Unknown provider"
+        generation_id = values["generation_id"]
+        if not generation_id:
+            raise DashboardError("invalid OpenRouter input")
+        metrics = (day, cost, *counts.values(), model, provider)
+        previous = seen.get(generation_id)
+        if previous is not None:
+            if previous != metrics:
+                raise DashboardError("conflicting duplicate OpenRouter record")
+            continue
+        seen[generation_id] = metrics
         result["requests"] += 1
         for key, value in (
             ("cost", cost),
@@ -91,16 +104,22 @@ def _read_rows(handle: TextIO) -> dict[str, object]:
         item["completion"] += counts["tokens_completion"]
         item["cost"] += cost
         result["providers"].add(provider)
-    return result
 
 
-def aggregate_openrouter(path: str | Path) -> dict[str, object]:
+def aggregate_openrouter(paths: str | Path | Iterable[str | Path]) -> dict[str, object]:
+    inputs = [paths] if isinstance(paths, (str, Path)) else list(paths)
+    if not inputs:
+        raise DashboardError("invalid OpenRouter input")
+    result = _empty_aggregate()
+    seen: dict[str, tuple[object, ...]] = {}
     try:
-        with Path(path).open(encoding="utf-8", newline="") as handle:
-            return _read_rows(handle)
+        for path in inputs:
+            with Path(path).open(encoding="utf-8-sig", newline="") as handle:
+                _read_rows(handle, result, seen)
+        return result
     except OSError:
         raise DashboardError("unable to read OpenRouter input") from None
-    except (csv.Error, UnicodeError, ValueError, IndexError, DashboardError):
+    except (csv.Error, UnicodeError, ValueError, IndexError, StopIteration, DashboardError):
         raise DashboardError("invalid OpenRouter input") from None
 
 

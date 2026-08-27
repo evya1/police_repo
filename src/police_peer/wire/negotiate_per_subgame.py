@@ -23,7 +23,11 @@ from __future__ import annotations
 import time
 
 from common.domain.scoring import role_for
-from common.transport.greetings import GreetingFactory, NegotiationContext
+from common.transport.greetings import (
+    ConflictingGreetingError,
+    NegotiationContext,
+    SeriesGreetingSession,
+)
 from common.transport.negotiate import verify_greeting
 from common.transport.opponent_pin import OpponentPin
 from common.transport.refusals import Refused
@@ -37,6 +41,7 @@ def negotiated_subgame_driver(
     *,
     opponent_pin: OpponentPin | None = None,
     audit_wire: object | None = None,
+    greeting_session: SeriesGreetingSession | None = None,
 ) -> SubgameDriver:
     """Build a `SubgameDriver` that negotiates before every sub-game after the first.
 
@@ -48,18 +53,30 @@ def negotiated_subgame_driver(
     """
     inner_driver = inner or default_subgame_driver(audit_wire)
     pin = opponent_pin if opponent_pin is not None else OpponentPin()
-    greetings: GreetingFactory | None = None
+    greetings = greeting_session
+    bound_config: tuple | None = None
 
     def _driver(channel, engine, config: PeerConfig, sub_game: int, *, evidence_sink=None) -> SeriesRow:
-        nonlocal greetings
+        nonlocal greetings, bound_config
+        context = NegotiationContext(
+            terms=config.terms,
+            group_id=group_id,
+            locks=config.locks,
+            identity_block=config.identity_block,
+        )
+        current_config = (
+            context, config.natural_role, config.seed, config.mode,
+            config.budgets.turn_timeout, config.budgets.connect_timeout,
+            config.budgets.poll_interval,
+        )
+        if bound_config is None:
+            bound_config = current_config
+        elif current_config != bound_config:
+            raise ConflictingGreetingError("sub-game driver belongs to a different configuration")
+        if greetings is None:
+            greetings = SeriesGreetingSession(context)
+        greetings.require_context(context)
         if sub_game > 1:
-            if greetings is None:
-                greetings = GreetingFactory(NegotiationContext(
-                    terms=config.terms,
-                    group_id=group_id,
-                    locks=config.locks,
-                    identity_block=config.identity_block,
-                ))
             _negotiate_subgame(channel, config, greetings, sub_game, pin)
         return inner_driver(channel, engine, config, sub_game, evidence_sink=evidence_sink)
 
@@ -69,7 +86,7 @@ def negotiated_subgame_driver(
 def _negotiate_subgame(
     channel,
     config: PeerConfig,
-    greetings: GreetingFactory,
+    greetings: SeriesGreetingSession,
     sub_game: int,
     pin: OpponentPin,
 ) -> None:
@@ -83,7 +100,7 @@ def _negotiate_subgame(
         opponent_group=pin.group,
     )
     channel.send_agreement(greeting)
-    opponent = _await_greeting(channel, config)
+    opponent = _await_greeting(channel, config, sub_game)
     context = greetings.context
     agreed = verify_greeting(
         opponent,
@@ -104,12 +121,15 @@ def _negotiate_subgame(
     pin.bind(agreed.opponent_group, sub_game=sub_game)
 
 
-def _await_greeting(channel, config: PeerConfig) -> dict:
-    """Poll for the opponent's greeting until it arrives or the connect budget runs out."""
+def _await_greeting(channel, config: PeerConfig, sub_game: int) -> dict:
+    """Poll for this sub-game's greeting, discarding older accepted retries."""
     deadline = time.monotonic() + config.budgets.connect_timeout
     while time.monotonic() < deadline:
         opponent = channel.poll_agreement()
         if opponent is not None:
+            theirs = opponent.get("sub_game_number") if isinstance(opponent, dict) else None
+            if isinstance(theirs, int) and theirs < sub_game:
+                continue
             return opponent
         time.sleep(config.budgets.poll_interval)
     raise TimeoutError("opponent sub-game greeting not received")

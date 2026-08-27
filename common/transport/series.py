@@ -16,6 +16,7 @@ from typing import Protocol
 
 from common.domain.scoring import Outcome, Role, role_for, settled_outcome
 from common.transport import replay_evidence as _replay_evidence
+from common.transport.greetings import NegotiationContext, SeriesGreetingSession
 from common.transport.opponent_pin import OpponentPin
 from common.transport.replay_evidence import SubgameDriver, SubgameReplayEvidence
 from common.transport.series_greeting import exchange_series_greeting
@@ -115,6 +116,7 @@ class PeerFacade:
         subgame_driver: SubgameDriver | None = None,
         mode: str | None = None,
         opponent_pin: OpponentPin | None = None,
+        greeting_session: SeriesGreetingSession | None = None,
     ) -> None:
         self.channel = channel
         self.engine = engine
@@ -129,6 +131,12 @@ class PeerFacade:
         self._opponent_identity: dict | None = None
         self._ledgers: list[SeriesRow] = []
         self._subgame_driver = subgame_driver or _replay_evidence.default_subgame_driver()
+        context = NegotiationContext(
+            terms=config.terms, group_id=name, locks=config.locks,
+            identity_block=config.identity_block,
+        )
+        self._greetings = greeting_session or SeriesGreetingSession(context)
+        self._greetings.require_context(context)
 
     def run(self) -> SeriesResult:
         """Run a full six-sub-game series. Return the result."""
@@ -161,7 +169,7 @@ class PeerFacade:
     def _exchange_greeting(self) -> None:
         """Send our greeting and poll for the opponent's, then verify (fixed FR-13 order)."""
         resolved = exchange_series_greeting(
-            self.channel, self.config, self.name, self._opponent_pin,
+            self.channel, self.config, self.name, self._opponent_pin, self._greetings,
         )
         (self._game_id, self._game_uid, self._opponent_group_id,
          self._opponent_identity) = resolved

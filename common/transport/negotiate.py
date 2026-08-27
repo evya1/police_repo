@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from common.domain.scoring import Role, role_for
-from common.transport.greetings import GreetingFactory, NegotiationContext
+from common.transport.greetings import NegotiationContext, SeriesGreetingSession
 from common.transport.greetings import our_greeting as our_greeting
 from common.transport.ids import game_id, game_uid, terms_signature
 from common.transport.refusals import Refused
@@ -53,7 +53,7 @@ def counter_signed_reply_builder(
     ``negotiate`` tool result.  A nonce is stable per sub-game so an at-least-once
     retry cannot manufacture conflicting counter-signatures.
     """
-    greetings = GreetingFactory(NegotiationContext(
+    greetings = SeriesGreetingSession(NegotiationContext(
         terms=terms,
         group_id=group_id,
         locks=locks,

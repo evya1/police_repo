@@ -4,18 +4,22 @@ from __future__ import annotations
 
 import time
 
-from common.transport.integrity import new_nonce
+from common.transport.greetings import NegotiationContext, SeriesGreetingSession
 from common.transport.kit_identity import identity_from_greeting
-from common.transport.negotiate import our_greeting, verify_greeting
+from common.transport.negotiate import verify_greeting
 
 
-def exchange_series_greeting(channel, config, name: str, opponent_pin) -> tuple[str, str, str, dict | None]:
+def exchange_series_greeting(
+    channel, config, name: str, opponent_pin, greetings: SeriesGreetingSession,
+) -> tuple[str, str, str, dict | None]:
     """Exchange and verify sub-game one's greeting, returning resolved public identity."""
-    greeting = our_greeting(
-        terms=config.terms, nonce=new_nonce(), group_id=name,
-        role=config.natural_role.value, sub_game_number=1, locks=config.locks,
+    expected = NegotiationContext(
+        terms=config.terms, group_id=name, locks=config.locks,
         identity_block=config.identity_block,
     )
+    greetings.require_context(expected)
+    context = greetings.context
+    greeting = greetings.build(sub_game=1, role=config.natural_role.value)
     channel.send_agreement(greeting)
     deadline = time.monotonic() + config.budgets.connect_timeout
     opponent = None
@@ -26,7 +30,9 @@ def exchange_series_greeting(channel, config, name: str, opponent_pin) -> tuple[
         time.sleep(config.budgets.poll_interval)
     if opponent is None:
         raise TimeoutError("opponent greeting not received")
-    agreed = verify_greeting(opponent, config.terms, name, 1, our_locks=config.locks)
+    agreed = verify_greeting(
+        opponent, context.terms, context.group_id, 1, our_locks=context.locks,
+    )
     opponent_pin.bind(agreed.opponent_group, sub_game=1)
     return (
         agreed.game_id, agreed.game_uid, agreed.opponent_group,

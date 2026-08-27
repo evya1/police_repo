@@ -66,19 +66,22 @@ def build_proposal(game_id: str, game_uid: str, final_result: dict, rows: list[d
     )
 
 
-def proposal_wire(proposal: AgreementProposal) -> dict:
+def proposal_wire(proposal: AgreementProposal, *, sender: str | None = None) -> dict:
     """The message we put on the wire.
 
     The digest is the claim; the aggregate rides along so a disagreeing opponent can see WHAT
     we settled on rather than only that we disagree. It is never what agreement is decided on.
     """
-    return {
+    message = {
         "kind": AGREEMENT_KIND,
         "game_id": proposal.game_id,
         "game_uid": proposal.game_uid,
         "consensus_sha256": proposal.consensus_sha256,
         "final_result": proposal.final_result,
     }
+    if sender is not None:
+        message["sender"] = sender
+    return message
 
 
 def evaluate(ours: AgreementProposal, theirs: dict | None) -> AgreementOutcome:

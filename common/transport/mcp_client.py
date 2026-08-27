@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import threading
 import time
 import urllib.error
@@ -38,6 +39,29 @@ class ProtocolRefusedError(Exception):
         self.tool = tool
         self.response = response
         super().__init__(f"peer refused {tool}: {response}")
+
+
+def decoded_tool_result(result: object) -> dict:
+    """Return the peer's JSON verdict, including dicts encoded as MCP text."""
+    data = getattr(result, "data", None)
+    if isinstance(data, dict):
+        return dict(data)
+    for item in getattr(result, "content", ()):
+        value = getattr(item, "text", None)
+        if not isinstance(value, str):
+            continue
+        try:
+            decoded = json.loads(value)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(decoded, dict):
+            return decoded
+    return {
+        "status": "error",
+        "accepted": False,
+        "ok": False,
+        "reason": "peer tool returned no JSON object verdict",
+    }
 
 
 class McpChannel:
@@ -109,8 +133,7 @@ class McpChannel:
     def _call(self, tool: str, args: dict) -> dict:
         async def _invoke() -> dict:
             result = await self._client.call_tool(tool, args)
-            data = getattr(result, "data", None)
-            return dict(data) if isinstance(data, dict) else {"ok": True}
+            return decoded_tool_result(result)
 
         def _refusal(value: object) -> bool:
             if not isinstance(value, dict):

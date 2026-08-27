@@ -40,7 +40,7 @@ def _looks_like_proposal(message: object) -> bool:
 
 def exchange_token_evidence(
     channel, ledger, *, game_id: str, game_uid: str, our_group: str,
-    opponent_group: str, counted: bool, budget: float,
+    opponent_group: str, sender: str = "police", counted: bool, budget: float,
 ) -> dict[int, dict[str, int]]:
     """Exchange truthful per-sub-game totals before constructing the agreed result."""
     own: dict[int, int] = {}
@@ -50,7 +50,8 @@ def exchange_token_evidence(
             raise ValueError(f"sub-game {number} token usage is unknown")
         own[number] = total.input_tokens + total.output_tokens
     channel.send_control({
-        "kind": TOKEN_EVIDENCE_KIND, "game_id": game_id, "game_uid": game_uid,
+        "kind": TOKEN_EVIDENCE_KIND, "sender": sender,
+        "game_id": game_id, "game_uid": game_uid,
         "group_id": our_group, "tokens": own,
     })
     deadline = time.monotonic() + budget
@@ -76,10 +77,12 @@ def exchange_token_evidence(
     raise TimeoutError("opponent token evidence did not arrive")
 
 
-def exchange(channel, ours: AgreementProposal, *, budget: float) -> AgreementOutcome:
+def exchange(
+    channel, ours: AgreementProposal, *, sender: str = "police", budget: float
+) -> AgreementOutcome:
     """Send our proposal once, wait one budget for theirs, and decide."""
     try:
-        channel.send_control(proposal_wire(ours))
+        channel.send_control(proposal_wire(ours, sender=sender))
     except Exception as exc:  # noqa: BLE001 - a played series is never lost to a send fault
         logger.warning("Could not send the result-agreement proposal: %s", exc)
         return AgreementOutcome(False, f"our proposal could not be sent: {exc}")

@@ -74,9 +74,10 @@ def settle(
         return AgreementOutcome(False, NOT_SETTLED)
     if token_ledger is None or identity is None or not result.opponent_identity:
         return AgreementOutcome(False, "complete identity and token evidence are required")
+    sender = result.ledger[-1].role.value
     tokens = exchange_token_evidence(
         channel, token_ledger, game_id=result.game_id, game_uid=result.game_uid,
-        our_group=our_group, opponent_group=result.opponent_group_id,
+        our_group=our_group, opponent_group=result.opponent_group_id, sender=sender,
         counted=mode == "counted", budget=budget,
     )
     commits = {
@@ -98,7 +99,7 @@ def settle(
     proposal = build_proposal(
         result.game_id, result.game_uid, official_final_result(final), rows
     )
-    outcome = exchange(channel, proposal, budget=budget)
+    outcome = exchange(channel, proposal, sender=sender, budget=budget)
     logger.info("Result agreement: agreed=%s (%s)", outcome.agreed, outcome.reason)
     return replace(outcome, rows=rows, final_result=final, tokens_by_sub_game=tokens)
 

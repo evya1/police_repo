@@ -20,6 +20,13 @@ def _money(value: object) -> str:
     return f"${Decimal(str(value)).quantize(Decimal('0.01')):,.2f}"
 
 
+def _duration(milliseconds: object) -> str:
+    seconds = int(milliseconds) // 1000
+    hours, seconds = divmod(seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+    return f"{hours}h {minutes}m {seconds}s"
+
+
 def render_markdown(
     openrouter: dict[str, object], claude: dict[str, object], codex: dict[str, object]
 ) -> str:
@@ -29,7 +36,7 @@ def render_markdown(
         "## AI Usage",
         "",
         "> [!IMPORTANT]",
-        f"> ### Total AI / LLM Cost — **{_money(combined['cost'])}**",
+        f"> ### Total AI / LLM cost — **{_money(combined['cost'])}**",
         f"> **OpenRouter:** {_money(openrouter['cost'])} · **Claude Code:** {_money(claude['accounted_cost_usd'])} · **Codex:** {_money(codex['estimated_cost_usd'])} estimated",
         ">",
         "> Sanitized aggregate project usage only — no secrets, credentials, personal identifiers, session IDs, request IDs, UUIDs, usernames, or private metadata are published.",
@@ -54,10 +61,11 @@ def render_markdown(
         f"| OpenRouter requests | {_int(openrouter['requests'])} |",
         f"| Claude Code sessions | {_int(claude['session_count'])} |",
         f"| Codex sessions | {_int(codex['session_count'])} |",
-        f"| Combined non-cache input / prompt tokens | {_int(combined['input'])} |",
-        f"| Combined non-cache output / completion tokens | {_int(combined['output'])} |",
+        f"| Codex recorded completed duration | {_duration(codex['recorded_duration_ms'])} ({_int(codex['duration_session_count'])} appended sessions) |",
+        f"| Combined input/prompt tokens | {_int(combined['input'])} |",
+        f"| Combined output/completion tokens | {_int(combined['output'])} |",
         "",
-        f"OpenRouter activity: `{min(openrouter['daily'])}` through `{max(openrouter['daily'])}` across {len(openrouter['daily'])} calendar-day buckets. Codex covers completed session data from `{codex['first_day']}` through `{codex['last_day']}`. No Claude Code date range was inferred. Requests and sessions remain separate activity units.",
+        f"OpenRouter activity: {min(openrouter['daily'])} through {max(openrouter['daily'])} across {len(openrouter['daily'])} calendar-day buckets. Codex covers completed session data from `{codex['first_day']}` through `{codex['last_day']}`. No Claude Code date range was inferred. Requests and sessions remain separate activity units.",
         "",
         "### Claude Code model summary",
         "",
@@ -92,6 +100,7 @@ def render_markdown(
         ]
     )
     for model in codex["models"]:
+        attributed = model["attributed_cost_usd"]
         lines.append(
             "| {} | {} | {} | {} | {} | {} | {} | {} |".format(
                 _label(model["model"]),
@@ -101,16 +110,16 @@ def render_markdown(
                 _int(model["reasoning_output_tokens"]),
                 _int(model["cache_read_tokens"]),
                 _int(model["cache_write_tokens"]),
-                _money(model["attributed_cost_usd"]),
+                "Unpriced" if attributed is None else _money(attributed),
             )
         )
     lines.extend(
         [
             f"| **Total** | **{_int(codex['session_count'])} sessions** | **{_int(codex['totals']['input_tokens'])}** | **{_int(codex['totals']['output_tokens'])}** | **{_int(codex['totals']['reasoning_output_tokens'])}** | **{_int(codex['totals']['cache_read_tokens'])}** | **{_int(codex['totals']['cache_write_tokens'])}** | **{_money(codex['estimated_cost_usd'])}** |",
             "",
-            "Codex records do not include billed cost. The estimate uses [OpenAI's GPT-5.6 Sol promotional API pricing](https://developers.openai.com/api/docs/models/gpt-5.6-sol): $4.00/M non-cache input, $0.40/M cached input, $5.00/M cache writes, and $20.00/M output. Reasoning output is included in output and is not charged twice.",
+            "Codex records do not include billed cost. The API list-price-equivalent estimate uses official model-specific pricing: [GPT-5.6 Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol) at $4.00/M non-cache input, $0.40/M cached input, $5.00/M cache writes, and $20.00/M output; [GPT-5.6 Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna) at $0.20/M non-cache input, $0.02/M cached input, $0.25/M cache writes, and $1.20/M output; and [GPT-5.4 Mini](https://developers.openai.com/api/docs/models/gpt-5.4-mini) at $0.75/M non-cache input, 7.5¢/M cached input, and $4.50/M output. No GPT-5.4 Mini cache writes were recorded. Reasoning output is included in output and is not charged twice.",
             "",
-            "Codex sessions are deduplicated by private session linkage, but only aggregate counts are published. Token counters are taken at each thread's last completion marker; later aborted or incomplete work is excluded.",
+            "Codex sessions are deduplicated by private session linkage, but only aggregate counts are published. Each thread uses its final cumulative completed counter; model switches are attributed from cumulative deltas. Later aborted or incomplete work is excluded. Recorded duration is explicit completion metadata for the 15 appended sessions only; the preserved historical baseline has no duration metadata.",
             "",
             "### OpenRouter model summary",
             "",
@@ -142,7 +151,7 @@ def render_markdown(
             "",
             "```bash",
             "python scripts/generate_usage_dashboard.py \\",
-            "  --openrouter-input /private/openrouter-baseline.csv /private/openrouter-increment.csv \\",
+            '  --openrouter-input "$OLD_CSV" "$NEW_CSV" \\',
             "  --claude-input data/claude-code-usage-aggregate.json \\",
             "  --codex-input data/codex-usage-aggregate.json \\",
             "  --output-dir docs/assets \\",

@@ -268,8 +268,8 @@ The final annotated tag will identify the exact submission release. No generated
 ## AI Usage
 
 > [!IMPORTANT]
-> ### Total AI / LLM Cost — **$679.43**
-> **OpenRouter:** $44.94 · **Claude Code:** $410.76 · **Codex:** $223.73 estimated
+> ### Total AI / LLM cost — **$834.22**
+> **OpenRouter:** $44.94 · **Claude Code:** $410.76 · **Codex:** $378.52 estimated
 >
 > Sanitized aggregate project usage only — no secrets, credentials, personal identifiers, session IDs, request IDs, UUIDs, usernames, or private metadata are published.
 
@@ -285,18 +285,19 @@ This dashboard combines aggregated OpenRouter activity, the frozen Claude Code b
 
 | Metric | Aggregate |
 | --- | ---: |
-| Total AI / LLM cost | **$679.43** |
+| Total AI / LLM cost | **$834.22** |
 | OpenRouter spend | $44.94 |
 | Claude Code accounted spend | $410.76 |
 | Claude Code source-reported spend | $251.20 |
-| Codex API list-price estimate | $223.73 |
+| Codex API list-price estimate | $378.52 |
 | OpenRouter requests | 4,501 |
 | Claude Code sessions | 18 |
-| Codex sessions | 14 |
-| Combined non-cache input / prompt tokens | 335,778,463 |
-| Combined non-cache output / completion tokens | 4,839,697 |
+| Codex sessions | 29 |
+| Codex recorded completed duration | 9h 7m 37s (15 appended sessions) |
+| Combined input/prompt tokens | 345,410,831 |
+| Combined output/completion tokens | 5,964,454 |
 
-OpenRouter activity: `2026-08-17` through `2026-08-27` across 7 calendar-day buckets. Codex covers completed session data from `2026-08-24` through `2026-08-25`. No Claude Code date range was inferred. Requests and sessions remain separate activity units.
+OpenRouter activity: 2026-08-17 through 2026-08-27 across 7 calendar-day buckets. Codex covers completed session data from `2026-08-24` through `2026-08-28`. No Claude Code date range was inferred. Requests and sessions remain separate activity units.
 
 ### Claude Code model summary
 
@@ -317,12 +318,14 @@ Session appearances are not additive because a session may use more than one mod
 
 | Model | Session appearances | Non-cache input | Output | Reasoning output | Cache read | Cache write | Estimated cost |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| GPT-5.6 Sol | 14 | 9,484,067 | 1,466,599 | 494,310 | 391,165,184 | 0 | $223.73 |
-| **Total** | **14 sessions** | **9,484,067** | **1,466,599** | **494,310** | **391,165,184** | **0** | **$223.73** |
+| GPT-5.4 Mini | 1 | 39,176 | 4,720 | 801 | 284,416 | 0 | $0.07 |
+| GPT-5.6 Luna | 6 | 1,308,470 | 148,619 | 65,177 | 43,047,552 | 0 | $1.30 |
+| GPT-5.6 Sol | 26 | 17,768,789 | 2,438,017 | 818,054 | 643,271,936 | 0 | $377.14 |
+| **Total** | **29 sessions** | **19,116,435** | **2,591,356** | **884,032** | **686,603,904** | **0** | **$378.52** |
 
-Codex records do not include billed cost. The estimate uses [OpenAI's GPT-5.6 Sol promotional API pricing](https://developers.openai.com/api/docs/models/gpt-5.6-sol): $4.00/M non-cache input, $0.40/M cached input, $5.00/M cache writes, and $20.00/M output. Reasoning output is included in output and is not charged twice.
+Codex records do not include billed cost. The API list-price-equivalent estimate uses official model-specific pricing: [GPT-5.6 Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol) at $4.00/M non-cache input, $0.40/M cached input, $5.00/M cache writes, and $20.00/M output; [GPT-5.6 Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna) at $0.20/M non-cache input, $0.02/M cached input, $0.25/M cache writes, and $1.20/M output; and [GPT-5.4 Mini](https://developers.openai.com/api/docs/models/gpt-5.4-mini) at $0.75/M non-cache input, 7.5¢/M cached input, and $4.50/M output. No GPT-5.4 Mini cache writes were recorded. Reasoning output is included in output and is not charged twice.
 
-Codex sessions are deduplicated by private session linkage, but only aggregate counts are published. Token counters are taken at each thread's last completion marker; later aborted or incomplete work is excluded.
+Codex sessions are deduplicated by private session linkage, but only aggregate counts are published. Each thread uses its final cumulative completed counter; model switches are attributed from cumulative deltas. Later aborted or incomplete work is excluded. Recorded duration is explicit completion metadata for the 15 appended sessions only; the preserved historical baseline has no duration metadata.
 
 ### OpenRouter model summary
 
@@ -346,7 +349,7 @@ Regenerate with private inputs kept outside the repository:
 
 ```bash
 python scripts/generate_usage_dashboard.py \
-  --openrouter-input /private/openrouter-baseline.csv /private/openrouter-increment.csv \
+  --openrouter-input "$OLD_CSV" "$NEW_CSV" \
   --claude-input data/claude-code-usage-aggregate.json \
   --codex-input data/codex-usage-aggregate.json \
   --output-dir docs/assets \

@@ -18,9 +18,9 @@ from usage_dashboard_openrouter import aggregate_openrouter, reconcile_openroute
 from usage_dashboard_svg import render_svg
 
 EXPECTED_COMBINED = {
-    "cost": Decimal("679.4328946"),
-    "input": 335_778_463,
-    "output": 4_839_697,
+    "cost": Decimal("834.21578444"),
+    "input": 345_410_831,
+    "output": 5_964_454,
 }
 
 

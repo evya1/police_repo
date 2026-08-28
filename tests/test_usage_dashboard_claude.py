@@ -62,9 +62,9 @@ class ClaudeTests(unittest.TestCase):
         openrouter = {"cost": Decimal("44.938573"), "prompt": 326_268_002, "completion": 2_838_882}
         self.assertEqual(
             combined_totals(openrouter, claude, codex),
-            {"cost": Decimal("679.4328946"), "input": 335_778_463, "output": 4_839_697},
+            {"cost": Decimal("834.21578444"), "input": 345_410_831, "output": 5_964_454},
         )
-        self.assertEqual(Decimal("679.4328946").quantize(Decimal("0.01")), Decimal("679.43"))
+        self.assertEqual(Decimal("834.21578444").quantize(Decimal("0.01")), Decimal("834.22"))
 
 
 if __name__ == "__main__":

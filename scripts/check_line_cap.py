@@ -1,5 +1,6 @@
 """Enforce a configurable line-count limit for source files, ratcheted against a pinned
 per-file baseline (T040) so historical debt cannot hide behind an unscanned directory.
+An exact ``# line-cap: disable`` Python comment explicitly opts its file out.
 """
 
 from __future__ import annotations
@@ -10,7 +11,9 @@ import tokenize
 from pathlib import Path
 
 from line_cap_ratchet import (
+    LINE_CAP_DISABLE_MARKER,
     find_violations,
+    line_cap_disabled,
     load_baseline,
     logical_line_count,
     ratchet_problems,
@@ -28,7 +31,8 @@ from quality_common import (
 )
 
 __all__ = [
-    "find_violations", "load_baseline", "logical_line_count", "ratchet_problems", "raw_line_count",
+    "LINE_CAP_DISABLE_MARKER", "find_violations", "line_cap_disabled", "load_baseline",
+    "logical_line_count", "ratchet_problems", "raw_line_count",
 ]
 
 
@@ -92,6 +96,10 @@ def main(argv: list[str] | None = None) -> int:
             raise QualityError("no matching source files found")
         baseline = load_baseline(config)
         problems = ratchet_problems(files, args.repo, limit, mode, baseline)
+        disabled_paths = {
+            path.relative_to(args.repo).as_posix() for path in files if line_cap_disabled(path)
+        }
+        active_baseline_count = sum(rel not in disabled_paths for rel in baseline)
     except (IndentationError, OSError, QualityError, SyntaxError, tokenize.TokenError) as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1
@@ -100,7 +108,10 @@ def main(argv: list[str] | None = None) -> int:
         for problem in problems:
             print(f"  {problem}")
         return 1
-    print(f"OK: {len(files)} file(s) are within {limit} {mode} lines ({len(baseline)} baselined)")
+    print(
+        f"OK: {len(files)} file(s) are within {limit} {mode} lines "
+        f"({active_baseline_count} baselined, {len(disabled_paths)} line-cap disabled)"
+    )
     return 0
 
 

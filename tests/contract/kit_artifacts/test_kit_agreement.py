@@ -77,8 +77,9 @@ def test_two_uids_for_one_match_never_agree_even_on_a_matching_digest():
 
 
 def test_the_wire_message_carries_the_aggregate_so_a_dispute_is_diffable():
-    wire = proposal_wire(ours())
+    wire = proposal_wire(ours(), sender="police")
     assert wire["kind"] == AGREEMENT_KIND
+    assert wire["sender"] == "police"
     assert wire["final_result"] == FINAL
     assert wire["consensus_sha256"] == ours().consensus_sha256
 

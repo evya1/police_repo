@@ -18,15 +18,15 @@ from usage_dashboard_openrouter import aggregate_openrouter, reconcile_openroute
 from usage_dashboard_svg import render_svg
 
 EXPECTED_COMBINED = {
-    "cost": Decimal("675.3687136"),
-    "input": 318_631_659,
-    "output": 4_657_926,
+    "cost": Decimal("834.21578444"),
+    "input": 345_410_831,
+    "output": 5_964_454,
 }
 
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description="Generate the aggregate AI usage dashboard.")
-    result.add_argument("--openrouter-input", required=True)
+    result.add_argument("--openrouter-input", nargs="+", required=True)
     result.add_argument("--claude-input", required=True)
     result.add_argument("--codex-input", required=True)
     result.add_argument("--output-dir", required=True)

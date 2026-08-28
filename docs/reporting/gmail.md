@@ -45,6 +45,17 @@ Construction validates scopes immediately. A missing store creates `FileIdempote
 
 If the remote send succeeds but `mark_sent` fails, that filesystem/store exception propagates and the durable duplicate marker is absent.
 
+## `GmailSender.send_kit_result`
+
+`send_kit_result(*, game_uid: str, result_bytes: bytes, filename: str, recipient: str | None = None, subject: str | None = None) -> dict[str, Any]` sends the already-published result:
+
+- The MIME text body is a useful human-readable description of the series.
+- It carries exactly **one** attachment named by `filename`, using `result_bytes` unchanged.
+- The other three artifact kinds (declaration, configs, logs) are **not** emailed — they are published in the repos and reached via the result's `links.github`.
+- Idempotency, recipient, scope, and draft guards match `send_report` exactly.
+
+This is additive; the older 14-attachment `send_report` path is untouched.
+
 ## Minimal offline example
 
 ```python

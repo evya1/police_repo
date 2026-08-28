@@ -22,7 +22,10 @@ def test_kit_mode_production_audit_is_nested_and_carries_role_sender() -> None:
     for audit in sent:
         assert set(audit) == {"sender", "records", "result_claim"}, audit.keys()
         assert audit["sender"] in {"police", "thief"}, audit["sender"]
-        assert isinstance(audit["result_claim"], str), audit["result_claim"]
+        assert set(audit["result_claim"]) == {"outcome", "steps"}
+        assert audit["result_claim"]["outcome"] in {"capture", "escape"}
+        assert type(audit["result_claim"]["steps"]) is int
+        assert audit["result_claim"]["steps"] >= 0
         for record in audit["records"]:
             assert set(record) == {"payload", "nonce", "commit"}, record.keys()
             assert isinstance(record["payload"], dict)

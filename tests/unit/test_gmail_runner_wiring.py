@@ -54,8 +54,7 @@ def test_counted_runner_shares_gatekeeper_and_reports_published_result(
     monkeypatch.setattr(
         runner, "settle", lambda *a, **k: SimpleNamespace(agreed=True, reason="agreed"),
     )
-    monkeypatch.setattr(runner, "write_artifacts", lambda *a, **k: None)
-    monkeypatch.setattr(runner, "_publish_replay_bundle", lambda *a, **k: None)
+    monkeypatch.setattr(runner, "write_series_artifacts", lambda *a, **k: None)
     monkeypatch.setattr(runner, "publish_kit", lambda *a, **k: result_path)
 
     code = runner.run_one_peer(

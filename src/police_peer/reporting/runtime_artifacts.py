@@ -7,6 +7,8 @@ from pathlib import Path
 
 from common.domain.scoring import Role
 from common.transport.series import SeriesResult
+from police_peer.evidence.token_ledger import TokenLedger
+from police_peer.reporting.replay_bundle import publish_replay_bundle
 
 
 def write_artifacts(
@@ -42,3 +44,18 @@ def write_artifacts(
     }
     filename = f"result_{result.game_id}.json" if result.game_id else "result.json"
     (path / filename).write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+
+def write_series_artifacts(
+    artifacts_dir: Path | str,
+    result: SeriesResult,
+    *,
+    role: Role,
+    group_id: str,
+    mode: str,
+    token_ledger: TokenLedger,
+) -> None:
+    """Write the local summary and, for settled series, its verified replay."""
+    write_artifacts(artifacts_dir, result, role=role, group_id=group_id, mode=mode)
+    if result.settled:
+        publish_replay_bundle(artifacts_dir, result, token_ledger=token_ledger)

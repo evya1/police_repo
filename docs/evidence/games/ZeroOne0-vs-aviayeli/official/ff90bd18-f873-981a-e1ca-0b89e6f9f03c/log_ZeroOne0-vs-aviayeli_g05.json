@@ -1,0 +1,1803 @@
+{
+  "_schema": "Per-sub-game match log consumed by the Replay Viewer for cryptographic audit. Each step is committed as SHA-256(State || Move || Intent || Nonce) and later revealed; nonces are revealed only at the final audit (book ch5 commit-reveal, ch7 replay). Static team metadata (hardware, members, repos, model) is NOT repeated here — it lives in 1-pre-game-declaration.json; join by game_uid. Step 0 is the signed step-zero record carrying only what changes per sub-game (github_commit). The 'prompt_discussion' block records the natural-language exchange and the LLM prompt/reasoning behind each hint (book ch6 prompt engineering).",
+  "schema_version": "1.1",
+  "game_id": "ZeroOne0-vs-aviayeli",
+  "game_uid": "ff90bd18-f873-981a-e1ca-0b89e6f9f03c",
+  "links": {
+    "_remark": "These are logical roles, NOT fixed filenames. Each actual file name MUST be derived from the game_id so that files from different games are never mixed. Match-level files (declaration, result) are named <role>_<game_id>.json; per-sub-game files (config, log) are named <role>_<game_id>_g<NN>.json where <NN> is the sub_game_number. The names below are examples for game_id=S01R02-team07-vs-team13.",
+    "declaration": "declaration_ZeroOne0-vs-aviayeli.json",
+    "config": "config_ZeroOne0-vs-aviayeli_g<NN>.json",
+    "log": "log_ZeroOne0-vs-aviayeli_g<NN>.json",
+    "result": "result_ZeroOne0-vs-aviayeli.json"
+  },
+  "summary": {
+    "sub_game_number": 5,
+    "group_id": "ZeroOne0",
+    "role": "thief",
+    "opponent_group_id": "aviayeli",
+    "result": "survival",
+    "steps": 35,
+    "audit": {
+      "passed": true,
+      "verified_steps": 36,
+      "failed_steps": []
+    },
+    "winner_role": "thief",
+    "timezone": "Asia/Jerusalem",
+    "started_at": "2026-08-27T01:36:49.458387+03:00",
+    "ended_at": "2026-08-27T01:37:51.099010+03:00",
+    "duration_seconds": 61.640623,
+    "tokens_total": 0
+  },
+  "records": [
+    {
+      "payload": {
+        "intent": "declare",
+        "sender": "thief",
+        "step": 0
+      },
+      "nonce": "2a19eac17bb8190d0ff2c917bdfaa28e",
+      "commit": "ce66a714363478ba57f976c8683610bdfae7467419ad9d6f67e0f6bf5e2b401b"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "fallback": false,
+        "hint": "I'm hiding around Central Park.",
+        "intent": "evade",
+        "move": "MOVE:N",
+        "position": [
+          2,
+          3
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,1": 0.2,
+          "0,2": 0.2,
+          "0,3": 0.2,
+          "0,4": 0.2,
+          "0,5": 0.2,
+          "1,1": 0.2,
+          "1,2": 0.5,
+          "1,3": 0.5,
+          "1,4": 0.5,
+          "1,5": 0.2,
+          "2,1": 0.2,
+          "2,2": 0.5,
+          "2,3": 0.8,
+          "2,4": 0.5,
+          "2,5": 0.2,
+          "3,1": 0.2,
+          "3,2": 0.5,
+          "3,3": 0.5,
+          "3,4": 0.5,
+          "3,5": 0.2,
+          "4,1": 0.2,
+          "4,2": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.2,
+          "4,5": 0.2
+        },
+        "state": "grid=7x7;self=[2, 3];barriers=[]",
+        "step": 1,
+        "timestamp": "2026-08-26T22:36:49.458387+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "1863ecb48cda63897ebc35c805dc1b32",
+      "commit": "0c2ef4b6f02be58217b427ac14bcf162e15e05593eaf56a97dc023f70fec91c9"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            0,
+            1
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm somewhere near Manhattan.",
+        "intent": "evade",
+        "move": "MOVE:E",
+        "position": [
+          2,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,1": 0.1,
+          "0,2": 0.2,
+          "0,3": 0.2,
+          "0,4": 0.2,
+          "0,5": 0.2,
+          "0,6": 0.2,
+          "1,1": 0.1,
+          "1,2": 0.4,
+          "1,3": 0.5,
+          "1,4": 0.5,
+          "1,5": 0.5,
+          "1,6": 0.2,
+          "2,1": 0.1,
+          "2,2": 0.4,
+          "2,3": 0.7,
+          "2,4": 0.8,
+          "2,5": 0.5,
+          "2,6": 0.2,
+          "3,1": 0.1,
+          "3,2": 0.4,
+          "3,3": 0.5,
+          "3,4": 0.5,
+          "3,5": 0.5,
+          "3,6": 0.2,
+          "4,1": 0.1,
+          "4,2": 0.2,
+          "4,3": 0.2,
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2
+        },
+        "state": "grid=7x7;self=[2, 4];barriers=[]",
+        "step": 2,
+        "timestamp": "2026-08-26T22:36:51.024018+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "42d6fa47cff11f6b824d0e80c188909f",
+      "commit": "7df4d970646a030466e091c6868da458b51d9eaf308ea3569c063902c880f236"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            0,
+            0
+          ]
+        },
+        "fallback": false,
+        "hint": "The Times Square district is where I am.",
+        "intent": "evade",
+        "move": "MOVE:S",
+        "position": [
+          3,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,2": 0.1,
+          "0,3": 0.1,
+          "0,4": 0.1,
+          "0,5": 0.1,
+          "0,6": 0.1,
+          "1,2": 0.3,
+          "1,3": 0.4,
+          "1,4": 0.4,
+          "1,5": 0.4,
+          "1,6": 0.2,
+          "2,2": 0.3,
+          "2,3": 0.6,
+          "2,4": 0.7,
+          "2,5": 0.5,
+          "2,6": 0.2,
+          "3,2": 0.3,
+          "3,3": 0.5,
+          "3,4": 0.8,
+          "3,5": 0.5,
+          "3,6": 0.2,
+          "4,2": 0.2,
+          "4,3": 0.5,
+          "4,4": 0.5,
+          "4,5": 0.5,
+          "4,6": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.2,
+          "5,6": 0.2
+        },
+        "state": "grid=7x7;self=[3, 4];barriers=[]",
+        "step": 3,
+        "timestamp": "2026-08-26T22:36:52.843673+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "568293901f7c2eb091939acc4c3d7237",
+      "commit": "06164466e75b2692136790af9684efdf3b443ac360fcb2d2c48b581d5dce5507"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            0,
+            1
+          ]
+        },
+        "fallback": false,
+        "hint": "Look for me in the The Bronx zone.",
+        "intent": "evade",
+        "move": "MOVE:S",
+        "position": [
+          4,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "1,2": 0.2,
+          "1,3": 0.3,
+          "1,4": 0.3,
+          "1,5": 0.3,
+          "1,6": 0.1,
+          "2,2": 0.2,
+          "2,3": 0.5,
+          "2,4": 0.6,
+          "2,5": 0.4,
+          "2,6": 0.2,
+          "3,2": 0.2,
+          "3,3": 0.5,
+          "3,4": 0.7,
+          "3,5": 0.5,
+          "3,6": 0.2,
+          "4,2": 0.2,
+          "4,3": 0.5,
+          "4,4": 0.8,
+          "4,5": 0.5,
+          "4,6": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.5,
+          "5,4": 0.5,
+          "5,5": 0.5,
+          "5,6": 0.2,
+          "6,2": 0.2,
+          "6,3": 0.2,
+          "6,4": 0.2,
+          "6,5": 0.2,
+          "6,6": 0.2
+        },
+        "state": "grid=7x7;self=[4, 4];barriers=[]",
+        "step": 4,
+        "timestamp": "2026-08-26T22:36:54.661605+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "870ed21b1da7d4b12aa13436af0fc356",
+      "commit": "85038d726691576e94a7b4125e0c31f19cfd8293da7a2aa1b3c31322cdc8f6ae"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            0,
+            0
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm somewhere near east.",
+        "intent": "evade",
+        "move": "MOVE:S",
+        "position": [
+          5,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "1,2": 0.1,
+          "1,3": 0.2,
+          "1,4": 0.2,
+          "1,5": 0.2,
+          "2,2": 0.1,
+          "2,3": 0.4,
+          "2,4": 0.5,
+          "2,5": 0.3,
+          "2,6": 0.1,
+          "3,2": 0.2,
+          "3,3": 0.4,
+          "3,4": 0.6,
+          "3,5": 0.4,
+          "3,6": 0.2,
+          "4,2": 0.2,
+          "4,3": 0.5,
+          "4,4": 0.7,
+          "4,5": 0.5,
+          "4,6": 0.2,
+          "5,2": 0.2,
+          "5,3": 0.5,
+          "5,4": 0.8,
+          "5,5": 0.5,
+          "5,6": 0.2,
+          "6,2": 0.2,
+          "6,3": 0.5,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.2
+        },
+        "state": "grid=7x7;self=[5, 4];barriers=[]",
+        "step": 5,
+        "timestamp": "2026-08-26T22:36:56.481380+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "5c5b65e794f5cdd7a77f368d4b83e1a8",
+      "commit": "b721448c45af88d2f6c7d95181b019fb8f2f3665fc978c0817aa64d7050ef5d8"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            0,
+            1
+          ]
+        },
+        "fallback": false,
+        "hint": "The east district is where I am.",
+        "intent": "evade",
+        "move": "MOVE:E",
+        "position": [
+          5,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "1,3": 0.1,
+          "1,4": 0.1,
+          "1,5": 0.1,
+          "2,3": 0.3,
+          "2,4": 0.4,
+          "2,5": 0.2,
+          "3,2": 0.1,
+          "3,3": 0.3,
+          "3,4": 0.5,
+          "3,5": 0.3,
+          "3,6": 0.2,
+          "4,2": 0.1,
+          "4,3": 0.4,
+          "4,4": 0.6,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,2": 0.1,
+          "5,3": 0.4,
+          "5,4": 0.7,
+          "5,5": 0.8,
+          "5,6": 0.5,
+          "6,2": 0.1,
+          "6,3": 0.4,
+          "6,4": 0.5,
+          "6,5": 0.5,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[5, 5];barriers=[]",
+        "step": 6,
+        "timestamp": "2026-08-26T22:36:58.310742+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "0a7ea762bae2b0e3962b12f8731fb673",
+      "commit": "ab99e2aee8d6e88a61fdb370ab6aacdb08a80f9228ecd60f8af6d4190628ffc5"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            0,
+            0
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm somewhere near north.",
+        "intent": "evade",
+        "move": "MOVE:S",
+        "position": [
+          6,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "2,3": 0.2,
+          "2,4": 0.3,
+          "2,5": 0.1,
+          "3,3": 0.2,
+          "3,4": 0.4,
+          "3,5": 0.2,
+          "3,6": 0.1,
+          "4,3": 0.3,
+          "4,4": 0.5,
+          "4,5": 0.4,
+          "4,6": 0.4,
+          "5,3": 0.3,
+          "5,4": 0.6,
+          "5,5": 0.7,
+          "5,6": 0.5,
+          "6,3": 0.3,
+          "6,4": 0.5,
+          "6,5": 0.8,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[6, 5];barriers=[]",
+        "step": 7,
+        "timestamp": "2026-08-26T22:37:00.142953+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "08263517281538756ed9d6e575082798",
+      "commit": "83b2999cb418c9618b8910c011a9c42e848f7f44970a2fa1d16fc27a13aa3b91"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            0,
+            1
+          ]
+        },
+        "fallback": false,
+        "hint": "The Brooklyn district is where I am.",
+        "intent": "evade",
+        "move": "MOVE:E",
+        "position": [
+          6,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "2,3": 0.1,
+          "2,4": 0.2,
+          "3,3": 0.1,
+          "3,4": 0.3,
+          "3,5": 0.1,
+          "4,3": 0.2,
+          "4,4": 0.4,
+          "4,5": 0.3,
+          "4,6": 0.3,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.6,
+          "5,6": 0.5,
+          "6,3": 0.2,
+          "6,4": 0.4,
+          "6,5": 0.7,
+          "6,6": 0.8
+        },
+        "state": "grid=7x7;self=[6, 6];barriers=[]",
+        "step": 8,
+        "timestamp": "2026-08-26T22:37:01.948476+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "f6fc5e3def62946e6ad62aadce49eb02",
+      "commit": "8f625930f4b01b62f57a406de01adffd16bbb06c9a6442d7dae091aaeeca0b67"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            1,
+            1
+          ]
+        },
+        "fallback": false,
+        "hint": "Look for me in the Manhattan zone.",
+        "intent": "evade",
+        "move": "MOVE:N",
+        "position": [
+          5,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "2,4": 0.1,
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,3": 0.1,
+          "4,4": 0.3,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,3": 0.1,
+          "5,4": 0.4,
+          "5,5": 0.5,
+          "5,6": 0.8,
+          "6,3": 0.1,
+          "6,4": 0.3,
+          "6,5": 0.6,
+          "6,6": 0.7
+        },
+        "state": "grid=7x7;self=[5, 6];barriers=[]",
+        "step": 9,
+        "timestamp": "2026-08-26T22:37:03.767145+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "ce1f5ad24cba69e731e86a5c92d80403",
+      "commit": "de93ea007ff5a420e9f4f2e9b2cd6cc21bc8bb92619f1f3541aaf4d290960ab4"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            1,
+            2
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm in the Brooklyn area.",
+        "intent": "evade",
+        "move": "MOVE:S",
+        "position": [
+          6,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "3,4": 0.1,
+          "3,5": 0.1,
+          "3,6": 0.1,
+          "4,4": 0.2,
+          "4,5": 0.4,
+          "4,6": 0.4,
+          "5,4": 0.3,
+          "5,5": 0.5,
+          "5,6": 0.7,
+          "6,4": 0.2,
+          "6,5": 0.5,
+          "6,6": 0.8
+        },
+        "state": "grid=7x7;self=[6, 6];barriers=[]",
+        "step": 10,
+        "timestamp": "2026-08-26T22:37:05.601209+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "2f259495cf58308e4e6cf50aa13648db",
+      "commit": "bd0d3a4519e65eebbf6dfaec7921847c3a69e924f79a958d13c5647b6c66749c"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            1,
+            3
+          ]
+        },
+        "fallback": false,
+        "hint": "I've been around Central Park today.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          6,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "4,4": 0.2,
+          "4,5": 0.3,
+          "4,6": 0.3,
+          "5,4": 0.2,
+          "5,5": 0.5,
+          "5,6": 0.6,
+          "6,4": 0.2,
+          "6,5": 0.5,
+          "6,6": 0.8
+        },
+        "state": "grid=7x7;self=[6, 6];barriers=[]",
+        "step": 11,
+        "timestamp": "2026-08-26T22:37:07.403140+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "3f3b6d15a12dfb533b5b25cb46fa809d",
+      "commit": "bbbfdfbeeb4b5fe19ebd5f7704ff0c646013b5984824233a86e6165727375a73"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            2,
+            3
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm in the Brooklyn area.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          6,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.5,
+          "5,6": 0.5,
+          "6,4": 0.2,
+          "6,5": 0.5,
+          "6,6": 0.8
+        },
+        "state": "grid=7x7;self=[6, 6];barriers=[]",
+        "step": 12,
+        "timestamp": "2026-08-26T22:37:09.240635+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "0dd8e2be66490d4e5fcc02411b7af48e",
+      "commit": "7e4064b623124e81d1c14cca4a550303e6e8dd6ab19be2087fb3b009007643ee"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            2,
+            4
+          ]
+        },
+        "fallback": false,
+        "hint": "The Brooklyn district is where I am.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          6,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.5,
+          "5,6": 0.5,
+          "6,4": 0.2,
+          "6,5": 0.5,
+          "6,6": 0.8
+        },
+        "state": "grid=7x7;self=[6, 6];barriers=[]",
+        "step": 13,
+        "timestamp": "2026-08-26T22:37:11.054704+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "028721177cfef12d154d261279bc48d4",
+      "commit": "8c186d17a0f0b05a04cfbf28dab703feda4da9ffd2ae5753717e95e06010e181"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            3,
+            4
+          ]
+        },
+        "fallback": false,
+        "hint": "I've been around north today.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          6,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.5,
+          "5,6": 0.5,
+          "6,4": 0.2,
+          "6,5": 0.5,
+          "6,6": 0.8
+        },
+        "state": "grid=7x7;self=[6, 6];barriers=[]",
+        "step": 14,
+        "timestamp": "2026-08-26T22:37:12.867075+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "6c2120d38f056a01a6d0978e90af3832",
+      "commit": "627fcbaec4f3eba04034b95143b1ce26a3e74acdcf260ad0b4e60d91bc6763bb"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            4,
+            4
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm in the Brooklyn area.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          6,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.5,
+          "5,6": 0.5,
+          "6,4": 0.2,
+          "6,5": 0.5,
+          "6,6": 0.8
+        },
+        "state": "grid=7x7;self=[6, 6];barriers=[]",
+        "step": 15,
+        "timestamp": "2026-08-26T22:37:14.706486+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "43c1010a54a58e2d93ce03d61f41e438",
+      "commit": "4259882924ba2d3d74ec1ec0fe7ffa2e43935f07ff1cc987ea387e3d40ad1343"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            4,
+            5
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm in the Brooklyn area.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          6,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.5,
+          "5,6": 0.5,
+          "6,4": 0.2,
+          "6,5": 0.5,
+          "6,6": 0.8
+        },
+        "state": "grid=7x7;self=[6, 6];barriers=[]",
+        "step": 16,
+        "timestamp": "2026-08-26T22:37:16.516551+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "4ded51c82296f72c2b4aa26564a558c5",
+      "commit": "d44b33c6fc96bd2bd4764bacc44887ef313ed44681bf503de3db8c0aee4305e2"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            5,
+            5
+          ]
+        },
+        "fallback": false,
+        "hint": "The Brooklyn district is where I am.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          6,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "4,4": 0.2,
+          "4,5": 0.2,
+          "4,6": 0.2,
+          "5,4": 0.2,
+          "5,5": 0.5,
+          "5,6": 0.5,
+          "6,4": 0.2,
+          "6,5": 0.5,
+          "6,6": 0.8
+        },
+        "state": "grid=7x7;self=[6, 6];barriers=[]",
+        "step": 17,
+        "timestamp": "2026-08-26T22:37:18.341892+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "9dd61f65a996072a93b4e743f5517fa0",
+      "commit": "7017cd8c560fd0bdf6b722072728e5f73e3f83ca8f11c61397538e88c13f77a9"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            6,
+            5
+          ]
+        },
+        "fallback": false,
+        "hint": "Look for me in the south zone.",
+        "intent": "evade",
+        "move": "MOVE:N",
+        "position": [
+          5,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "3,4": 0.2,
+          "3,5": 0.2,
+          "3,6": 0.2,
+          "4,4": 0.2,
+          "4,5": 0.5,
+          "4,6": 0.5,
+          "5,4": 0.2,
+          "5,5": 0.5,
+          "5,6": 0.8,
+          "6,4": 0.2,
+          "6,5": 0.5,
+          "6,6": 0.7
+        },
+        "state": "grid=7x7;self=[5, 6];barriers=[]",
+        "step": 18,
+        "timestamp": "2026-08-26T22:37:20.160434+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "a847656495303bf8e3028aada7b5b14d",
+      "commit": "24a8288f4efa67138407fc79512f064f2227083061cc8373b84085a831ca597a"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            6,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "I've been around Times Square today.",
+        "intent": "evade",
+        "move": "MOVE:N",
+        "position": [
+          4,
+          6
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "2,4": 0.2,
+          "2,5": 0.2,
+          "2,6": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.5,
+          "3,6": 0.5,
+          "4,4": 0.2,
+          "4,5": 0.5,
+          "4,6": 0.8,
+          "5,4": 0.2,
+          "5,5": 0.5,
+          "5,6": 0.7,
+          "6,4": 0.2,
+          "6,5": 0.4,
+          "6,6": 0.6
+        },
+        "state": "grid=7x7;self=[4, 6];barriers=[]",
+        "step": 19,
+        "timestamp": "2026-08-26T22:37:21.989138+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "6aa315e1bd215918562054d08c7eca24",
+      "commit": "9e3d9697f13efaa16e852c8ef6778f79927056113303789360fd952897eeabfc"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            5,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm in the east area.",
+        "intent": "evade",
+        "move": "MOVE:W",
+        "position": [
+          4,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "2,3": 0.2,
+          "2,4": 0.2,
+          "2,5": 0.2,
+          "2,6": 0.2,
+          "3,3": 0.2,
+          "3,4": 0.5,
+          "3,5": 0.5,
+          "3,6": 0.5,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.8,
+          "4,6": 0.7,
+          "5,3": 0.2,
+          "5,4": 0.5,
+          "5,5": 0.5,
+          "5,6": 0.6,
+          "6,3": 0.2,
+          "6,4": 0.2,
+          "6,5": 0.3,
+          "6,6": 0.5
+        },
+        "state": "grid=7x7;self=[4, 5];barriers=[]",
+        "step": 20,
+        "timestamp": "2026-08-26T22:37:23.807474+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "70f69b14218dd9fe2f25ace9855f3357",
+      "commit": "6dd12fc082596d42d6901234f2767ce1830d7d985b951e2ddb6b1d76b401a0b8"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            6,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "You'll find me near Times Square.",
+        "intent": "evade",
+        "move": "MOVE:N",
+        "position": [
+          3,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "1,3": 0.2,
+          "1,4": 0.2,
+          "1,5": 0.2,
+          "1,6": 0.2,
+          "2,3": 0.2,
+          "2,4": 0.5,
+          "2,5": 0.5,
+          "2,6": 0.5,
+          "3,3": 0.2,
+          "3,4": 0.5,
+          "3,5": 0.8,
+          "3,6": 0.5,
+          "4,3": 0.2,
+          "4,4": 0.5,
+          "4,5": 0.7,
+          "4,6": 0.6,
+          "5,3": 0.2,
+          "5,4": 0.4,
+          "5,5": 0.4,
+          "5,6": 0.5,
+          "6,3": 0.1,
+          "6,4": 0.1,
+          "6,5": 0.2,
+          "6,6": 0.4
+        },
+        "state": "grid=7x7;self=[3, 5];barriers=[]",
+        "step": 21,
+        "timestamp": "2026-08-26T22:37:25.608738+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "d675df37881aa2c06029f085d912acf7",
+      "commit": "2913969104e4bdaadc9112f2f3273eb821ef5f1b679243b57a0cd96fb64baf71"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            5,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "I've been around north today.",
+        "intent": "evade",
+        "move": "MOVE:N",
+        "position": [
+          2,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,3": 0.2,
+          "0,4": 0.2,
+          "0,5": 0.2,
+          "0,6": 0.2,
+          "1,3": 0.2,
+          "1,4": 0.5,
+          "1,5": 0.5,
+          "1,6": 0.5,
+          "2,3": 0.2,
+          "2,4": 0.5,
+          "2,5": 0.8,
+          "2,6": 0.5,
+          "3,3": 0.2,
+          "3,4": 0.5,
+          "3,5": 0.7,
+          "3,6": 0.5,
+          "4,3": 0.2,
+          "4,4": 0.4,
+          "4,5": 0.6,
+          "4,6": 0.5,
+          "5,3": 0.1,
+          "5,4": 0.3,
+          "5,5": 0.3,
+          "5,6": 0.4,
+          "6,5": 0.1,
+          "6,6": 0.3
+        },
+        "state": "grid=7x7;self=[2, 5];barriers=[]",
+        "step": 22,
+        "timestamp": "2026-08-26T22:37:27.433838+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "9501bde7269613c3b4a2ecc6394dd08b",
+      "commit": "914432bd26cbfb074a705e6bbc8315b59239bc9a20b066dca145bc4080cf3622"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            6,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "You'll find me near east.",
+        "intent": "evade",
+        "move": "MOVE:N",
+        "position": [
+          1,
+          5
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,3": 0.2,
+          "0,4": 0.5,
+          "0,5": 0.5,
+          "0,6": 0.5,
+          "1,3": 0.2,
+          "1,4": 0.5,
+          "1,5": 0.8,
+          "1,6": 0.5,
+          "2,3": 0.2,
+          "2,4": 0.5,
+          "2,5": 0.7,
+          "2,6": 0.5,
+          "3,3": 0.2,
+          "3,4": 0.4,
+          "3,5": 0.6,
+          "3,6": 0.4,
+          "4,3": 0.1,
+          "4,4": 0.3,
+          "4,5": 0.5,
+          "4,6": 0.4,
+          "5,4": 0.2,
+          "5,5": 0.2,
+          "5,6": 0.3,
+          "6,6": 0.2
+        },
+        "state": "grid=7x7;self=[1, 5];barriers=[]",
+        "step": 23,
+        "timestamp": "2026-08-26T22:37:29.264223+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "e51dcbe3b26a451c795d2c63a07242da",
+      "commit": "918ee76bad185530d07428cbac5039a0f00da9d91971577dc2c77808adf34f0f"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            5,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "You'll find me near Central Park.",
+        "intent": "evade",
+        "move": "MOVE:W",
+        "position": [
+          1,
+          4
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,2": 0.2,
+          "0,3": 0.5,
+          "0,4": 0.5,
+          "0,5": 0.5,
+          "0,6": 0.4,
+          "1,2": 0.2,
+          "1,3": 0.5,
+          "1,4": 0.8,
+          "1,5": 0.7,
+          "1,6": 0.4,
+          "2,2": 0.2,
+          "2,3": 0.5,
+          "2,4": 0.5,
+          "2,5": 0.6,
+          "2,6": 0.4,
+          "3,2": 0.2,
+          "3,3": 0.2,
+          "3,4": 0.3,
+          "3,5": 0.5,
+          "3,6": 0.3,
+          "4,4": 0.2,
+          "4,5": 0.4,
+          "4,6": 0.3,
+          "5,4": 0.1,
+          "5,5": 0.1,
+          "5,6": 0.2,
+          "6,6": 0.1
+        },
+        "state": "grid=7x7;self=[1, 4];barriers=[]",
+        "step": 24,
+        "timestamp": "2026-08-26T22:37:31.081988+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "3aab3d5ca2c4871bb0aa2cc33b72499b",
+      "commit": "6c58b8962cd3bb1f5d8e8d99c926c665ce2cc64539f9d71cd0d314e1a1b5c22d"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            6,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "The Manhattan district is where I am.",
+        "intent": "evade",
+        "move": "MOVE:W",
+        "position": [
+          1,
+          3
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,1": 0.2,
+          "0,2": 0.5,
+          "0,3": 0.5,
+          "0,4": 0.5,
+          "0,5": 0.4,
+          "0,6": 0.3,
+          "1,1": 0.2,
+          "1,2": 0.5,
+          "1,3": 0.8,
+          "1,4": 0.7,
+          "1,5": 0.6,
+          "1,6": 0.3,
+          "2,1": 0.2,
+          "2,2": 0.5,
+          "2,3": 0.5,
+          "2,4": 0.5,
+          "2,5": 0.5,
+          "2,6": 0.3,
+          "3,1": 0.2,
+          "3,2": 0.2,
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.4,
+          "3,6": 0.2,
+          "4,4": 0.1,
+          "4,5": 0.3,
+          "4,6": 0.2,
+          "5,6": 0.1
+        },
+        "state": "grid=7x7;self=[1, 3];barriers=[]",
+        "step": 25,
+        "timestamp": "2026-08-26T22:37:32.898181+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "10e36aca2ddd6845410086e84b70364c",
+      "commit": "3342a5c5ced25920883adc0606882e0deb02d68b12a113e1ed49f7cb038472e2"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            5,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "I've been around Brooklyn today.",
+        "intent": "evade",
+        "move": "MOVE:W",
+        "position": [
+          1,
+          2
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.2,
+          "0,1": 0.5,
+          "0,2": 0.5,
+          "0,3": 0.5,
+          "0,4": 0.4,
+          "0,5": 0.3,
+          "0,6": 0.2,
+          "1,0": 0.2,
+          "1,1": 0.5,
+          "1,2": 0.8,
+          "1,3": 0.7,
+          "1,4": 0.6,
+          "1,5": 0.5,
+          "1,6": 0.2,
+          "2,0": 0.2,
+          "2,1": 0.5,
+          "2,2": 0.5,
+          "2,3": 0.5,
+          "2,4": 0.4,
+          "2,5": 0.4,
+          "2,6": 0.2,
+          "3,0": 0.2,
+          "3,1": 0.2,
+          "3,2": 0.2,
+          "3,3": 0.2,
+          "3,4": 0.2,
+          "3,5": 0.3,
+          "3,6": 0.1,
+          "4,5": 0.2,
+          "4,6": 0.1
+        },
+        "state": "grid=7x7;self=[1, 2];barriers=[]",
+        "step": 26,
+        "timestamp": "2026-08-26T22:37:34.711189+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "ce27750cfb71c78ed0d8fe05edfcac2a",
+      "commit": "2d33c7ce8f844d504d374bbec6d683585539c1adc50630343cb4009e3f2d147f"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            6,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "My location is close to east.",
+        "intent": "evade",
+        "move": "MOVE:W",
+        "position": [
+          1,
+          1
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.5,
+          "0,1": 0.5,
+          "0,2": 0.5,
+          "0,3": 0.4,
+          "0,4": 0.3,
+          "0,5": 0.2,
+          "0,6": 0.1,
+          "1,0": 0.5,
+          "1,1": 0.8,
+          "1,2": 0.7,
+          "1,3": 0.6,
+          "1,4": 0.5,
+          "1,5": 0.4,
+          "1,6": 0.1,
+          "2,0": 0.5,
+          "2,1": 0.5,
+          "2,2": 0.5,
+          "2,3": 0.4,
+          "2,4": 0.3,
+          "2,5": 0.3,
+          "2,6": 0.1,
+          "3,0": 0.2,
+          "3,1": 0.2,
+          "3,2": 0.2,
+          "3,3": 0.2,
+          "3,4": 0.1,
+          "3,5": 0.2,
+          "4,5": 0.1
+        },
+        "state": "grid=7x7;self=[1, 1];barriers=[]",
+        "step": 27,
+        "timestamp": "2026-08-26T22:37:36.542388+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "336fbc7e5bb1ae95a96da152a38fc22a",
+      "commit": "be60733fccb552c50cbae637a1f909f5c8880e9e37cdb6915c3dceed4c4f7a9c"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            5,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "The north district is where I am.",
+        "intent": "evade",
+        "move": "MOVE:N",
+        "position": [
+          0,
+          1
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.5,
+          "0,1": 0.8,
+          "0,2": 0.5,
+          "0,3": 0.3,
+          "0,4": 0.2,
+          "0,5": 0.1,
+          "1,0": 0.5,
+          "1,1": 0.7,
+          "1,2": 0.6,
+          "1,3": 0.5,
+          "1,4": 0.4,
+          "1,5": 0.3,
+          "2,0": 0.4,
+          "2,1": 0.4,
+          "2,2": 0.4,
+          "2,3": 0.3,
+          "2,4": 0.2,
+          "2,5": 0.2,
+          "3,0": 0.1,
+          "3,1": 0.1,
+          "3,2": 0.1,
+          "3,3": 0.1,
+          "3,5": 0.1
+        },
+        "state": "grid=7x7;self=[0, 1];barriers=[]",
+        "step": 28,
+        "timestamp": "2026-08-26T22:37:38.388666+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "7878095d319dc6ff5fa39a318218fe96",
+      "commit": "e79c84ce1ffb8332eab5dbf2fae3f02f08dee75fd221bf56c2026fa253dcc9a8"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            6,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "Look for me in the Times Square zone.",
+        "intent": "evade",
+        "move": "MOVE:W",
+        "position": [
+          0,
+          0
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.8,
+          "0,1": 0.7,
+          "0,2": 0.4,
+          "0,3": 0.2,
+          "0,4": 0.1,
+          "1,0": 0.5,
+          "1,1": 0.6,
+          "1,2": 0.5,
+          "1,3": 0.4,
+          "1,4": 0.3,
+          "1,5": 0.2,
+          "2,0": 0.3,
+          "2,1": 0.3,
+          "2,2": 0.3,
+          "2,3": 0.2,
+          "2,4": 0.1,
+          "2,5": 0.1
+        },
+        "state": "grid=7x7;self=[0, 0];barriers=[]",
+        "step": 29,
+        "timestamp": "2026-08-26T22:37:40.178967+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "65df391bc3050066de6edc55d006dbf3",
+      "commit": "e5b798269a19c710115d77b0ef8e514ea8b84198009a8c69edf9090834e02d8c"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            5,
+            6
+          ]
+        },
+        "fallback": false,
+        "hint": "The west district is where I am.",
+        "intent": "evade",
+        "move": "MOVE:S",
+        "position": [
+          1,
+          0
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.7,
+          "0,1": 0.6,
+          "0,2": 0.3,
+          "0,3": 0.1,
+          "1,0": 0.8,
+          "1,1": 0.5,
+          "1,2": 0.4,
+          "1,3": 0.3,
+          "1,4": 0.2,
+          "1,5": 0.1,
+          "2,0": 0.5,
+          "2,1": 0.5,
+          "2,2": 0.2,
+          "2,3": 0.1,
+          "3,0": 0.2,
+          "3,1": 0.2,
+          "3,2": 0.2
+        },
+        "state": "grid=7x7;self=[1, 0];barriers=[]",
+        "step": 30,
+        "timestamp": "2026-08-26T22:37:42.007582+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "a2911daf28192e860a93e998e585d941",
+      "commit": "42b58b40f953d1445841e9f0308fd98403204ed424ae2ab41156bc4399cf6ecf"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            5,
+            5
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm hiding around The Bronx.",
+        "intent": "evade",
+        "move": "MOVE:N",
+        "position": [
+          0,
+          0
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.8,
+          "0,1": 0.5,
+          "0,2": 0.2,
+          "1,0": 0.7,
+          "1,1": 0.5,
+          "1,2": 0.3,
+          "1,3": 0.2,
+          "1,4": 0.1,
+          "2,0": 0.4,
+          "2,1": 0.4,
+          "2,2": 0.2,
+          "3,0": 0.1,
+          "3,1": 0.1,
+          "3,2": 0.1
+        },
+        "state": "grid=7x7;self=[0, 0];barriers=[]",
+        "step": 31,
+        "timestamp": "2026-08-26T22:37:43.828041+00:00",
+        "verdict": "truth"
+      },
+      "nonce": "726dbd6136230991d7d6b4e778912f9d",
+      "commit": "1896635003f5e210c2a51bbfb5a9850dd9b1239566f6fc7252fb5dab691d6bef"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            4,
+            5
+          ]
+        },
+        "fallback": false,
+        "hint": "My location is close to Times Square.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          0,
+          0
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.8,
+          "0,1": 0.5,
+          "0,2": 0.2,
+          "1,0": 0.6,
+          "1,1": 0.5,
+          "1,2": 0.2,
+          "1,3": 0.1,
+          "2,0": 0.3,
+          "2,1": 0.3,
+          "2,2": 0.2
+        },
+        "state": "grid=7x7;self=[0, 0];barriers=[]",
+        "step": 32,
+        "timestamp": "2026-08-26T22:37:45.632196+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "9de7e47a6a588be166629d2e9de25c6a",
+      "commit": "ab24ce018753f278c23e216467dad89441bdc9425eb9dcde9ba37e060c61910e"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            3,
+            5
+          ]
+        },
+        "fallback": false,
+        "hint": "I'm somewhere near Central Park.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          0,
+          0
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.8,
+          "0,1": 0.5,
+          "0,2": 0.2,
+          "1,0": 0.5,
+          "1,1": 0.5,
+          "1,2": 0.2,
+          "2,0": 0.2,
+          "2,1": 0.2,
+          "2,2": 0.2
+        },
+        "state": "grid=7x7;self=[0, 0];barriers=[]",
+        "step": 33,
+        "timestamp": "2026-08-26T22:37:47.471073+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "a17fa7806b373ebec0f1edec4d14f574",
+      "commit": "aaa04976f6b5a795831093d2c21a080af7fe81a44bf1da1e5625e85291211df3"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            2,
+            5
+          ]
+        },
+        "fallback": false,
+        "hint": "My location is close to Times Square.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          0,
+          0
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.8,
+          "0,1": 0.5,
+          "0,2": 0.2,
+          "1,0": 0.5,
+          "1,1": 0.5,
+          "1,2": 0.2,
+          "2,0": 0.2,
+          "2,1": 0.2,
+          "2,2": 0.2
+        },
+        "state": "grid=7x7;self=[0, 0];barriers=[]",
+        "step": 34,
+        "timestamp": "2026-08-26T22:37:49.279463+00:00",
+        "verdict": "lie"
+      },
+      "nonce": "e23c30a477ced99162548cbcb24f0c17",
+      "commit": "46182975f59f6b12efc461d8e3499a3fa505f9c79a19d2945b4e16a44f448732"
+    },
+    {
+      "payload": {
+        "barrier_cell": null,
+        "claim_response": {
+          "caught": false,
+          "claim": [
+            2,
+            4
+          ]
+        },
+        "fallback": false,
+        "hint": "The The Bronx district is where I am.",
+        "intent": "evade",
+        "move": "STAY",
+        "position": [
+          0,
+          0
+        ],
+        "prompt_text": "",
+        "reasoning": "",
+        "response_seconds": 0.0,
+        "sender": "thief",
+        "smell_grid": {
+          "0,0": 0.8,
+          "0,1": 0.5,
+          "0,2": 0.2,
+          "1,0": 0.5,
+          "1,1": 0.5,
+          "1,2": 0.2,
+          "2,0": 0.2,
+          "2,1": 0.2,
+          "2,2": 0.2
+        },
+        "state": "grid=7x7;self=[0, 0];barriers=[]",
+        "step": 35,
+        "timestamp": "2026-08-26T22:37:51.099010+00:00",
+        "verdict": "truth",
+        "win_claim": {
+          "type": "survival"
+        }
+      },
+      "nonce": "658a8d46fd284ec8b2da4b26bfdfbe38",
+      "commit": "feac2e07f908a44340e0d42408b74b8e41d6cf698bc72a613ad2c31e38c4519d"
+    }
+  ],
+  "mutual_agreement": {
+    "opponent_group_id": "aviayeli",
+    "sha256": "a10ab30514347164329d1a81014996cc4cd708e6b1ff2bd11a71b8ef25a34d45",
+    "confirmed": true
+  }
+}

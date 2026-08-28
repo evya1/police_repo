@@ -27,8 +27,8 @@ Private TOML selects the provider; credentials never belong in TOML:
 ```toml
 [llm]
 provider = "openrouter" # template | openrouter
-model = "inclusionai/ling-3.0-flash"
-provider_slug = "novita"
+model = "deepseek/deepseek-v4-flash-0731:nitro"
+# provider_slug = "novita" # optional explicit pin; omit for Nitro routing
 step_deadline_seconds = 30
 max_output_tokens = 32
 every_n_steps = 1
@@ -72,8 +72,8 @@ Output and startup behavior:
 
 - `template` returns `None` without reading credentials or constructing network objects.
 - `openrouter` returns a `LanguageModelAdapter` implementing `TextProvider`.
-- Missing keys, models, provider slugs, or invalid limits raise `ConfigError` before transport
-  startup.
+- Missing keys or models and invalid limits raise `ConfigError` before transport startup.
+  `provider_slug` is optional.
 
 `police_peer.sdk.create_peer(...)` exposes the same optional `environment`,
 `completion_client`, `gatekeeper`, `text_provider`, and `token_ledger` injection seams. Normal
@@ -89,7 +89,7 @@ OpenRouterClient(
     *,
     api_key: str,
     model: str,
-    provider_slug: str,
+    provider_slug: str | None = None,
     base_url: str = "https://openrouter.ai/api/v1",
     max_output_tokens: int = 32,
     clock: Callable[[], float] = time.monotonic,
@@ -109,8 +109,10 @@ The client sends `POST <base_url>/chat/completions` with:
 - one user text message;
 - the fixed model and output-token cap;
 - temperature zero and reasoning explicitly disabled;
-- provider routing pinned to `provider_slug`, with fallback disabled;
-- parameter support required and provider data collection denied; and
+- no provider routing block when `provider_slug` is omitted, allowing Nitro to choose the
+  fastest healthy provider;
+- when `provider_slug` is explicit, routing is pinned to that slug, fallback is disabled,
+  parameter support is required, and provider data collection is denied; and
 - the key only in the bearer authorization header.
 
 `RawCompletion` returns untrusted response fields:

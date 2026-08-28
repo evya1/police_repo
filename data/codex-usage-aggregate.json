@@ -1,33 +1,70 @@
 {
   "source": "Codex",
-  "session_count": 14,
+  "session_count": 29,
   "first_day": "2026-08-24",
-  "last_day": "2026-08-25",
+  "last_day": "2026-08-28",
   "cost_method": "estimated_api_list_price",
   "pricing": {
-    "input_per_million_usd": "4.00",
-    "cached_input_per_million_usd": "0.40",
-    "cache_write_per_million_usd": "5.00",
-    "output_per_million_usd": "20.00"
+    "GPT-5.4 Mini": {
+      "input_per_million_usd": "0.75",
+      "cached_input_per_million_usd": "0.075",
+      "cache_write_per_million_usd": null,
+      "output_per_million_usd": "4.50"
+    },
+    "GPT-5.6 Luna": {
+      "input_per_million_usd": "0.20",
+      "cached_input_per_million_usd": "0.02",
+      "cache_write_per_million_usd": "0.25",
+      "output_per_million_usd": "1.20"
+    },
+    "GPT-5.6 Sol": {
+      "input_per_million_usd": "4.00",
+      "cached_input_per_million_usd": "0.40",
+      "cache_write_per_million_usd": "5.00",
+      "output_per_million_usd": "20.00"
+    }
   },
   "models": [
     {
-      "model": "GPT-5.6 Sol",
-      "session_appearances": 14,
-      "input_tokens": 9484067,
-      "output_tokens": 1466599,
-      "cache_read_tokens": 391165184,
+      "model": "GPT-5.4 Mini",
+      "input_tokens": 39176,
+      "output_tokens": 4720,
+      "reasoning_output_tokens": 801,
+      "cache_read_tokens": 284416,
       "cache_write_tokens": 0,
-      "reasoning_output_tokens": 494310,
-      "attributed_cost_usd": "223.7343216"
+      "session_appearances": 1,
+      "attributed_cost_usd": "0.0719532"
+    },
+    {
+      "model": "GPT-5.6 Luna",
+      "input_tokens": 1308470,
+      "output_tokens": 148619,
+      "reasoning_output_tokens": 65177,
+      "cache_read_tokens": 43047552,
+      "cache_write_tokens": 0,
+      "session_appearances": 6,
+      "attributed_cost_usd": "1.30098784"
+    },
+    {
+      "model": "GPT-5.6 Sol",
+      "input_tokens": 17768789,
+      "output_tokens": 2438017,
+      "reasoning_output_tokens": 818054,
+      "cache_read_tokens": 643271936,
+      "cache_write_tokens": 0,
+      "session_appearances": 26,
+      "attributed_cost_usd": "377.1442704"
     }
   ],
   "totals": {
-    "input_tokens": 9484067,
-    "output_tokens": 1466599,
-    "cache_read_tokens": 391165184,
-    "cache_write_tokens": 0,
-    "reasoning_output_tokens": 494310
+    "input_tokens": 19116435,
+    "output_tokens": 2591356,
+    "reasoning_output_tokens": 884032,
+    "cache_read_tokens": 686603904,
+    "cache_write_tokens": 0
   },
-  "estimated_cost_usd": "223.7343216"
+  "estimated_cost_usd": "378.51721144",
+  "unpriced_model_count": 0,
+  "recorded_duration_ms": 32857095,
+  "duration_session_count": 15
 }

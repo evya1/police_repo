@@ -1,28 +1,17 @@
-"""The pre-game gate, and refusals a stranger can act on without asking us.
+"""Verify an inbound pre-game greeting in the fixed FR-13 order.
 
-Every refusal here names *which* thing is wrong, because the difference decides
-whose side the fix is on and how long it takes to find. The distinction that
-cost a real team two hours:
-
-* **terms absent** — a greeting carrying no ``terms`` at all is a differently-
-  shaped wire arriving under a reference wire. A wire-shape fault on the
-  **sender's** side.
-* **terms differing** — both sides speak this wire and their constitutions
-  disagree. A config fault, and the diff says which key.
-
-They look identical if you only report "handshake failed".
-
-The verification order is fixed (FR-13): terms present → 14 keys →
-value-equality → signature re-verify → locked-model comparison → pairing
-(same ``sub_game_number``, **complementary** ``role``) → declared ``game_uid``.
-A stranger MAY be refused with a diagnosis; a refusal MUST travel as a
-``receive_control`` message (FR-8, FR-13).
+Refusals distinguish wire-shape faults from value disagreements so the remote
+team can act on them without asking us for private state.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
+from common.transport.greeting_reply import (
+    counter_signed_reply_builder as counter_signed_reply_builder,
+)
+from common.transport.greetings import our_greeting as our_greeting
 from common.transport.ids import game_id, game_uid, terms_signature
 from common.transport.refusals import Refused
 from common.transport.terms import TERMS_KEYS
@@ -37,54 +26,6 @@ class Agreed:
     opponent_group: str
     opponent_role: str | None
     terms: dict
-
-
-def our_greeting(
-    terms: dict,
-    nonce: str,
-    group_id: str,
-    role: str,
-    sub_game_number: int,
-    opponent_group: str | None = None,
-    locks: dict[str, str] | None = None, identity_block: dict | None = None,
-) -> dict:
-    """Build our outgoing negotiation greeting.
-
-    Follows FR-20 omission convention: ``None`` fields are omitted from the
-    wire dict (not emitted as null). The ``game_uid`` is omitted on the first
-    sub-game (we don't yet know the opponent), and locks are omitted when not
-    declared.
-    """
-    locks = locks or {}
-    # Derive the uid only when we know the opponent (sub-game 2 onward, or a
-    # configured pairing). Omission never refuses (SPEC section 7.3).
-    uid = (game_uid(terms, group_id, opponent_group)
-           if opponent_group else None)
-
-    # FR-20: omit None fields — they are silence, not explicit nulls.
-    greeting: dict = {
-        "terms": terms,
-        "nonce": nonce,
-        "signature": terms_signature(terms, nonce),
-        "group_id": group_id,
-        "role": role,
-        "sub_game_number": sub_game_number,
-        # The identity block is PURELY ADDITIVE (CT-08). `verify_greeting` never refuses on
-        # anything inside it: an opponent who declares less than we do is not at fault, and a
-        # handshake that broke on an unknown identity key would be a self-inflicted refusal.
-        "identity": {**(identity_block or {}), "group_id": group_id, "role": role},
-    }
-    if uid is not None:
-        greeting["game_uid"] = uid
-    for family, key in (
-        ("scent_model", "scent_model_sha256"),
-        ("wire_shape", "wire_shape_sha256"),
-        ("info_mode", "info_mode_sha256"),
-        ("smell_binding", "smell_binding_sha256"),
-    ):
-        if locks.get(family) is not None:
-            greeting[key] = locks[family]
-    return greeting
 
 
 def verify_greeting(raw: dict, our_terms: dict, our_group_id: str,

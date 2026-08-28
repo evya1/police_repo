@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from common.transport.kit_agreement import build_proposal, proposal_wire
+import threading
+
+from common.transport.kit_agreement import build_proposal, evaluate, proposal_wire
 from common.transport.loopback import pair
-from police_peer.wire.result_agreement import exchange
+from police_peer.evidence.token_ledger import TokenLedger
+from police_peer.wire.result_agreement import exchange, exchange_token_evidence
 
 GAME_ID, UID = "a-vs-b", "3f2a6b1c-0000-4000-8000-000000000001"
 FINAL = {
@@ -35,6 +38,16 @@ def test_two_peers_that_settled_differently_do_not_agree():
     outcome = exchange(ours, proposal(), budget=1.0)
     assert not outcome.agreed
     assert "consensus digests differ" in outcome.reason
+
+
+def test_matching_digest_for_wrong_or_missing_game_identifiers_does_not_agree():
+    ours = proposal()
+    messages = (
+        dict(proposal_wire(ours), game_id="wrong-game"),
+        {key: value for key, value in proposal_wire(ours).items() if key != "game_id"},
+        {key: value for key, value in proposal_wire(ours).items() if key != "game_uid"},
+    )
+    assert all(not evaluate(ours, message).agreed for message in messages)
 
 
 def test_a_silent_opponent_times_out_to_non_agreement():
@@ -73,3 +86,29 @@ def test_a_read_fault_never_raises_into_a_played_series():
     outcome = exchange(Broken(), proposal(), budget=0.2)
     assert not outcome.agreed
     assert "could not be read" in outcome.reason
+
+
+def test_both_peers_exchange_six_known_zero_token_totals():
+    channel_a, channel_b = pair("a", "b")
+    outcomes, errors = {}, []
+
+    def go(name, channel, ours, theirs):
+        try:
+            outcomes[name] = exchange_token_evidence(
+                channel, TokenLedger(), game_id=GAME_ID, game_uid=UID,
+                our_group=ours, opponent_group=theirs, counted=False, budget=1.0,
+            )
+        except Exception as exc:  # noqa: BLE001 - surfaced below
+            errors.append(exc)
+
+    threads = [
+        threading.Thread(target=go, args=("a", channel_a, "a", "b")),
+        threading.Thread(target=go, args=("b", channel_b, "b", "a")),
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert not errors
+    expected = {number: {"a": 0, "b": 0} for number in range(1, 7)}
+    assert outcomes == {"a": expected, "b": expected}

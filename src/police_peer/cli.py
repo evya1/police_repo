@@ -41,8 +41,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--emit-kit-bundle",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Also project the settled series into the league-kit 14-artifact bundle at "
-             "<artifacts>/kit/<game_uid>/ (ADR-012). The internal replay bundle is written "
+        help="Also project the settled series into the official 14-artifact bundle at "
+             "<artifacts>/official/<game_uid>/. The internal replay bundle is written "
              "either way.",
     )
     parser.add_argument(

@@ -1,6 +1,8 @@
 # Reporting package
 
-The `police_peer.reporting` package turns settled game evidence into JSON artifacts, publishes replay and league-kit directory bundles, optionally reconciles the older internal artifact model, and sends that model through a send-only Gmail adapter. The package does not play games or alter evidence. `police_peer.reporting.__init__` is empty and exports no convenience API; import symbols from their defining modules.
+The `police_peer.reporting` package turns settled evidence into internal replay data and the
+official Appendix-F JSON set. It can deliver the exact validated result bytes through the
+send-only Gmail adapter; it never alters game evidence.
 
 The two artifact models are separate:
 
@@ -20,8 +22,8 @@ Do not interchange these identically named classes.
 | `pipeline.py` | [Reporting pipeline](pipeline.md) | Agreement gate, bundle validation, Gmail delivery, and pipeline idempotency. |
 | `replay_documents.py` | [Replay documents](replay-documents.md) | Pure builders for the 15-file `internal-interop-1` replay set. |
 | `replay_bundle.py` | [Replay publication](replay-bundle.md) | Atomic publication and self-verification of replay directories. |
-| `kit_bundle.py` | [League-kit projection](kit-bundle.md) | Pure build and atomic publication of the league-kit-shaped projection. |
-| `settlement.py` | [Settlement](settlement.md) | Result-agreement exchange and non-fatal kit publication orchestration. |
+| `kit_bundle.py` | [Official projection](kit-bundle.md) | Pure build and atomic publication of 14 official files. |
+| `settlement.py` | [Settlement](settlement.md) | Token/Git evidence exchange, complete-result agreement, and fail-closed publication. |
 
 ## End-to-end runtime usage
 
@@ -34,7 +36,10 @@ from police_peer.reporting.replay_bundle import publish_replay_bundle
 from police_peer.reporting.settlement import publish_kit, settle
 
 # `channel` and `result` come from the completed series runtime.
-agreement = settle(channel, result, our_group="group-a", budget=5.0)
+agreement = settle(
+    channel, result, our_group="group-a", budget=5.0,
+    token_ledger=token_ledger, identity=identity,
+)
 replay_dir = publish_replay_bundle(Path("artifacts"), result)
 publish_kit(
     Path("artifacts"),
@@ -50,24 +55,31 @@ Data flows as follows:
 1. The series engine returns immutable per-sub-game replay evidence and a six-row ledger in `common.transport.series.SeriesResult`.
 2. `settle` derives shared result rows and exchanges a consensus proposal with the opponent. It performs network/channel I/O only when `result.settled` is true.
 3. `publish_replay_bundle` builds 15 internal replay JSON files in memory, stages them, reloads and verifies them, then publishes `<artifact_root>/replay/<game_uid>/` with one rename.
-4. `publish_kit` projects the same sealed evidence into declaration, six configs, six logs, and one result under `<artifact_root>/kit/<game_uid>/`. Projection errors are logged and suppressed.
+4. `publish_kit` projects the same sealed evidence into declaration, six configs, six logs,
+   and one result under `<artifact_root>/official/<game_uid>/`. Missing mandatory identity,
+   Git, token, timestamp, or agreement evidence fails closed.
 5. Separately, callers using the older `internal-1` model can build a `ReportingArtifactBundle` and pass it to `ReportingPipeline.process_and_send`; that path validates 14 attachments and performs Gmail API I/O through `ExternalApiGatekeeper`.
 
 ## Configuration and environment
 
 - Install the repository environment with `uv sync --locked --all-groups`; imports assume both `src/` and the repository `common/` package are available.
 - Replay and kit APIs take `artifact_root` explicitly. They do not read an environment variable or configuration file.
-- Gmail requires an `ExternalApiGatekeeper`, exactly the `gmail.send` OAuth scope (short or full form), a Gmail-compatible service client, and either a default or per-call recipient. This package does not load OAuth files or environment variables itself; composition code must create and inject the client.
+- Gmail requires `GMAIL_OAUTH_CLIENT_FILE`, `GMAIL_OAUTH_TOKEN_FILE`, exactly the `gmail.send`
+  scope, and an explicit runtime recipient. Tests and warm-ups use dry-run capture only. Live
+  sending additionally requires the human authorization flag.
 - Default idempotency paths are `.sent_game_uids.json` for `GmailSender` and `.sent_reports.json` for `ReportingPipeline`, relative to the process working directory. Supply explicit stores for controlled locations.
 - Never put credentials or token values in artifacts. `validate_schema` rejects secret-bearing field names, but it does not inspect arbitrary string values for secrets.
 
 ## Outputs and errors
 
-Replay files are indented, sorted-key UTF-8 JSON with a trailing newline. Kit files are indented UTF-8 JSON with a trailing newline. The `internal-1` attachments use compact canonical JSON bytes. Gmail builds a MIME message whose attachments are all declared as `application/json`.
+Replay files are internal. Official files are indented UTF-8 JSON with a trailing newline and
+outward times use `Asia/Jerusalem`. Gmail attaches the already-published result bytes without
+reserializing them.
 
 Atomic publishers create missing parent directories, refuse an existing destination, never append, and normally remove staging data on failure. A lock acquired before a later failure is intentionally left for recovery; a pre-existing lock is reported and not removed. See the module pages for exact aliases and failure details.
 
-Key failure families are `ReplayDocumentError`, replay/atomic publication errors, `ArtifactError` and its schema/signature subclasses, Gmail errors, `ReportingPipelineError`, agreement errors from `common.transport.kit_agreement`, and ordinary JSON/filesystem/client exceptions where a module does not translate them. `publish_kit` is the exception: it catches every projection exception, logs an error, and returns `None`.
+Validate a directory with `uv run python scripts/validate_official_artifacts.py <directory>`.
+Publication and email composition refuse invalid data.
 
 ## Police/Thief parity
 

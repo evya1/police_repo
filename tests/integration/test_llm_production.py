@@ -37,8 +37,7 @@ def _private(path: Path, provider: str = "openrouter") -> Path:
     path.write_text(
         "[llm]\n"
         f'provider = "{provider}"\n'
-        'model = "inclusionai/ling-3.0-flash"\n'
-        'provider_slug = "novita"\n'
+        'model = "deepseek/deepseek-v4-flash-0731:nitro"\n'
         "step_deadline_seconds = 5\nmax_output_tokens = 8\nevery_n_steps = 1\n",
         encoding="utf-8",
     )

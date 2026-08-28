@@ -19,6 +19,7 @@ def test_an_absent_file_yields_safe_defaults(tmp_path):
     private = load_private(tmp_path / "missing.toml")
     assert private.identity.group_name == ""
     assert private.email.recipient == LECTURER_REPORT_ADDRESS
+    assert LECTURER_REPORT_ADDRESS == "rmisegal+uoh26finalgame@gmail.com"
     assert private.email.mode == "dry-run"
 
 

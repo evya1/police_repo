@@ -10,12 +10,11 @@ from common.config import ConfigError, load_config
 from common.domain.scoring import Role
 from common.transport.audit_wire import resolve_audit_wire
 from common.transport.loopback import pair
-from common.transport.opponent_pin import OpponentPin
 from common.transport.series import PeerConfig, PeerFacade, SeriesResult
 from police_peer.evidence.token_ledger import TokenLedger
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.infra.llm_client import CompletionClient
-from police_peer.live_events import LiveListener, observe, observe_driver
+from police_peer.live_events import LiveListener, observe
 from police_peer.replay_service import BundleReplayReport
 from police_peer.replay_service import verify_bundle as _verify_replay_bundle
 from police_peer.strategy import Strategy
@@ -30,7 +29,7 @@ from police_peer.wire.config import (
     project_terms,
 )
 from police_peer.wire.llm_composition import compose_text_provider
-from police_peer.wire.negotiate_per_subgame import negotiated_subgame_driver
+from police_peer.wire.series_composition import compose_series_peer
 from police_peer.wire.startup import SUPPORTED_SCHEMA_VERSIONS, validate_startup_config
 from police_peer.wire.strategy_settings import assemble_strategy_config
 
@@ -152,19 +151,13 @@ def create_peer(
         ch_local, _ = pair(group_id, "loopback-peer")
         channel = ch_local
 
-    # ONE pin and ONE audit wire per series, resolved here and shared by both
-    # greeting paths -- never rebuilt inside the driver (T054).
     audit_wire = resolve_audit_wire(wire_profile)
-    opponent_pin = OpponentPin()
-
-    return PeerFacade(
+    return compose_series_peer(
         channel=channel,
         engine=engine,
         config=peer_cfg,
-        name=group_id,
+        group_id=group_id,
         mode=mode,
-        opponent_pin=opponent_pin,
-        subgame_driver=observe_driver(negotiated_subgame_driver(
-            group_id, opponent_pin=opponent_pin, audit_wire=audit_wire,
-        ), listener),
+        audit_wire=audit_wire,
+        listener=listener,
     )

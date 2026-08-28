@@ -5,7 +5,7 @@ component: C06
 status: draft
 shared: true
 owner: orchestrator
-updated: 2026-08-15
+updated: 2026-08-27
 ---
 
 # C06 — Reporting & League
@@ -16,7 +16,7 @@ Own the official machine-readable artifacts, the send-only Gmail pipeline behind
 
 ## Requirements owned (primary)
 
-REPORT-001…013 (independent automatic sending, official recipient, send-only OAuth scope, local-only secret files, signed JSON artifacts, the four artifact schemas, rate limiting, DOS detection, backoff, daily quota); LEAGUE-001…007 (six-sub-game series, eligibility limits, single-count-per-opponent, honest prior-match declaration, diversity reward, tie score, fairness-evidence provision); QR-008, QR-018 (central external-service Gatekeeper; paid-API cost documentation). 22 requirements total.
+REPORT-001…013 (independent automatic sending, official recipient, send-only OAuth scope, local-only secret files, signed JSON artifacts, the four artifact schemas, rate limiting, DOS detection, backoff, daily quota); LEAGUE-001…007 (six-sub-game series, eligibility limits, single-submission-per-opponent, honest prior-match declaration, diversity reward, tie score, fairness-evidence provision); QR-008, QR-018 (central external-service Gatekeeper; paid-API cost documentation). 22 requirements total.
 
 ## Requirements consumed / affected
 
@@ -32,7 +32,7 @@ REPORT-001…013 (independent automatic sending, official recipient, send-only O
 - Both teams agree on the result and send consistent separate reports (REPORT-009); missing or
   conflicting evidence is preserved and reporting is refused.
 - Sending is protected by a Token Bucket rate limiter (REPORT-010), a DOS detector that can lock the pipeline (REPORT-011), HTTP 429 backoff rather than blind retry (REPORT-012), and ideally a daily quota manager (REPORT-013).
-- A counted series against one opponent contains exactly six sub-games (LEAGUE-001); at least two counted matches against different teams and no more than ten total are required (LEAGUE-002); only one match per opponent counts (LEAGUE-003); each team accurately declares its prior counted-match count (LEAGUE-004); a new-opponent win earns the fixed diversity reward of 10 (LEAGUE-005); a cumulative tie gives 2 to each side (LEAGUE-006); hardware/version/token evidence is provided for lecturer-side fairness normalization without inventing a local formula (LEAGUE-007).
+- A counted series against one opponent contains exactly six sub-games (LEAGUE-001); at least two officially declared counted results against different teams and no more than ten submitted results are required (LEAGUE-002); only one result per opponent may enter the official league/submission record, while additional counted-mode rehearsals may be played but must stay isolated and unsubmitted (LEAGUE-003); each team accurately declares its prior official counted-match count (LEAGUE-004); a new-opponent win earns the fixed diversity reward of 10 (LEAGUE-005); a cumulative tie gives 2 to each side (LEAGUE-006); hardware/version/token evidence is provided for lecturer-side fairness normalization without inventing a local formula (LEAGUE-007).
 
 ## Inputs
 

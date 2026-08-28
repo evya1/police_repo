@@ -9,6 +9,8 @@ from pathlib import Path
 
 from quality_common import QualityError
 
+LINE_CAP_DISABLE_MARKER = "# line-cap: disable"
+
 _TOKEN_SKIP = {
     tokenize.ENCODING,
     tokenize.ENDMARKER,
@@ -18,6 +20,17 @@ _TOKEN_SKIP = {
     tokenize.DEDENT,
     tokenize.COMMENT,
 }
+
+
+def line_cap_disabled(path: Path) -> bool:
+    """Return whether a Python file has the exact opt-out comment token."""
+    if path.suffix.lower() != ".py":
+        return False
+    with path.open("rb") as handle:
+        return any(
+            token.type == tokenize.COMMENT and token.string.strip() == LINE_CAP_DISABLE_MARKER
+            for token in tokenize.tokenize(handle.readline)
+        )
 
 
 def raw_line_count(path: Path) -> int:
@@ -47,7 +60,11 @@ def logical_line_count(path: Path) -> int:
 def find_violations(files: list[Path], limit: int, mode: str) -> list[tuple[Path, int]]:
     """Return every file whose selected line count exceeds the limit (baseline-unaware)."""
     measure = raw_line_count if mode == "raw" else logical_line_count
-    return [(path, count) for path in files if (count := measure(path)) > limit]
+    return [
+        (path, count)
+        for path in files
+        if not line_cap_disabled(path) and (count := measure(path)) > limit
+    ]
 
 
 def load_baseline(config: dict) -> dict[str, int]:
@@ -74,7 +91,9 @@ def ratchet_problems(
     names a path outside the scanned set (missing, wildcard, or directory-wide) fails too.
     """
     measure = raw_line_count if mode == "raw" else logical_line_count
-    counts = {path.relative_to(repo).as_posix(): measure(path) for path in files}
+    scanned = {path.relative_to(repo).as_posix(): path for path in files}
+    disabled = {rel for rel, path in scanned.items() if line_cap_disabled(path)}
+    counts = {rel: measure(path) for rel, path in scanned.items() if rel not in disabled}
     problems = []
     for rel, count in sorted(counts.items()):
         pinned = baseline.get(rel)
@@ -86,6 +105,6 @@ def ratchet_problems(
             problems.append(f"stale baseline entry: {rel} is {count} lines (<= {limit}); remove it")
     problems += [
         f"baseline entry not in the scanned set (missing, wildcard, or directory-wide): {rel}"
-        for rel in baseline if rel not in counts
+        for rel in baseline if rel not in scanned
     ]
     return problems

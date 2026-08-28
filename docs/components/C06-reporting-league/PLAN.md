@@ -22,6 +22,7 @@ before C01–C03 complete.
 ## What is fixed now
 
 - Owns REPORT-001…013, LEAGUE-001…007, QR-008, QR-018.
+- INPUT-011/CR-001 pins LEAGUE-003 at the declaration/submission boundary: repeat counted-mode rehearsals may execute, but only one isolated result per opponent may enter the official record.
 - Consumes CT-04 (canonical bytes, non-official draft) and CT-06 (verified sub-game result); never recomputes either.
 - M-07's reconciliation algorithm shape (independent derivation → cross-check against peer draft → refuse silent auto-resolution on mismatch) is binding now even though the sanction/tie-aggregation values it plugs into are not.
 

@@ -1,10 +1,10 @@
 """FastMCP server: four tools, lazy import, no blocking in handlers.
 
 The server is the *receive* half of a peer. Each tool validates its argument,
-enqueues it into the peer's own ``Inboxes``, and returns ``{"ok": True}`` at
-once — it never awaits game progress, mutates game state, or touches crypto
-(FR-8). Two peers each awaiting the other inside a handler would deadlock
-instantly, so handlers do exactly three things: accept, enqueue, return.
+enqueues it into the peer's own ``Inboxes``, and returns at once. A published
+local audit is projected into the accepted-audit response; other calls use the
+minimal acknowledgment. No handler awaits game progress, mutates game state,
+or touches crypto (FR-8).
 
 ``fastmcp`` is imported lazily inside ``build_server`` so the zero-dependency
 loopback spine keeps running with nothing installed (NFR-5, FR-39).
@@ -17,14 +17,40 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Mapping
 from typing import Any
 
 from common.transport.loopback import Inboxes
+from common.transport.tool_replies import accepted_audit_response
 
 # The exact tool names the wire surface exposes (FR-6/7). The argument-name
 # asymmetry is load-bearing: ``submit_audit`` takes ``payload``; the other three
 # take ``message`` (TC-02).
 TOOL_NAMES = ("negotiate", "receive_turn", "submit_audit", "receive_control")
+
+
+def _handle_negotiate(inboxes: Inboxes, message: dict) -> dict:
+    """Validate/countersign a greeting and enqueue only real accepted sub-games."""
+    reply = getattr(inboxes, "agreement_reply", None)
+    if reply is not None:
+        response = reply(message)
+        if message.get("sub_game_number") == 0 or response.get("accepted") is False:
+            return response
+        inboxes.agreements.append(message)
+        return response
+    inboxes.agreements.append(message)
+    return {"ok": True}
+
+
+def _handle_audit(inboxes: Inboxes, payload: dict) -> dict:
+    """Enqueue their reveal and return our already-published audit response.
+
+    A call arriving before local publication receives the reference-compatible
+    ``{"ok": True}`` acknowledgment; it never receives a fabricated or echoed audit.
+    """
+    inboxes.enqueue_audit(payload)
+    reply = getattr(inboxes, "audit_reply", None)
+    return accepted_audit_response(reply) if isinstance(reply, Mapping) else {"ok": True}
 
 
 def build_server(inboxes: Inboxes, *, name: str = "peer") -> Any:
@@ -40,8 +66,7 @@ def build_server(inboxes: Inboxes, *, name: str = "peer") -> Any:
     @mcp.tool
     def negotiate(message: dict) -> dict:
         """Accept a negotiation greeting / signed terms and enqueue it."""
-        inboxes.agreements.append(message)
-        return {"ok": True}
+        return _handle_negotiate(inboxes, message)
 
     @mcp.tool
     def receive_turn(message: dict) -> dict:
@@ -52,8 +77,7 @@ def build_server(inboxes: Inboxes, *, name: str = "peer") -> Any:
     @mcp.tool
     def submit_audit(payload: dict) -> dict:
         """Accept an end-of-game audit reveal and enqueue it. Note: ``payload``."""
-        inboxes.audits.append(payload)
-        return {"ok": True}
+        return _handle_audit(inboxes, payload)
 
     @mcp.tool
     def receive_control(message: dict) -> dict:

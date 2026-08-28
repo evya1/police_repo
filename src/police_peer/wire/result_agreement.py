@@ -28,6 +28,7 @@ from common.transport.kit_agreement import (
 )
 
 logger = logging.getLogger(__name__)
+TOKEN_EVIDENCE_KIND = "result_token_evidence"
 
 #: How often we look for the opponent's proposal while waiting.
 POLL_INTERVAL = 0.05
@@ -37,10 +38,51 @@ def _looks_like_proposal(message: object) -> bool:
     return isinstance(message, dict) and message.get("kind") == AGREEMENT_KIND
 
 
-def exchange(channel, ours: AgreementProposal, *, budget: float) -> AgreementOutcome:
+def exchange_token_evidence(
+    channel, ledger, *, game_id: str, game_uid: str, our_group: str,
+    opponent_group: str, sender: str = "police", counted: bool, budget: float,
+) -> dict[int, dict[str, int]]:
+    """Exchange truthful per-sub-game totals before constructing the agreed result."""
+    own: dict[int, int] = {}
+    for number in range(1, 7):
+        total = ledger.sub_game_total(str(number), include_warmup=not counted)
+        if total.status.value == "unknown":
+            raise ValueError(f"sub-game {number} token usage is unknown")
+        own[number] = total.input_tokens + total.output_tokens
+    channel.send_control({
+        "kind": TOKEN_EVIDENCE_KIND, "sender": sender,
+        "game_id": game_id, "game_uid": game_uid,
+        "group_id": our_group, "tokens": own,
+    })
+    deadline = time.monotonic() + budget
+    while time.monotonic() < deadline:
+        message = channel.poll_control()
+        if not isinstance(message, dict) or message.get("kind") != TOKEN_EVIDENCE_KIND:
+            time.sleep(POLL_INTERVAL)
+            continue
+        if message.get("game_id") != game_id or message.get("game_uid") != game_uid:
+            raise ValueError("opponent token evidence names a different game")
+        if message.get("group_id") != opponent_group:
+            raise ValueError("opponent token evidence names a different group")
+        raw = message.get("tokens")
+        if not isinstance(raw, dict):
+            raise ValueError("opponent token evidence is malformed")
+        theirs = {int(key): value for key, value in raw.items()}
+        if set(theirs) != set(range(1, 7)) or any(
+            isinstance(value, bool) or not isinstance(value, int) or value < 0
+            for value in theirs.values()
+        ):
+            raise ValueError("opponent token evidence is incomplete or invalid")
+        return {n: {our_group: own[n], opponent_group: theirs[n]} for n in range(1, 7)}
+    raise TimeoutError("opponent token evidence did not arrive")
+
+
+def exchange(
+    channel, ours: AgreementProposal, *, sender: str = "police", budget: float
+) -> AgreementOutcome:
     """Send our proposal once, wait one budget for theirs, and decide."""
     try:
-        channel.send_control(proposal_wire(ours))
+        channel.send_control(proposal_wire(ours, sender=sender))
     except Exception as exc:  # noqa: BLE001 - a played series is never lost to a send fault
         logger.warning("Could not send the result-agreement proposal: %s", exc)
         return AgreementOutcome(False, f"our proposal could not be sent: {exc}")

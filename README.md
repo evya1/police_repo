@@ -7,7 +7,7 @@
 [![CI](https://github.com/evya1/police_repo/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/evya1/police_repo/actions/workflows/ci.yml)
 [![License: Educational Use EULA](https://img.shields.io/badge/License-Educational_Use_EULA-8A2BE2)](LICENSE)
 
-**Course:** [Final Project](docs/PRD.md) · **Group:** [`ZeroOne0`](docs/evidence/games/ZeroOne0-vs-bestteam/game.json) · **Sibling:** [Thief repository](https://github.com/evya1/thief_repo)
+**Course:** [Final Project](docs/PRD.md) · **Group:** [`ZeroOne0`](docs/evidence/games/ZeroOne0-vs-aviayeli/README.md) · **Sibling:** [Thief repository](https://github.com/evya1/thief_repo)
 
 | Live GUI — local truth and belief | Replay GUI — verified result |
 | --------------------------------- | ---------------------------- |
@@ -28,13 +28,15 @@ uv run pytest
 DEMO_ROOT="$(mktemp -d)"
 uv run python scripts/smoke_replay_integration.py \
   --config config/game.json --artifact-root "$DEMO_ROOT" --json
+uv run python scripts/validate_official_artifacts.py \
+  docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c
 uv run python scripts/replay_gui.py \
   docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3 --verify-only
 uv run python scripts/replay.py \
   docs/evidence/games/ZeroOne0-vs-bestteam/internal-replay/a42b2bb2-2312-c679-5e69-fa3d5ea0aad9 --json
 ```
 
-Expected: Ruff and pytest pass; the loopback result is settled with `replay_verdict: verified_ok`; Replay GUI verification reports `verified_ok`; the audit reports six verified subgames and zero tampered subgames.
+Expected: Ruff and pytest pass; the loopback result is settled with `replay_verdict: verified_ok`; the submitted Avi bundle validates; Replay GUI verification reports `verified_ok`; the audit reports six verified subgames and zero tampered subgames.
 
 ## What the agent does
 
@@ -93,7 +95,8 @@ No credentials are required for tests, local loopback play, replay, or audit ver
 
 ## Running a local match
 
-This public-SDK smoke command composes both roles over an in-memory loopback, runs all six subgames, publishes internal and reference-kit bundles, reloads them, and verifies the replay:
+This public-SDK smoke command composes both roles over an in-memory loopback, runs all six
+subgames, and verifies the internal replay bundle:
 
 ```sh
 LOCAL_ARTIFACTS="$(mktemp -d)"
@@ -104,7 +107,9 @@ uv run python scripts/smoke_replay_integration.py \
   --json
 ```
 
-For a two-process FastMCP run, start the Police and Thief commands documented in [`docs/CLI.md`](docs/CLI.md) from their respective repositories.
+For the production two-process warm-up and official 14-file output, follow
+[Official Appendix-F reporting](docs/reporting/official-appendix-f.md). Valid official files
+appear under `<artifacts>/official/<game_uid>/`; replay and outbox data remain separate.
 
 ## Running against an external peer
 
@@ -175,39 +180,41 @@ uv run python scripts/check_replay_parity.py \
 
 Exit `0` means verified; replay verification distinguishes illegal, invalid/incomplete, and tampered evidence with dedicated nonzero statuses.
 
-## Confirmed match results
+## Submitted match result
 
-The canonical completed game artifact is [`game.json`](docs/evidence/games/ZeroOne0-vs-bestteam/game.json).
+The selected final league report and its full evidence index are documented in
+[`docs/evidence/games/ZeroOne0-vs-aviayeli/README.md`](docs/evidence/games/ZeroOne0-vs-aviayeli/README.md).
 
 | Field | Confirmed value |
 | --- | --- |
-| Game ID | `ZeroOne0-vs-bestteam` |
-| Game UID | `a42b2bb2-2312-c679-5e69-fa3d5ea0aad9` |
+| Game ID | `ZeroOne0-vs-aviayeli` |
+| Game UID | `ff90bd18-f873-981a-e1ca-0b89e6f9f03c` |
 | Mode | `counted` |
-| Opponent | `bestteam` |
-| Match time | 2026-08-24, approximately 22:31–22:44 |
+| Opponent | `aviayeli` |
 | Natural role | Police |
-| Series | Six completed subgames; settled `true` |
-| Audit | `audit_ok: true` in every subgame |
-| Roles | ZeroOne0 Police in 1, 3, 5; Thief in 2, 4, 6 |
-| Final score | ZeroOne0 35 — bestteam 75 |
+| Series | Six completed subgames; mutual agreement confirmed |
+| Roles | ZeroOne0 Thief in 1, 3, 5; Police in 2, 4, 6 |
+| Final score | ZeroOne0 40 — aviayeli 60 |
+| Counted-night consensus | `c39d331ce8c45e30823baf2aeae58053020836542aa6e14d584fa2a58af23ee6` |
+| Full post-game settlement | `5077306a3703467941ce7593bcf805a022c9f162588acc4f3feca97a045b0373` |
 
-This completed external series contains real play by ZeroOne0 in both Police and Thief roles. Replay verification checks 309 sealed records: six verified subgames, zero tampered.
+The Gmail API acknowledged the single selected ZeroOne0 result attachment. The
+older completed series against `bestteam` remains available as
+[additional historical match evidence](docs/evidence/games/ZeroOne0-vs-bestteam/README.md);
+it is not presented as the selected final-report submission.
 
 ## Evidence and submission artifacts
 
 | Evidence | Repository path |
 | --- | --- |
-| Canonical game artifact | [`game.json`](docs/evidence/games/ZeroOne0-vs-bestteam/game.json) |
-| Match configuration/agreement | [`config/matches/ZeroOne0-vs-bestteam-20260824.json`](config/matches/ZeroOne0-vs-bestteam-20260824.json) |
-| Declaration/identity evidence | [`declaration_ZeroOne0-vs-bestteam.json`](docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3/declaration_ZeroOne0-vs-bestteam.json) |
-| Six per-subgame configurations | [`kit-reference-v3/`](docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3/) |
-| Six logs and transcript records | [`kit-reference-v3/`](docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3/) |
-| Result and agreement evidence | [`result_ZeroOne0-vs-bestteam.json`](docs/evidence/games/ZeroOne0-vs-bestteam/kit-reference-v3/result_ZeroOne0-vs-bestteam.json) |
-| Immutable replay and manifest | [`internal-replay/a42b2bb2-2312-c679-5e69-fa3d5ea0aad9/`](docs/evidence/games/ZeroOne0-vs-bestteam/internal-replay/a42b2bb2-2312-c679-5e69-fa3d5ea0aad9/) |
-| Audit/reporting provenance | [`provenance.json`](docs/evidence/games/ZeroOne0-vs-bestteam/provenance.json) |
+| Submitted match evidence index | [`ZeroOne0-vs-aviayeli/README.md`](docs/evidence/games/ZeroOne0-vs-aviayeli/README.md) |
+| Declaration/identity evidence | [`declaration_ZeroOne0-vs-aviayeli.json`](docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c/declaration_ZeroOne0-vs-aviayeli.json) |
+| Six per-subgame configurations | [`official/ff90bd18.../`](docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c/) |
+| Six logs and transcript records | [`official/ff90bd18.../`](docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c/) |
+| Appendix-F result | [`result_ZeroOne0-vs-aviayeli.json`](docs/evidence/games/ZeroOne0-vs-aviayeli/official/ff90bd18-f873-981a-e1ca-0b89e6f9f03c/result_ZeroOne0-vs-aviayeli.json) |
+| Exact submitted attachment | [`submission-email/result_ZeroOne0-vs-aviayeli.json`](docs/evidence/games/ZeroOne0-vs-aviayeli/submission-email/result_ZeroOne0-vs-aviayeli.json) |
+| Additional historical match | [`ZeroOne0-vs-bestteam/`](docs/evidence/games/ZeroOne0-vs-bestteam/) |
 | GUI proof | [Live](docs/assets/live-gui.png) · [Replay](docs/assets/replay-gui-verified.png) |
-| Match evidence index | [`docs/evidence/games/ZeroOne0-vs-bestteam/README.md`](docs/evidence/games/ZeroOne0-vs-bestteam/README.md) |
 
 Reporting composition, validation, settlement, replay publication, and Gmail delivery are documented under [`docs/reporting/`](docs/reporting/).
 
@@ -232,13 +239,14 @@ The suite enforces Ruff, 85% aggregate coverage, documentation presence, local M
 - [x] Completed Police implementation and production FastMCP wiring
 - [x] Completed local-truth Live GUI and verified Replay GUI
 - [x] Completed Commit-Reveal, replay, audit, and tamper rejection
-- [x] Completed six-subgame counted external match against `bestteam`
+- [x] Completed and submitted the selected six-subgame counted series against `aviayeli`
+- [x] Preserved the validated 14-file bundle and exact submitted attachment
 - [x] Completed reporting, agreement, declaration, and artifact integration
 - [x] Completed tests, coverage, documentation, links, and quality gates
 - [x] Confirmed group code `ZeroOne0` and sibling repository
-- [x] Merged release on `master` with annotated `v1.0-submission` tag
+- [ ] Publish a final annotated submission tag after this evidence commit
 
-The exact tagged commit is the submission release. No generated credentials, private identifiers, or secret material are part of the repository.
+The final annotated tag will identify the exact submission release. No generated credentials, private email addresses, OAuth material, or secret material are part of the repository.
 
 ## Repository structure
 
@@ -260,8 +268,8 @@ The exact tagged commit is the submission release. No generated credentials, pri
 ## AI Usage
 
 > [!IMPORTANT]
-> ### Total AI / LLM Cost — **$675.37**
-> **OpenRouter:** $40.87 · **Claude Code:** $410.76 · **Codex:** $223.73 estimated
+> ### Total AI / LLM cost — **$834.22**
+> **OpenRouter:** $44.94 · **Claude Code:** $410.76 · **Codex:** $378.52 estimated
 >
 > Sanitized aggregate project usage only — no secrets, credentials, personal identifiers, session IDs, request IDs, UUIDs, usernames, or private metadata are published.
 
@@ -271,24 +279,25 @@ The exact tagged commit is the submission release. No generated credentials, pri
   <img alt="Aggregated OpenRouter, Claude Code, and Codex usage and cost" src="docs/assets/ai-usage-light.svg">
 </picture>
 
-This dashboard combines the frozen OpenRouter and Claude Code baseline with a sanitized aggregate of completed Codex sessions. Only aggregate categories and calendar-day buckets are published.
+This dashboard combines aggregated OpenRouter activity, the frozen Claude Code baseline, and a sanitized aggregate of completed Codex sessions. Only aggregate categories and calendar-day buckets are published.
 
 ### Reconciliation
 
 | Metric | Aggregate |
 | --- | ---: |
-| Total AI / LLM cost | **$675.37** |
-| OpenRouter reported spend | $40.87 |
+| Total AI / LLM cost | **$834.22** |
+| OpenRouter spend | $44.94 |
 | Claude Code accounted spend | $410.76 |
 | Claude Code source-reported spend | $251.20 |
-| Codex API list-price estimate | $223.73 |
-| OpenRouter requests | 4,142 |
+| Codex API list-price estimate | $378.52 |
+| OpenRouter requests | 4,501 |
 | Claude Code sessions | 18 |
-| Codex sessions | 14 |
-| Combined non-cache input / prompt tokens | 318,631,659 |
-| Combined non-cache output / completion tokens | 4,657,926 |
+| Codex sessions | 29 |
+| Codex recorded completed duration | 9h 7m 37s (15 appended sessions) |
+| Combined input/prompt tokens | 345,410,831 |
+| Combined output/completion tokens | 5,964,454 |
 
-OpenRouter covers calendar days `2026-08-17` through `2026-08-21`. Codex covers completed session data from `2026-08-24` through `2026-08-25`. No Claude Code date range was inferred. Requests and sessions remain separate activity units.
+OpenRouter activity: 2026-08-17 through 2026-08-27 across 7 calendar-day buckets. Codex covers completed session data from `2026-08-24` through `2026-08-28`. No Claude Code date range was inferred. Requests and sessions remain separate activity units.
 
 ### Claude Code model summary
 
@@ -309,36 +318,38 @@ Session appearances are not additive because a session may use more than one mod
 
 | Model | Session appearances | Non-cache input | Output | Reasoning output | Cache read | Cache write | Estimated cost |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| GPT-5.6 Sol | 14 | 9,484,067 | 1,466,599 | 494,310 | 391,165,184 | 0 | $223.73 |
-| **Total** | **14 sessions** | **9,484,067** | **1,466,599** | **494,310** | **391,165,184** | **0** | **$223.73** |
+| GPT-5.4 Mini | 1 | 39,176 | 4,720 | 801 | 284,416 | 0 | $0.07 |
+| GPT-5.6 Luna | 6 | 1,308,470 | 148,619 | 65,177 | 43,047,552 | 0 | $1.30 |
+| GPT-5.6 Sol | 26 | 17,768,789 | 2,438,017 | 818,054 | 643,271,936 | 0 | $377.14 |
+| **Total** | **29 sessions** | **19,116,435** | **2,591,356** | **884,032** | **686,603,904** | **0** | **$378.52** |
 
-Codex records do not include billed cost. The estimate uses [OpenAI's GPT-5.6 Sol promotional API pricing](https://developers.openai.com/api/docs/models/gpt-5.6-sol): $4.00/M non-cache input, $0.40/M cached input, $5.00/M cache writes, and $20.00/M output. Reasoning output is included in output and is not charged twice.
+Codex records do not include billed cost. The API list-price-equivalent estimate uses official model-specific pricing: [GPT-5.6 Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol) at $4.00/M non-cache input, $0.40/M cached input, $5.00/M cache writes, and $20.00/M output; [GPT-5.6 Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna) at $0.20/M non-cache input, $0.02/M cached input, $0.25/M cache writes, and $1.20/M output; and [GPT-5.4 Mini](https://developers.openai.com/api/docs/models/gpt-5.4-mini) at $0.75/M non-cache input, 7.5¢/M cached input, and $4.50/M output. No GPT-5.4 Mini cache writes were recorded. Reasoning output is included in output and is not charged twice.
 
-Codex sessions are deduplicated by private session linkage, but only aggregate counts are published. Token counters are taken at each thread's last completion marker; later aborted or incomplete work is excluded.
+Codex sessions are deduplicated by private session linkage, but only aggregate counts are published. Each thread uses its final cumulative completed counter; model switches are attributed from cumulative deltas. Later aborted or incomplete work is excluded. Recorded duration is explicit completion metadata for the 15 appended sessions only; the preserved historical baseline has no duration metadata.
 
 ### OpenRouter model summary
 
 | Model | Provider | Requests | Prompt tokens | Completion tokens | Total reported cost | Share of cost |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| [Google: Gemini 3.7 Flash](https://openrouter.ai/google/gemini-3.7-flash) | Google | 3,077 | 249,543,651 | 1,613,321 | $23.81 | 58.23% |
-| [Z.ai: GLM 5.2](https://openrouter.ai/z-ai/glm-5.2) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a>, <a href="https://openrouter.ai/provider/crusoe"><img src="docs/assets/providers/crusoe.png" width="16" alt=""> Crusoe</a>, <a href="https://openrouter.ai/provider/decart"><img src="docs/assets/providers/decart.png" width="16" alt=""> Decart</a>, <a href="https://openrouter.ai/provider/friendli"><img src="docs/assets/providers/friendli.png" width="16" alt=""> Friendli</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/siliconflow"><img src="docs/assets/providers/siliconflow.svg" width="16" alt=""> SiliconFlow</a>, <a href="https://openrouter.ai/provider/streamlake"><img src="docs/assets/providers/streamlake.png" width="16" alt=""> StreamLake</a> | 447 | 37,572,921 | 517,421 | $9.25 | 22.63% |
-| [DeepSeek: DeepSeek V4 Pro 0813](https://openrouter.ai/deepseek/deepseek-v4-pro-0813) | <a href="https://openrouter.ai/provider/alibaba"><img src="docs/assets/providers/alibaba.png" width="16" alt=""> Alibaba Cloud Int.</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/parasail"><img src="docs/assets/providers/parasail.png" width="16" alt=""> Parasail</a>, <a href="https://openrouter.ai/provider/siliconflow"><img src="docs/assets/providers/siliconflow.svg" width="16" alt=""> SiliconFlow</a>, <a href="https://openrouter.ai/provider/together"><img src="docs/assets/providers/together.png" width="16" alt=""> Together</a> | 242 | 12,337,550 | 366,486 | $4.35 | 10.62% |
-| [Google: Gemini 3.1 Pro Preview](https://openrouter.ai/google/gemini-3.1-pro-preview) | Google | 76 | 3,382,625 | 28,152 | $2.14 | 5.21% |
-| [DeepSeek: DeepSeek V4 Pro 0423](https://openrouter.ai/deepseek/deepseek-v4-pro) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a> | 53 | 1,587,579 | 32,999 | $0.87 | 2.11% |
-| [Google: Gemini 2.5 Pro](https://openrouter.ai/google/gemini-2.5-pro) | Google | 18 | 205,051 | 4,663 | $0.26 | 0.62% |
-| [DeepSeek: DeepSeek V4 Flash 0731](https://openrouter.ai/deepseek/deepseek-v4-flash-0731) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a>, <a href="https://openrouter.ai/provider/digitalocean"><img src="docs/assets/providers/digitalocean.png" width="16" alt=""> DigitalOcean</a>, <a href="https://openrouter.ai/provider/fireworks"><img src="docs/assets/providers/fireworks.png" width="16" alt=""> Fireworks</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/morph"><img src="docs/assets/providers/morph.jpg" width="16" alt=""> Morph</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/relace"><img src="docs/assets/providers/relace.png" width="16" alt=""> Relace</a> | 163 | 4,066,925 | 90,406 | $0.14 | 0.33% |
-| [MoonshotAI: Kimi K2.6](https://openrouter.ai/moonshotai/kimi-k2.6) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a>, <a href="https://openrouter.ai/provider/decart"><img src="docs/assets/providers/decart.png" width="16" alt=""> Decart</a> | 8 | 100,584 | 826 | $0.03 | 0.07% |
-| Other (15 models) | Multiple providers | 58 | 324,312 | 2,837 | $0.07 | 0.17% |
+| [Google: Gemini 3.7 Flash](https://openrouter.ai/google/gemini-3.7-flash) | Google | 3,077 | 249,543,651 | 1,613,321 | $23.81 | 52.96% |
+| [Z.ai: GLM 5.2](https://openrouter.ai/z-ai/glm-5.2) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a>, <a href="https://openrouter.ai/provider/crusoe"><img src="docs/assets/providers/crusoe.png" width="16" alt=""> Crusoe</a>, <a href="https://openrouter.ai/provider/decart"><img src="docs/assets/providers/decart.png" width="16" alt=""> Decart</a>, <a href="https://openrouter.ai/provider/friendli"><img src="docs/assets/providers/friendli.png" width="16" alt=""> Friendli</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/siliconflow"><img src="docs/assets/providers/siliconflow.svg" width="16" alt=""> SiliconFlow</a>, <a href="https://openrouter.ai/provider/streamlake"><img src="docs/assets/providers/streamlake.png" width="16" alt=""> StreamLake</a> | 447 | 37,572,921 | 517,421 | $9.25 | 20.58% |
+| [DeepSeek: DeepSeek V4 Pro 0813](https://openrouter.ai/deepseek/deepseek-v4-pro-0813) | <a href="https://openrouter.ai/provider/alibaba"><img src="docs/assets/providers/alibaba.png" width="16" alt=""> Alibaba Cloud Int.</a>, <a href="https://openrouter.ai/provider/gmicloud"><img src="docs/assets/providers/gmicloud.png" width="16" alt=""> GMICloud</a>, <a href="https://openrouter.ai/provider/novita"><img src="docs/assets/providers/novita.png" width="16" alt=""> NovitaAI</a>, <a href="https://openrouter.ai/provider/parasail"><img src="docs/assets/providers/parasail.png" width="16" alt=""> Parasail</a>, <a href="https://openrouter.ai/provider/siliconflow"><img src="docs/assets/providers/siliconflow.svg" width="16" alt=""> SiliconFlow</a>, <a href="https://openrouter.ai/provider/together"><img src="docs/assets/providers/together.png" width="16" alt=""> Together</a> | 291 | 16,184,856 | 438,093 | $4.83 | 10.74% |
+| [Google: Gemini 3.1 Pro Preview](https://openrouter.ai/google/gemini-3.1-pro-preview) | Google | 76 | 3,382,625 | 28,152 | $2.14 | 4.74% |
+| z-ai/glm-5.3-20260816 | Z.AI | 90 | 5,947,835 | 44,830 | $1.86 | 4.13% |
+| anthropic/claude-4.5-haiku-20251001 | Amazon Bedrock | 144 | 4,369,961 | 33,791 | $0.97 | 2.15% |
+| [DeepSeek: DeepSeek V4 Pro 0423](https://openrouter.ai/deepseek/deepseek-v4-pro) | <a href="https://openrouter.ai/provider/baidu"><img src="docs/assets/providers/baidu.png" width="16" alt=""> Baidu Qianfan</a> | 53 | 1,587,579 | 32,999 | $0.87 | 1.92% |
+| anthropic/claude-4.8-opus-fast-20260528 | Anthropic | 14 | 211,650 | 4,426 | $0.69 | 1.52% |
+| Other (18 models) | Multiple providers | 309 | 7,466,924 | 125,849 | $0.57 | 1.26% |
 
 > Claude Code includes four sessions that source-reported $0.00. The Opus 4.8 list-price equivalent is included in accounted spend; one $15.65 multi-model session remains unallocated rather than assigning its cost to a model without evidence.
 
 > Totals are calculated from full-precision values before public dollar amounts are rounded to two decimal places.
 
-Regenerate with a private input kept outside the repository:
+Regenerate with private inputs kept outside the repository:
 
 ```bash
 python scripts/generate_usage_dashboard.py \
-  --openrouter-input openrouter_activity.csv \
+  --openrouter-input "$OLD_CSV" "$NEW_CSV" \
   --claude-input data/claude-code-usage-aggregate.json \
   --codex-input data/codex-usage-aggregate.json \
   --output-dir docs/assets \

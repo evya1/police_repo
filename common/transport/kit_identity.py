@@ -12,10 +12,8 @@ An identity assembled from placeholders would be a false declaration under App. 
 and it would look exactly like a true one.
 
 **The signature is sign-then-insert.** The per-group digest covers the block as it stood
-BEFORE the signature key existed, so the field is excluded from its own preimage. It carries a
-``sha256:`` prefix; the consensus digest in ``kit_consensus`` does not. They are different
-fields computed over different things, and giving them the same shape would invite exactly one
-confusion too many.
+BEFORE the signature key existed, so the field is excluded from its own preimage. Official
+v1.1 stores the bare digest over sorted-key JSON with the standard JSON separators.
 
 The greeting carries a SUBSET: enough for an opponent to write our half of their declaration,
 and nothing they cannot check. Hardware travels as a digest, never as a spec -- they cannot
@@ -25,21 +23,24 @@ verify our RAM, and a value nobody can check does not belong on a wire.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass, field
 
 from common.transport.canonical import canonical_bytes
 
-#: Sign-then-insert prefix for the per-group declaration signature.
-SIGNATURE_PREFIX = "sha256:"
+#: Compatibility export; official v1.1 signatures use no textual prefix.
+SIGNATURE_PREFIX = ""
 
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+_SIGNATURE_RE = re.compile(r"^[0-9a-f]{64}$")
 
 #: The keys that ride the greeting. Everything an opponent needs to name us truthfully in
 #: their own declaration, and nothing they would have to take on trust.
 GREETING_KEYS = (
-    "group_id", "group_name", "repos", "mcp_servers", "llm_model",
-    "hardware_spec_sha256", "github_commit", "counted_games_played", "code_version",
+    "group_id", "group_name", "members", "repos", "mcp_servers", "llm_model",
+    "hardware_spec", "hardware_spec_sha256", "github_commit", "counted_games_played",
+    "code_version", "signature",
 )
 
 
@@ -122,23 +123,25 @@ def group_block(identity: GroupIdentity) -> dict:
     """The declaration's block for one group, signed then sealed."""
     block = _unsigned_block(identity)
     return {**block, "signature": SIGNATURE_PREFIX + hashlib.sha256(
-        canonical_bytes(block)
+        json.dumps(block, sort_keys=True, ensure_ascii=False).encode()
     ).hexdigest()}
 
 
 def verify_group_block(block: dict) -> bool:
     """Re-derive the signature over the block minus the signature itself."""
     declared = block.get("signature")
-    if not isinstance(declared, str) or not declared.startswith(SIGNATURE_PREFIX):
+    if not isinstance(declared, str) or not _SIGNATURE_RE.fullmatch(declared):
         return False
     unsigned = {k: v for k, v in block.items() if k != "signature"}
-    expected = SIGNATURE_PREFIX + hashlib.sha256(canonical_bytes(unsigned)).hexdigest()
+    expected = SIGNATURE_PREFIX + hashlib.sha256(
+        json.dumps(unsigned, sort_keys=True, ensure_ascii=False).encode()
+    ).hexdigest()
     return declared == expected
 
 
 def identity_greeting_block(identity: GroupIdentity) -> dict:
-    """The subset that rides the greeting. Hardware travels as a digest, never as a spec."""
-    block = _unsigned_block(identity)
+    """The signed declaration block needed for the opponent's official report."""
+    block = group_block(identity)
     return {k: block[k] for k in GREETING_KEYS}
 
 

@@ -1,21 +1,13 @@
-"""End-to-end series engine over a PeerChannel.
-
-The top of the tree: a full six-sub-game series that drives handshake, strict
-thief-first alternation, at-least-once turn delivery, and a real three-layer mutual
-audit over any PeerChannel (loopback for CI, FastMCP for production). The engine is
-role-agnostic: it takes the natural role and the channel and derives the per-sub-game
-role via ``role_for``. A failed audit settles the sub-game ``TAMPER_FORFEIT`` — both
-sides zeroed, no repair path (FR-29). The per-sub-game turn loop lives in
-``subgame.py`` (150-logical-line cap).
-"""
+"""Role-agnostic six-sub-game engine over any ``PeerChannel`` implementation."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from common.domain.scoring import Outcome, Role, settled_outcome
+from common.domain.scoring import Outcome, Role, role_for, settled_outcome
 from common.transport import replay_evidence as _replay_evidence
+from common.transport.greetings import NegotiationContext, SeriesGreetingSession
 from common.transport.opponent_pin import OpponentPin
 from common.transport.replay_evidence import SubgameDriver, SubgameReplayEvidence
 from common.transport.series_greeting import exchange_series_greeting
@@ -31,26 +23,17 @@ class Budgets(Protocol):
     poll_interval: float
 
 
+@dataclass(eq=False, repr=False, slots=True)
 class PeerConfig:
     """Configuration injected into the series engine."""
 
-    def __init__(
-        self,
-        natural_role: Role,
-        budgets: Budgets,
-        terms: dict,
-        seed: int = 0,
-        locks: dict[str, str] | None = None,
-        mode: str = "warmup",
-        identity_block: dict | None = None,
-    ) -> None:
-        self.natural_role = natural_role
-        self.budgets = budgets
-        self.terms = terms
-        self.seed = seed
-        self.locks = locks
-        self.mode = mode
-        self.identity_block = identity_block
+    natural_role: Role
+    budgets: Budgets
+    terms: dict
+    seed: int = 0
+    locks: dict[str, str] | None = None
+    mode: str = "warmup"
+    identity_block: dict | None = None
 
 
 @dataclass
@@ -115,6 +98,7 @@ class PeerFacade:
         subgame_driver: SubgameDriver | None = None,
         mode: str | None = None,
         opponent_pin: OpponentPin | None = None,
+        greeting_session: SeriesGreetingSession | None = None,
     ) -> None:
         self.channel = channel
         self.engine = engine
@@ -129,12 +113,23 @@ class PeerFacade:
         self._opponent_identity: dict | None = None
         self._ledgers: list[SeriesRow] = []
         self._subgame_driver = subgame_driver or _replay_evidence.default_subgame_driver()
+        context = NegotiationContext(
+            terms=config.terms, group_id=name, locks=config.locks,
+            identity_block=config.identity_block,
+        )
+        self._greetings = greeting_session or SeriesGreetingSession(context)
+        self._greetings.require_context(context)
 
     def run(self) -> SeriesResult:
         """Run a full six-sub-game series. Return the result."""
+        select_endpoint = getattr(self.channel, "select_for_role", None)
+        if select_endpoint is not None:
+            select_endpoint(role_for(self.config.natural_role, 1))
         self._exchange_greeting()
         evidence = _replay_evidence.EvidenceCollector(self._game_id, self._game_uid)
         for sub_game in range(1, 7):
+            if select_endpoint is not None:
+                select_endpoint(role_for(self.config.natural_role, sub_game))
             row = self._subgame_driver(
                 self.channel, self.engine, self.config, sub_game, evidence_sink=evidence.capture
             )
@@ -156,7 +151,7 @@ class PeerFacade:
     def _exchange_greeting(self) -> None:
         """Send our greeting and poll for the opponent's, then verify (fixed FR-13 order)."""
         resolved = exchange_series_greeting(
-            self.channel, self.config, self.name, self._opponent_pin,
+            self.channel, self.config, self.name, self._opponent_pin, self._greetings,
         )
         (self._game_id, self._game_uid, self._opponent_group_id,
          self._opponent_identity) = resolved

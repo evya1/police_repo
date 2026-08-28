@@ -2,28 +2,54 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
-import re
+import shutil
 import threading
-import uuid
 from pathlib import Path
 
 import pytest
 
+from common.config import load_config
 from common.domain.scoring import Role
-from common.transport.canonical import canonical_bytes
 from common.transport.canonical import commit as recompute
-from common.transport.ids import game_uid as derive_uid
+from common.transport.kit_bundle_validation import validate_official_bundle
+from common.transport.kit_identity import GroupIdentity, group_block
+from common.transport.kit_settlement import TIE_SCORE
 from common.transport.loopback import pair
 from common.transport.series import PeerFacade, SeriesResult
-from common.transport.terms import TERMS_KEYS
 from police_peer.reporting.kit_bundle import publish_kit_bundle
-from police_peer.reporting.settlement import publish_kit
 from police_peer.sdk import Budgets, create_peer
 
-KIT_NAME_RE = re.compile(r"^(declaration|config|log|result)_(?P<gid>.+?)(?:_g(?P<nn>\d+))?\.json$")
 POLICE, THIEF = "kit-police", "kit-thief"
+HARDWARE = {
+    "cpu_type": "Example CPU", "cpu_freq_mhz": 2400.0, "cpu_cores": 2,
+    "ram_gb": 4.0, "gpu_model": None, "vram_gb": None,
+}
+
+
+def _identity(group: str, commit: str) -> dict:
+    return group_block(GroupIdentity(
+        group_id=group, group_name=group, members=(f"{group}-member",),
+        repos={"cop": "https://example.invalid/cop", "thief": "https://example.invalid/thief"},
+        mcp_servers={"cop": "http://127.0.0.1:8101/mcp", "thief": "http://127.0.0.1:8102/mcp"},
+        llm_model="template", hardware_spec=HARDWARE,
+        github_commit=commit, counted_games_played=0, code_version="1.0.0",
+    ))
+
+
+@pytest.fixture(scope="module")
+def official_args() -> dict:
+    config = load_config(Path(__file__).resolve().parents[2] / "config" / "game.json")
+    config["agreed_between"] = [POLICE, THIEF]
+    return {
+        "groups": [_identity(POLICE, "a" * 40), _identity(THIEF, "b" * 40)],
+        "agreed_config": config,
+        "confirmed": True,
+        "max_tokens_per_game": 200_000,
+        "tokens_by_sub_game": {
+            number: {POLICE: 0, THIEF: 0} for number in range(1, 7)
+        },
+    }
 
 
 @pytest.fixture(scope="module")
@@ -57,9 +83,11 @@ def series() -> SeriesResult:
 
 
 @pytest.fixture(scope="module")
-def bundle(series, tmp_path_factory) -> Path:
+def bundle(series, official_args, tmp_path_factory) -> Path:
     root = tmp_path_factory.mktemp("kit")
-    return publish_kit_bundle(root, series, our_group=POLICE, counted=False)
+    return publish_kit_bundle(
+        root, series, our_group=POLICE, counted=False, **official_args
+    )
 
 
 def docs(bundle: Path) -> dict[str, dict]:
@@ -72,27 +100,21 @@ def test_the_bundle_is_exactly_fourteen_flat_files(bundle):
     assert not [p for p in bundle.iterdir() if p.is_dir()], "the kit reads ONE flat directory"
 
 
-def test_every_filename_parses_under_the_kits_own_grammar(bundle):
-    for name in sorted(p.name for p in bundle.iterdir()):
-        assert KIT_NAME_RE.match(name), name
+def test_validator_rejects_missing_and_mismatched_artifacts(bundle, tmp_path):
+    missing = tmp_path / "missing"
+    shutil.copytree(bundle, missing)
+    next(missing.glob("config_*_g03.json")).unlink()
+    with pytest.raises(Exception, match="file set mismatch"):
+        validate_official_bundle(missing)
 
-
-def test_one_game_uid_joins_every_artifact(bundle):
-    uids = {d["game_uid"] for d in docs(bundle).values()}
-    assert len(uids) == 1
-    uuid.UUID(uids.pop())
-
-
-def test_the_uid_re_derives_from_the_flat_fourteen_key_terms(bundle, series):
-    """The failure a consistency check cannot see: a uid built from a wider object."""
-    every = docs(bundle)
-    terms = next(d["terms"] for n, d in every.items() if n.startswith("config_"))
-    assert set(terms) == set(TERMS_KEYS), "the config must carry exactly the flat signed terms"
-    assert derive_uid(terms, POLICE, THIEF) == series.game_uid
-
-
-def test_the_game_id_is_the_sorted_pair_not_self_first(series):
-    assert series.game_id == "-vs-".join(sorted([POLICE, THIEF]))
+    mismatched = tmp_path / "mismatched"
+    shutil.copytree(bundle, mismatched)
+    path = next(mismatched.glob("log_*_g04.json"))
+    document = json.loads(path.read_text())
+    document["game_uid"] = "different"
+    path.write_text(json.dumps(document))
+    with pytest.raises(Exception, match="identifiers mismatch"):
+        validate_official_bundle(mismatched)
 
 
 def test_every_sealed_record_reproduces_its_commitment(bundle):
@@ -100,19 +122,12 @@ def test_every_sealed_record_reproduces_its_commitment(bundle):
     for name, doc in docs(bundle).items():
         if not name.startswith("log_"):
             continue
-        for half in ("records", "opponent_records"):
-            for record in doc.get(half) or []:
-                assert set(record) == {"payload", "nonce", "commit"}
-                assert recompute(record["payload"], record["nonce"]) == record["commit"]
-                checked += 1
+        assert "opponent_records" not in doc
+        for record in doc["records"]:
+            assert set(record) == {"payload", "nonce", "commit"}
+            assert recompute(record["payload"], record["nonce"]) == record["commit"]
+            checked += 1
     assert checked > 0
-
-
-def test_the_config_digest_matches_its_own_terms(bundle):
-    for name, doc in docs(bundle).items():
-        if name.startswith("config_"):
-            expected = hashlib.sha256(canonical_bytes(doc["terms"])).hexdigest()
-            assert doc["config_sha256"] == expected
 
 
 def test_totals_are_the_sum_of_the_rows(bundle):
@@ -121,32 +136,23 @@ def test_totals_are_the_sum_of_the_rows(bundle):
     summed = {
         g: sum(row["score"][g] for row in result["sub_games"]) for g in result["groups"]
     }
-    addend = final.get("tie_score_each", 0) if final["series_tie"] else 0
+    addend = TIE_SCORE if final["series_tie"] else 0
     assert final["total_score"] == {g: v + addend for g, v in summed.items()}
+    assert set(final) == {
+        "total_score", "sub_games_won", "ties", "winner_group", "series_tie",
+        "tokens_total_series",
+    }
 
 
-def test_the_kit_omits_optional_token_metadata(series, tmp_path):
-    """The kit projection carries only the kit's mandatory fields; `tokens` is optional."""
-    root = publish_kit_bundle(tmp_path, series, our_group=POLICE, counted=False,
-                              include_tokens=False)
-    result = next(d for n, d in docs(root).items() if n.startswith("result_"))
-    assert all("tokens" not in row for row in result["sub_games"])
-    assert "tokens_total_series" not in result["final_result"]
-
-
-def test_publish_kit_omits_token_metadata_even_when_usage_is_known(series, tmp_path):
-    """Token usage is not projected into the kit, so `unknown` usage cannot abort it."""
-    publish_kit(tmp_path, series, our_group=POLICE, mode="warmup", confirmed=False)
-    emitted = docs(tmp_path / "kit" / series.game_uid)
-    result = next(doc for name, doc in emitted.items() if name.startswith("result_"))
-    assert all("tokens" not in row for row in result["sub_games"])
-    assert "tokens_total_series" not in result["final_result"]
-
-
-def test_a_warm_up_never_arms_the_league_fields(bundle):
-    result = next(d for n, d in docs(bundle).items() if n.startswith("result_"))
-    assert set(result["final_result"]["diversity_reward_applied"].values()) == {False}
-    assert "league" not in result
+def test_unknown_or_omitted_token_evidence_fails_closed(series, official_args, tmp_path):
+    args = {**official_args, "tokens_by_sub_game": None}
+    with pytest.raises(Exception, match="token evidence"):
+        publish_kit_bundle(tmp_path, series, our_group=POLICE, counted=False, **args)
+    with pytest.raises(Exception, match="token evidence"):
+        publish_kit_bundle(
+            tmp_path, series, our_group=POLICE, counted=False,
+            include_tokens=False, **official_args,
+        )
 
 
 def test_declaration_and_result_agree_on_the_series_length(bundle):
@@ -154,35 +160,17 @@ def test_declaration_and_result_agree_on_the_series_length(bundle):
     declaration = next(d for n, d in every.items() if n.startswith("declaration_"))
     result = next(d for n, d in every.items() if n.startswith("result_"))
     assert declaration["num_sub_games"] == result["num_sub_games"] == 6
-
-
-def test_step_zero_reaches_the_declaration(series, tmp_path):
-    step_zero = {"group_id": POLICE, "github_commit": "a" * 40, "signature": "sealed"}
-    emitted = publish_kit_bundle(
-        tmp_path, series, our_group=POLICE, counted=False, step_zero=step_zero,
+    assert all(len(group["signature"]) == 64 for group in declaration["groups"].values())
+    assert all(
+        set(group["hardware_spec"]) == set(HARDWARE)
+        for group in declaration["groups"].values()
     )
-    declaration = next(
-        document for name, document in docs(emitted).items()
-        if name.startswith("declaration_")
-    )
-    assert declaration["step_zero"] == step_zero
 
 
 def test_every_logged_sub_game_appears_in_the_result(bundle):
     every = docs(bundle)
-    logged = {d["sub_game_number"] for n, d in every.items() if n.startswith("log_")}
+    logged = {d["summary"]["sub_game_number"] for n, d in every.items() if n.startswith("log_")}
     listed = {row["sub_game_number"] for n, d in every.items()
               if n.startswith("result_") for row in d["sub_games"]}
     assert logged <= listed
     assert logged == set(range(1, 7))
-
-
-def test_the_internal_bundle_is_untouched_by_the_projection(series, tmp_path):
-    """The kit bundle is written beside the evidence of record, never over it."""
-    from police_peer.reporting.replay_bundle import publish_replay_bundle
-    from police_peer.sdk import verify_replay_bundle
-
-    internal = publish_replay_bundle(tmp_path, series)
-    publish_kit_bundle(tmp_path, series, our_group=POLICE, counted=False)
-    assert len(list(internal.iterdir())) == 15
-    assert verify_replay_bundle(internal).verdict.value == "verified_ok"

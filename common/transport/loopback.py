@@ -1,7 +1,7 @@
 """Both peers in one process, over the same four-tool surface as the wire.
 
 This is not a mock. It is the same message dicts, the same tool names, the same
-``{"ok": True}`` returns; only the hop is a function call. That is what lets the entire series —
+the same replies; only the hop is a function call. That is what lets the entire series —
 handshake, six sub-games, mutual audits, artifacts — run in CI with **no dependencies installed**,
 and it is why the fault injector in ``faults.py`` can prove the receiver contract without a
 network to be flaky.
@@ -13,7 +13,12 @@ take ``message``; ``submit_audit`` takes ``payload``.
 
 from __future__ import annotations
 
+import threading
 from collections import deque
+from collections.abc import Mapping
+
+from common.transport.canonical import canonical_bytes
+from common.transport.tool_replies import accepted_audit_response
 
 
 class Inboxes:
@@ -24,10 +29,35 @@ class Inboxes:
         self.turns: deque[dict] = deque()
         self.audits: deque[dict] = deque()
         self.controls: deque[dict] = deque()
+        # Optional live-wire compatibility responder.  The professor's mailbox
+        # contract needs only {"ok": true}; some league peers additionally use
+        # the immediate tool result as their counter-signature evidence.
+        self.agreement_reply = None
+        # Set by the outbound channel immediately before disclosing our audit.
+        # The server may return the same reveal to peers that consume audit
+        # evidence from the synchronous tool result as well as the symmetric push.
+        self.audit_reply = None
+        self._seen_audits: set[bytes] = set()
+        # FastMCP dispatches sync tool handlers onto worker threads, so two
+        # concurrent submit_audit calls can interleave here. The lock makes
+        # deduplicate-or-enqueue one indivisible step for every caller.
+        self._audit_lock = threading.Lock()
+
+    def enqueue_audit(self, payload: dict) -> bool:
+        """Enqueue one exact audit once; absorb at-least-once redelivery."""
+        fingerprint = canonical_bytes(payload)
+        with self._audit_lock:
+            if fingerprint in self._seen_audits:
+                return False
+            self._seen_audits.add(fingerprint)
+            self.audits.append(payload)
+            return True
 
     def drain(self) -> None:
-        for q in (self.agreements, self.turns, self.audits, self.controls):
-            q.clear()
+        with self._audit_lock:
+            for q in (self.agreements, self.turns, self.audits, self.controls):
+                q.clear()
+            self._seen_audits.clear()
 
 
 class LoopbackPeer:
@@ -49,7 +79,11 @@ class LoopbackPeer:
         return {"ok": True}
 
     def submit_audit(self, payload: dict) -> dict:
-        self.inboxes.audits.append(payload)
+        self.inboxes.enqueue_audit(payload)
+        reply = self.inboxes.audit_reply
+        required = {"sender", "records", "result_claim"}
+        if isinstance(reply, Mapping) and required <= reply.keys():
+            return accepted_audit_response(reply)
         return {"ok": True}
 
     def receive_control(self, message: dict) -> dict:
@@ -72,6 +106,7 @@ class LoopbackTransport:
         return self.theirs.receive_turn(message)
 
     def send_audit(self, payload: dict) -> dict:
+        self.ours.inboxes.audit_reply = payload
         return self.theirs.submit_audit(payload)
 
     def send_control(self, message: dict) -> dict:

@@ -49,6 +49,9 @@ class AgreementOutcome:
     agreed: bool
     reason: str
     their_sha: str | None = None
+    rows: list[dict] | None = None
+    final_result: dict | None = None
+    tokens_by_sub_game: dict[int, dict[str, int]] | None = None
 
 
 def build_proposal(game_id: str, game_uid: str, final_result: dict, rows: list[dict]):
@@ -63,19 +66,22 @@ def build_proposal(game_id: str, game_uid: str, final_result: dict, rows: list[d
     )
 
 
-def proposal_wire(proposal: AgreementProposal) -> dict:
+def proposal_wire(proposal: AgreementProposal, *, sender: str | None = None) -> dict:
     """The message we put on the wire.
 
     The digest is the claim; the aggregate rides along so a disagreeing opponent can see WHAT
     we settled on rather than only that we disagree. It is never what agreement is decided on.
     """
-    return {
+    message = {
         "kind": AGREEMENT_KIND,
         "game_id": proposal.game_id,
         "game_uid": proposal.game_uid,
         "consensus_sha256": proposal.consensus_sha256,
         "final_result": proposal.final_result,
     }
+    if sender is not None:
+        message["sender"] = sender
+    return message
 
 
 def evaluate(ours: AgreementProposal, theirs: dict | None) -> AgreementOutcome:
@@ -89,10 +95,17 @@ def evaluate(ours: AgreementProposal, theirs: dict | None) -> AgreementOutcome:
     their_sha = theirs.get("consensus_sha256")
     if not isinstance(their_sha, str) or not their_sha:
         return AgreementOutcome(False, "the counter-proposal declared no consensus digest")
-    if theirs.get("game_uid") and theirs["game_uid"] != ours.game_uid:
+    if theirs.get("game_id") != ours.game_id:
         return AgreementOutcome(
             False,
-            f"the counter-proposal names game_uid {theirs['game_uid']}, we derived "
+            f"the counter-proposal names game_id {theirs.get('game_id')!r}, we derived "
+            f"{ours.game_id!r}",
+            their_sha,
+        )
+    if theirs.get("game_uid") != ours.game_uid:
+        return AgreementOutcome(
+            False,
+            f"the counter-proposal names game_uid {theirs.get('game_uid')!r}, we derived "
             f"{ours.game_uid} -- two uids for one match is the contradiction rule 35 zeroes",
             their_sha,
         )

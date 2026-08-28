@@ -116,8 +116,8 @@ class RenderingTests(unittest.TestCase):
             self.openrouter, self.claude, self.codex
         )
         self.assertEqual(re.findall(r"\$[\d,]+\.\d{3,}", outputs), [])
-        self.assertIn("### Total AI / LLM Cost — **$639.99**", outputs)
-        self.assertIn("| Total AI / LLM cost | **$639.99** |", outputs)
+        self.assertIn("### Total AI / LLM cost — **$794.78**", outputs)
+        self.assertIn("| Total AI / LLM cost | **$794.78** |", outputs)
 
     def test_readme_update_changes_only_marker_content(self) -> None:
         with TemporaryDirectory() as directory:

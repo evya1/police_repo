@@ -39,22 +39,23 @@ def test_single_digit_sub_games_are_padded_not_bare():
     assert names.log_name("a-vs-b", 9).endswith("_g09.json")
 
 
-def test_base_block_carries_the_join_keys_and_declares_its_profile():
+def test_base_block_carries_join_keys_and_official_schema_version():
     block = names.base_block("a-vs-b", "uid-1")
     assert block["game_id"] == "a-vs-b"
     assert block["game_uid"] == "uid-1"
-    assert block["schema_profile"] == "league-kit-reference-v3"
-    assert "official" not in block["schema_profile"]
+    assert block["schema_version"] == "1.1"
+    assert "schema_profile" not in block
 
 
-def test_github_links_are_omitted_when_unknown_and_carried_when_given():
-    assert "github" not in names.links_block("a-vs-b")
-    repos = {"g1": {"cop": "https://example.invalid/c"}}
-    assert names.links_block("a-vs-b", repos)["github"] == repos
+def test_links_have_no_non_reference_fields():
+    assert set(names.links_block("a-vs-b")) == {
+        "_remark", "declaration", "config", "log", "result",
+    }
 
 
 def test_links_name_all_four_kinds(kit_game_id):
     links = names.links_block(kit_game_id)
+    assert links["_remark"].startswith("These are logical roles")
     assert links["declaration"] == f"declaration_{kit_game_id}.json"
     assert links["result"] == f"result_{kit_game_id}.json"
     assert links["config"] == f"config_{kit_game_id}_g<NN>.json"

@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from common.transport.canonical import canonical_bytes
-from common.transport.kit_names import result_name
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.reporting.gmail_support import (
     GMAIL_SEND_SCOPE,
@@ -13,6 +11,7 @@ from police_peer.reporting.gmail_support import (
     FileIdempotencyStore,
     GmailClientNotConfiguredError,
     GmailError,
+    GmailTransmissionUncertainError,
     IdempotencyStore,
     InvalidScopeError,
     build_email_message,
@@ -22,8 +21,8 @@ from police_peer.reporting.gmail_support import (
 __all__ = [
     "GMAIL_SEND_SCOPE", "AttachmentMissingError", "DraftSubstitutionError",
     "DuplicateSendError", "FileIdempotencyStore", "GmailClientNotConfiguredError",
-    "GmailError", "GmailSender", "IdempotencyStore", "InvalidScopeError",
-    "build_email_message", "validate_oauth_scope",
+    "GmailError", "GmailSender", "GmailTransmissionUncertainError", "IdempotencyStore",
+    "InvalidScopeError", "build_email_message", "validate_oauth_scope",
 ]
 
 
@@ -56,9 +55,6 @@ class GmailSender:
         subject: str | None = None,
         body: str = "Automated Police/Thief series report attached.",
     ) -> dict[str, Any]:
-        if self.idempotency_store.is_sent(game_uid):
-            raise DuplicateSendError(f"Report for game_uid '{game_uid}' has already been transmitted.")
-
         if self._client is None:
             raise GmailClientNotConfiguredError("Gmail service client is not configured.")
 
@@ -75,6 +71,8 @@ class GmailSender:
             body=body,
             attachments=artifacts,
         )
+        if not self.idempotency_store.claim(game_uid):
+            raise DuplicateSendError(f"Report for game_uid '{game_uid}' has already been transmitted.")
 
         def _raw_send() -> dict[str, Any]:
             # Disallow draft substitutions
@@ -85,9 +83,31 @@ class GmailSender:
                 messages_res = users_res.messages()
             except Exception as exc:
                 raise DraftSubstitutionError("Cannot use drafts API for report transmission.") from exc
-            return messages_res.send(userId="me", body={"raw": raw_b64}).execute()
+            request = messages_res.send(userId="me", body={"raw": raw_b64})
+            try:
+                return request.execute()
+            except Exception as exc:
+                # The request may already be on the wire; its outcome is unknown.
+                # Classify as a hard failure so the Gatekeeper never re-attempts
+                # the non-idempotent users.messages.send operation.
+                raise GmailTransmissionUncertainError(
+                    "Gmail transmission started but its outcome is unknown"
+                ) from exc
 
-        result = self.gatekeeper.execute(_raw_send)
+        try:
+            result = self.gatekeeper.execute(_raw_send)
+            if not isinstance(result, dict) or not result.get("id"):
+                raise GmailTransmissionUncertainError("Gmail API did not acknowledge the message")
+        except GmailTransmissionUncertainError:
+            # Fail closed: once a provider-side attempt may have begun, retain
+            # the claim so no automatic duplicate send can ever follow.
+            raise
+        except Exception:
+            # Definite pre-transmission failure (admission refusal, client
+            # construction): the provider never saw a request, so the claim
+            # may be safely released for a later retry.
+            self.idempotency_store.release(game_uid)
+            raise
         self.idempotency_store.mark_sent(game_uid)
         return result
 
@@ -95,22 +115,12 @@ class GmailSender:
         self,
         *,
         game_uid: str,
-        result: dict[str, Any],
-        filename: str | None = None,
+        result_bytes: bytes,
+        filename: str,
         recipient: str | None = None,
         subject: str | None = None,
     ) -> dict[str, Any]:
-        """Send one kit-shaped result as the canonical body plus the same file attached.
-
-        The kit's settled convention (SPEC \u00a76.1, WARNINGS \u00a76) is one email per team
-        per counted series: the result JSON as the exact canonical bytes in the body, and the
-        same file as the single named attachment. The other three artifact kinds are published
-        in the repos, never mailed. This is additive: ``send_report`` (the older 14-attachment
-        internal-1 path) is untouched.
-        """
-        if self.idempotency_store.is_sent(game_uid):
-            raise DuplicateSendError(f"Report for game_uid '{game_uid}' has already been transmitted.")
-
+        """Send the exact already-published result bytes as the single JSON attachment."""
         if self._client is None:
             raise GmailClientNotConfiguredError("Gmail service client is not configured.")
 
@@ -119,20 +129,20 @@ class GmailSender:
             raise ValueError("Recipient email address must be explicitly provided or configured.")
 
         target_subject = subject or f"[PoliceThief-Report] Series {game_uid}"
-        # The body must be the exact canonical compact bytes that were hashed -- never a
-        # pretty-printed re-serialization (SPEC \u00a76). ``canonical_bytes`` is the compact form.
-        body_bytes = canonical_bytes(result)
-        body = body_bytes.decode("utf-8")
-        game_id_value = result.get("game_id")
-        target_filename = filename or result_name(game_id_value if isinstance(game_id_value, str) else "")
+        body = (
+            "The validated final Police/Thief series report is attached as JSON. "
+            f"Series identifier: {game_uid}."
+        )
 
         _, raw_b64 = build_email_message(
             sender=self.sender_email,
             recipient=target_recipient,
             subject=target_subject,
             body=body,
-            attachments=[(target_filename, body_bytes)],
+            attachments=[(filename, result_bytes)],
         )
+        if not self.idempotency_store.claim(game_uid):
+            raise DuplicateSendError(f"Report for game_uid '{game_uid}' has already been transmitted.")
 
         def _raw_send() -> dict[str, Any]:
             users_res = self._client.users() if hasattr(self._client, "users") else self._client
@@ -142,8 +152,30 @@ class GmailSender:
                 messages_res = users_res.messages()
             except Exception as exc:
                 raise DraftSubstitutionError("Cannot use drafts API for report transmission.") from exc
-            return messages_res.send(userId="me", body={"raw": raw_b64}).execute()
+            request = messages_res.send(userId="me", body={"raw": raw_b64})
+            try:
+                return request.execute()
+            except Exception as exc:
+                # The request may already be on the wire; its outcome is unknown.
+                # Classify as a hard failure so the Gatekeeper never re-attempts
+                # the non-idempotent users.messages.send operation.
+                raise GmailTransmissionUncertainError(
+                    "Gmail transmission started but its outcome is unknown"
+                ) from exc
 
-        result_dict = self.gatekeeper.execute(_raw_send)
+        try:
+            result_dict = self.gatekeeper.execute(_raw_send)
+            if not isinstance(result_dict, dict) or not result_dict.get("id"):
+                raise GmailTransmissionUncertainError("Gmail API did not acknowledge the message")
+        except GmailTransmissionUncertainError:
+            # Fail closed: once a provider-side attempt may have begun, retain
+            # the claim so no automatic duplicate send can ever follow.
+            raise
+        except Exception:
+            # Definite pre-transmission failure (admission refusal, client
+            # construction): the provider never saw a request, so the claim
+            # may be safely released for a later retry.
+            self.idempotency_store.release(game_uid)
+            raise
         self.idempotency_store.mark_sent(game_uid)
         return result_dict

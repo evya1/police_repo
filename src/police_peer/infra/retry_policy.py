@@ -12,6 +12,7 @@ _NON_RETRYABLE_TYPE_NAMES = frozenset(
         "AttachmentMissingError",
         "DuplicateSendError",
         "InvalidScopeError",
+        "GmailTransmissionUncertainError",
     }
 )
 

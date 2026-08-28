@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,7 @@ def build_gmail_service(*, client_file: Path, token_file: Path) -> Any:
     credentials = None
     try:
         if token_file.is_file():
+            _validate_stored_token_scope(token_file)
             credentials = Credentials.from_authorized_user_file(
                 str(token_file), [GMAIL_SEND_SCOPE]
             )
@@ -49,6 +51,20 @@ def build_gmail_service(*, client_file: Path, token_file: Path) -> Any:
         raise
     except Exception as exc:
         raise ConfigError("Gmail OAuth client initialization failed") from exc
+
+
+def _validate_stored_token_scope(path: Path) -> None:
+    """Reject token metadata that was not granted exactly the send-only scope."""
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+        scopes = document.get("scopes") if isinstance(document, dict) else None
+    except (OSError, ValueError) as exc:
+        raise ConfigError("Gmail OAuth token metadata is invalid") from exc
+    if not isinstance(scopes, list) or not all(isinstance(scope, str) for scope in scopes):
+        raise ConfigError("Gmail OAuth token must declare the send-only scope")
+    normalized = {scope.rstrip("/") for scope in scopes}
+    if normalized != {GMAIL_SEND_SCOPE}:
+        raise ConfigError("Gmail OAuth token must declare the send-only scope")
 
 
 def _write_private_token(path: Path, payload: str) -> None:

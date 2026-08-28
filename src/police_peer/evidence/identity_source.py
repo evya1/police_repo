@@ -75,7 +75,7 @@ def build_identity(
         members=tuple(identity.members),
         repos=repos,
         mcp_servers=_endpoints(private, public_url),
-        llm_model=private.llm.model,
+        llm_model=private.llm.model if private.llm.provider == "openrouter" else "template",
         hardware_spec=collect_runtime_summary().as_dict(),
         github_commit=require_head_commit(repo_root),
         counted_games_played=counted_games_played(history),

@@ -48,7 +48,6 @@ def test_live_opt_in_without_key_never_constructs_client(monkeypatch) -> None:
     ("text", "message"),
     [
         ('provider = "openrouter"\nmodel = ""\nprovider_slug = "novita"', "model"),
-        ('provider = "openrouter"\nmodel = "m"\nprovider_slug = ""', "provider_slug"),
         ('provider = "ollama"', "provider"),
         ('provider = "openrouter"\nmodel = "m"\nprovider_slug = "p"\nmax_output_tokens = 3201',
          "max_output_tokens"),
@@ -75,3 +74,11 @@ def test_openrouter_settings_parse_all_production_fields(tmp_path: Path) -> None
     assert settings == LlmSettings(
         "openrouter", "inclusionai/ling-3.0-flash", "novita", 12.0, 8, 2,
     )
+
+
+def test_openrouter_provider_slug_is_optional(tmp_path: Path) -> None:
+    settings = load_private(_write(
+        tmp_path / "game.toml",
+        'provider = "openrouter"\nmodel = "deepseek/deepseek-v4-flash-0731:nitro"',
+    )).llm
+    assert settings.provider_slug is None

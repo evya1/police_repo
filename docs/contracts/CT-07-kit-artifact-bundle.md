@@ -1,10 +1,10 @@
 ---
 artifact: contract
 id: CT-07
-status: draft
+status: accepted
 owner_component: C06 (Reporting & League)
 shared: true
-updated: 2026-08-24
+updated: 2026-08-26
 ---
 
 # CT-07 — Kit Artifact Bundle
@@ -29,12 +29,12 @@ audit's opponent-commitment ledger.
 
 ## Output
 
-One flat directory, `<artifacts>/kit/<game_uid>/`, holding exactly 14 files:
+One flat directory, `<artifacts>/official/<game_uid>/`, holding exactly 14 files:
 
 | Count | Name | Content |
 |---|---|---|
 | 1 | `declaration_<game_id>.json` | identity, members, repos, endpoints, hardware, model, token cap, commit |
-| 6 | `config_<game_id>_g<NN>.json` | the flat 14-key negotiated terms inline, plus `config_sha256` |
+| 6 | `config_<game_id>_g<NN>.json` | the complete agreed shared configuration, plus `config_sha256` |
 | 6 | `log_<game_id>_g<NN>.json` | `summary` plus every sealed record in the kit's nested envelope |
 | 1 | `result_<game_id>.json` | per-sub-game rows, the derived aggregate, and `mutual_agreement` |
 
@@ -51,16 +51,21 @@ One flat directory, `<artifacts>/kit/<game_uid>/`, holding exactly 14 files:
 - A zeroed sub-game is credited to nobody: `tie: false`, `winner_group: null`.
 - An opponent game count we cannot observe is `null` (unclaimed), never `0`.
 - The `league` posture block is never defaulted; a warm-up never arms the league fields.
-- Every document declares `schema_profile: "league-kit-reference-v3"` and claims nothing
-  official (INPUT-001 remains open).
+- Every document declares the official outward `schema_version: "1.1"` and carries the pinned
+  reference's full explanatory `_schema`; the obsolete `league-kit-reference-v3` label is
+  forbidden.
+- Declaration signatures are bare 64-character SHA-256 values over sorted-key JSON, matching
+  the official v1.1 helper; hardware uses exactly its six official fields.
+- Declaration, log-summary, and result timestamps use `Asia/Jerusalem`, independent of host
+  timezone. Sealed event timestamps remain immutable inside commitment payloads.
+- Every result row carries both real 40-character Git commits, both truthful token totals,
+  both log references, and audit evidence. Unknown mandatory evidence fails publication.
 
 ## Verification
 
 ```bash
-python tools/check_artifacts.py <bundle> [--terms <flat terms>.json]   # ALL ARTIFACT CHECKS PASS
-python -m sparring.cli replay   <bundle> --expect-clean                # 6 verified, 0 tampered
-python tools/check_artifacts.py <ours> <theirs>                        # ALL SETS AGREE
+uv run python scripts/validate_official_artifacts.py <bundle>
 ```
 
-The consensus digest is pinned by a third-party golden vector in
-`tests/contract/kit_artifacts/test_kit_consensus.py`; see `tests/fixtures/kit_reference/`.
+The settlement digest covers the complete six rows and derived final result. Confirmation is
+true only after both peers exchange and acknowledge that digest.

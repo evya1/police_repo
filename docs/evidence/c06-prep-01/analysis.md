@@ -6,6 +6,14 @@ implementation-planning evidence for T016–T020; it does not change
 `official_status` for OPEN-001, OPEN-004, or OPEN-008, all of which remain
 OPEN pending course-staff/lecturer input.
 
+## Authoritative correction received after this analysis
+
+INPUT-011/CR-001 (2026-08-27) clarifies that repeated counted-mode rehearsals may be played
+against the same opponent; only one result per opponent may be officially declared and submitted.
+The older “refuse a second counted match” statements below are retained as historical planning
+evidence and are no longer normative. Repeat evidence must remain isolated and must not replace
+the selected official result.
+
 ## 1. PLANQ-005 Gmail sender decision
 
 PLANQ-005 is RESOLVED by this analysis (grounded in

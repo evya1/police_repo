@@ -1,33 +1,15 @@
-"""The settlement consensus digest -- the release's SECOND canonical form (CT-07, ADR-012).
-
-This module exists to be the ONLY place in the repository that serializes with json.dumps'
-DEFAULT (spaced) separators. Everything else we hash -- commits, terms signatures, game uids,
-config digests -- goes through the compact form in ``common.transport.canonical``, and that
-function must never reach this preimage. A peer that signs the compact form produces a digest
-that cannot match its opponent's at the exact moment both sides must agree on a result, and
-the mismatch looks like a disagreement about the game rather than about a separator.
-
-Keeping the two forms in two modules, under two names, with neither reachable from the other,
-is that rule expressed in code rather than remembered.
-
-The PREIMAGE is a second, independent choice, and the wrong one can never match either. The
-scope is the aggregate both peers must agree on plus the trimmed rows -- and nothing either
-side may legitimately differ on. The league fields (game counts, first-meeting, diversity) sit
-OUTSIDE it deliberately: a game count is each team's own unverifiable claim, and a per-side
-value inside a shared preimage makes agreement impossible by construction.
-
-``tie`` is likewise absent from the row keys. It lives in the document row and outside the
-hash: it is derivable (``winner_group is None``) and the tie COUNT already sits in the signed
-aggregate, so the trim loses nothing -- and a six-key row matches nothing that was ever played.
-"""
+"""Canonical digest of the complete official result agreed by both peers."""
 
 from __future__ import annotations
 
 import hashlib
 import json
 
-#: The five row keys inside the consensus preimage.
-CONSENSUS_ROW_KEYS = ("sub_game_number", "roles", "result", "winner_group", "score")
+#: Every official result-row field is inside the agreement preimage.
+CONSENSUS_ROW_KEYS = (
+    "sub_game_number", "roles", "started_at", "ended_at", "result", "winner_group",
+    "tie", "steps", "github_commit", "tokens", "score", "log_files", "audit",
+)
 
 #: The five aggregate keys inside the consensus preimage.
 CONSENSUS_AGGREGATE_KEYS = (
@@ -36,11 +18,11 @@ CONSENSUS_AGGREGATE_KEYS = (
 
 
 def consensus_scope(game_id: str, final_result: dict, rows: list[dict]) -> dict:
-    """Build the exact preimage two peers must both produce."""
+    """Build the complete agreed result preimage."""
     return {
         "game_id": game_id,
-        "aggregate": {k: final_result[k] for k in CONSENSUS_AGGREGATE_KEYS},
-        "sub_games": [{k: r[k] for k in CONSENSUS_ROW_KEYS} for r in rows],
+        "aggregate": final_result,
+        "sub_games": rows,
     }
 
 

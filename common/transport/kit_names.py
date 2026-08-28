@@ -6,22 +6,20 @@ match-level files never do. Keeping the grammar in one module means the projecti
 ``kit_documents`` and any future official-schema adapter agree on names by construction
 rather than by convention.
 
-``SCHEMA_PROFILE`` is deliberately explicit: the official templates are an unresolved
-external input (INPUT-001), so every document states the profile it was built against and
-none of them claims official compliance.
+The outward documents use the instructor reference's Appendix-F schema version 1.1.
 """
 
 from __future__ import annotations
 
-#: The interoperability profile these documents target. Never "official".
-SCHEMA_PROFILE = "league-kit-reference-v3"
-
-#: Envelope schema version, matching the profile's own artifacts.
+#: Appendix-F outward schema version from the pinned instructor reference.
 SCHEMA_VERSION = "1.1"
 
 _LINKS_REMARK = (
-    "match-level files are named <kind>_<game_id>.json; per-sub-game files carry _g<NN>. "
-    "All four share one game_uid, which is what joins them."
+    "These are logical roles, NOT fixed filenames. Each actual file name MUST be derived from "
+    "the game_id so that files from different games are never mixed. Match-level files "
+    "(declaration, result) are named <role>_<game_id>.json; per-sub-game files (config, log) "
+    "are named <role>_<game_id>_g<NN>.json where <NN> is the sub_game_number. The names below "
+    "are examples for game_id=S01R02-team07-vs-team13."
 )
 
 
@@ -45,30 +43,22 @@ def log_name(game_id: str, sub_game_number: int) -> str:
     return f"log_{game_id}_g{sub_game_number:02d}.json"
 
 
-def links_block(game_id: str, github: dict | None = None) -> dict:
-    """Return the cross-reference block naming all four artifact kinds.
-
-    ``github`` carries the per-group repository links (App. E rule 49) and is omitted
-    entirely when the caller does not know them -- an absent link is never invented.
-    """
-    links = {
+def links_block(game_id: str) -> dict:
+    """Return the exact reference cross-reference block."""
+    return {
         "_remark": _LINKS_REMARK,
         "declaration": declaration_name(game_id),
         "config": f"config_{game_id}_g<NN>.json",
         "log": f"log_{game_id}_g<NN>.json",
         "result": result_name(game_id),
     }
-    if github:
-        links["github"] = github
-    return links
 
 
-def base_block(game_id: str, game_uid: str, github: dict | None = None) -> dict:
+def base_block(game_id: str, game_uid: str) -> dict:
     """Return the envelope every artifact of one match shares."""
     return {
         "schema_version": SCHEMA_VERSION,
-        "schema_profile": SCHEMA_PROFILE,
         "game_id": game_id,
         "game_uid": game_uid,
-        "links": links_block(game_id, github),
+        "links": links_block(game_id),
     }

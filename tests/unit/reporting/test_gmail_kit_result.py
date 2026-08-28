@@ -69,26 +69,33 @@ def _decode(raw_b64: str):
     return BytesParser(policy=policy.default).parsebytes(raw)
 
 
-def test_body_is_the_exact_canonical_compact_bytes(tmp_path: Path) -> None:
+def _send(sender: GmailSender, result: dict, *, payload: bytes | None = None) -> None:
+    sender.send_kit_result(
+        game_uid=result["game_uid"],
+        result_bytes=payload if payload is not None else canonical_bytes(result),
+        filename=result_name(result["game_id"]),
+    )
+
+
+def test_body_is_a_useful_human_readable_description(tmp_path: Path) -> None:
     client = FakeGmailService()
     sender = _make(tmp_path, client=client)
     result = _result()
-    sender.send_kit_result(game_uid=result["game_uid"], result=result)
+    _send(sender, result)
 
     raw = client.resource.request[1]["raw"]
     msg = _decode(raw)
-    # The text body must be the canonical COMPACT form -- never a pretty-printed
-    # re-serialization (SPEC §6, WARNINGS §6). ``EmailMessage`` appends a trailing newline,
-    # which is accepted.
-    expected = canonical_bytes(result).decode("utf-8") + "\n"
-    assert msg.get_body(preferencelist=("plain",)).get_content() == expected
+    body = msg.get_body(preferencelist=("plain",)).get_content()
+    assert "validated final" in body
+    assert result["game_uid"] in body
 
 
 def test_single_named_attachment_is_the_same_file(tmp_path: Path) -> None:
     client = FakeGmailService()
     sender = _make(tmp_path, client=client)
     result = _result()
-    sender.send_kit_result(game_uid=result["game_uid"], result=result)
+    published = b'{"exact":"published bytes"}\n'
+    _send(sender, result, payload=published)
 
     raw = client.resource.request[1]["raw"]
     msg = _decode(raw)
@@ -96,14 +103,14 @@ def test_single_named_attachment_is_the_same_file(tmp_path: Path) -> None:
     assert len(attachments) == 1, "the kit email carries exactly one attachment"
     attachment = attachments[0]
     assert attachment.get_filename() == result_name(result["game_id"])
-    assert attachment.get_payload(decode=True) == canonical_bytes(result)
+    assert attachment.get_payload(decode=True) == published
 
 
 def test_attachment_filename_falls_back_to_result_name(tmp_path: Path) -> None:
     client = FakeGmailService()
     sender = _make(tmp_path, client=client)
     result = _result()
-    sender.send_kit_result(game_uid=result["game_uid"], result=result)
+    _send(sender, result)
     raw = client.resource.request[1]["raw"]
     msg = _decode(raw)
     (attachment,) = msg.iter_attachments()
@@ -114,15 +121,15 @@ def test_duplicate_send_refused(tmp_path: Path) -> None:
     client = FakeGmailService()
     sender = _make(tmp_path, client=client)
     result = _result()
-    sender.send_kit_result(game_uid=result["game_uid"], result=result)
+    _send(sender, result)
     with pytest.raises(DuplicateSendError):
-        sender.send_kit_result(game_uid=result["game_uid"], result=result)
+        _send(sender, result)
 
 
 def test_missing_client_raises(tmp_path: Path) -> None:
     sender = _make(tmp_path, client=None)
     with pytest.raises(GmailClientNotConfiguredError):
-        sender.send_kit_result(game_uid="g", result=_result())
+        _send(sender, _result())
 
 
 def test_missing_recipient_raises(tmp_path: Path) -> None:
@@ -134,4 +141,4 @@ def test_missing_recipient_raises(tmp_path: Path) -> None:
         idempotency_store=FileIdempotencyStore(tmp_path / "sent.json"),
     )
     with pytest.raises(ValueError, match="Recipient email address must be explicitly provided"):
-        sender.send_kit_result(game_uid="g", result=_result())
+        _send(sender, _result())

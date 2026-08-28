@@ -20,8 +20,10 @@ def secret_config() -> dict[str, object]:
     """Return a minimal secret-check policy."""
     return {
         "secret_allowed_paths": [".env.example"],
-        "secret_banned_names": [".env", "credentials.json"],
-        "secret_banned_globs": [".env.*", "*.pem"],
+        "secret_banned_names": [".env", "credentials.json", "token.json"],
+        "secret_banned_globs": [
+            ".env.*", "*credentials*.json", "*token*.json", "*.pem",
+        ],
     }
 
 
@@ -58,12 +60,32 @@ class RepositorySafetyTests(unittest.TestCase):
                 ["prefixed API token: settings.py:1"],
             )
 
+    def test_secret_check_flags_variant_oauth_filenames(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = initialize_git_repository(Path(directory))
+            for name in ("oauth-credentials-prod.json", "gmail-token-prod.json"):
+                (repo / name).write_text("{}\n", encoding="utf-8")
+            track(repo, "oauth-credentials-prod.json", "gmail-token-prod.json")
+            self.assertEqual(
+                check_no_secrets.scan_repository(repo, secret_config()),
+                [
+                    "tracked secret-like file: gmail-token-prod.json",
+                    "tracked secret-like file: oauth-credentials-prod.json",
+                ],
+            )
+
     def test_secret_check_skips_binary_files(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repo = initialize_git_repository(Path(directory))
             (repo / "data.bin").write_bytes(b"\0" + ("sk-" + "A" * 24).encode())
             track(repo, "data.bin")
             self.assertEqual(check_no_secrets.scan_repository(repo, secret_config()), [])
+
+    def test_mail_preview_helper_has_no_live_google_send_path(self) -> None:
+        source = (ROOT / "scripts" / "send_kit_email.py").read_text(encoding="utf-8")
+        self.assertIn("GMAIL_TEST_RECIPIENT", source)
+        self.assertNotIn("googleapiclient", source)
+        self.assertNotIn(".messages().send", source)
 
     def test_archive_check_rejects_unexpected_archive(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -18,7 +18,7 @@ from common.transport.kit_result_validation import (
 from police_peer.infra.external_api_gatekeeper import ExternalApiGatekeeper
 from police_peer.infra.gmail_oauth import build_gmail_service
 from police_peer.reporting.gmail import GMAIL_SEND_SCOPE, FileIdempotencyStore, GmailSender
-from police_peer.wire.identity_config import LECTURER_REPORT_ADDRESS, EmailSettings
+from police_peer.wire.identity_config import EmailSettings
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,7 +44,7 @@ class _CaptureMessages:
         return self
 
     def execute(self) -> dict[str, str]:
-        return {"status": "composed-locally"}
+        return {"id": "composed-locally"}
 
 
 class _CaptureService:
@@ -82,14 +82,20 @@ class GmailKitReporter:
         game_uid = document["game_uid"]
         capture = _CaptureService() if self.settings.mode == "dry-run" else None
         client = capture or self.service_client or self._live_client()
-        state_name = "gmail-dry-run.json" if capture else "gmail-sent.json"
+        state_path = self.artifact_root / "state" / "gmail-dry-run.json"
+        if capture is None:
+            state_path = (
+                self.token_file.with_name(".police-thief-gmail-sent.json")
+                if self.token_file is not None
+                else self.artifact_root / "state" / "gmail-sent.json"
+            )
         sender = GmailSender(
             self.gatekeeper, scopes=[GMAIL_SEND_SCOPE], sender_email=self.sender_email,
             default_recipient=self.recipient, service_client=client,
-            idempotency_store=FileIdempotencyStore(self.artifact_root / "state" / state_name),
+            idempotency_store=FileIdempotencyStore(state_path),
         )
         response = sender.send_kit_result(
-            game_uid=game_uid, result=document, filename=result_path.name,
+            game_uid=game_uid, result_bytes=result_path.read_bytes(), filename=result_path.name,
         )
         accepted = capture is None and bool(response.get("id"))
         if capture is None and not accepted:
@@ -126,8 +132,6 @@ def compose_gmail_reporter(
     if settings.mode == "send":
         if not authorize_send:
             raise ConfigError("live Gmail mode requires --authorize-email-send")
-        if target == LECTURER_REPORT_ADDRESS:
-            raise ConfigError("live Gmail mode requires a non-placeholder recipient")
         if not sender:
             raise ConfigError("GMAIL_SENDER_EMAIL is required for live Gmail mode")
         client_value = str(env.get("GMAIL_OAUTH_CLIENT_FILE", "")).strip()

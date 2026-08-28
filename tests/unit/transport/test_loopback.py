@@ -5,7 +5,7 @@ TC-01 / TC-02: assert the four tool names and the argument-name asymmetry.
 
 from __future__ import annotations
 
-from common.transport.loopback import Inboxes, LoopbackPeer, LoopbackTransport, pair
+from common.transport.loopback import Inboxes, LoopbackPeer, pair
 
 
 class TestInboxes:
@@ -58,6 +58,43 @@ class TestLoopbackPeer:
         assert result == {"ok": True}
         assert len(peer.inboxes.audits) == 1
 
+    def test_submit_audit_exact_retry_is_absorbed(self) -> None:
+        peer = LoopbackPeer("A")
+        payload = {"sender": "police", "records": [], "result_claim": {"outcome": "capture"}}
+        peer.submit_audit(payload)
+        peer.submit_audit(dict(payload))
+        assert list(peer.inboxes.audits) == [payload]
+
+    def test_submit_audit_returns_published_local_audit_contract(self) -> None:
+        peer = LoopbackPeer("A")
+        peer.inboxes.audit_reply = {
+            "sender": "police",
+            "records": [{"nonce": "local"}],
+            "result_claim": {"outcome": "capture", "steps": 1},
+            "private_note": "must-not-leak",
+        }
+        opponent_audit = {"sender": "thief", "records": [], "result_claim": {}}
+
+        result = peer.submit_audit(opponent_audit)
+
+        assert result == {
+            "status": "accepted",
+            "accepted": True,
+            "ok": True,
+            "sender": "police",
+            "records": [{"nonce": "local"}],
+            "result_claim": {"outcome": "capture", "steps": 1},
+        }
+        assert list(peer.inboxes.audits) == [opponent_audit]
+
+    def test_legacy_internal_audit_uses_compatibility_acknowledgment(self) -> None:
+        peer = LoopbackPeer("A")
+        peer.inboxes.audit_reply = {
+            "records": [], "nonces": [], "result_claim": "capture",
+        }
+
+        assert peer.submit_audit({"records": []}) == {"ok": True}
+
     def test_receive_control_appends_to_controls(self) -> None:
         peer = LoopbackPeer("A")
         result = peer.receive_control({"kind": "quit"})
@@ -92,10 +129,33 @@ class TestLoopbackTransport:
 
     def test_send_audit_delivers_to_theirs_submit_audit(self) -> None:
         a, b = pair("A", "B")
-        result = a.send_audit({"records": []})
+        payload = {"records": []}
+        result = a.send_audit(payload)
         assert result == {"ok": True}
+        assert a.ours.inboxes.audit_reply is payload
         msg = b.poll_audit()
-        assert msg == {"records": []}
+        assert msg == payload
+
+    def test_send_audit_returns_their_published_audit_contract(self) -> None:
+        a, b = pair("A", "B")
+        a.theirs.inboxes.audit_reply = {
+            "sender": "thief",
+            "records": [{"nonce": "theirs"}],
+            "result_claim": {"outcome": "escape", "steps": 35},
+        }
+        payload = {"sender": "police", "records": [], "result_claim": {}}
+
+        result = a.send_audit(payload)
+
+        assert result == {
+            "status": "accepted",
+            "accepted": True,
+            "ok": True,
+            "sender": "thief",
+            "records": [{"nonce": "theirs"}],
+            "result_claim": {"outcome": "escape", "steps": 35},
+        }
+        assert b.poll_audit() == payload
 
     def test_send_control_delivers_to_theirs_receive_control(self) -> None:
         a, b = pair("A", "B")
@@ -121,24 +181,3 @@ class TestLoopbackTransport:
         # Verify the messages landed in the right inboxes
         assert b.poll_agreement() == {"terms": {}}
         assert b.poll_audit() == {"records": []}
-
-
-class TestPair:
-    """Tests for the pair() factory."""
-
-    def test_pair_creates_mutual_transport(self) -> None:
-        a, b = pair()
-        assert isinstance(a, LoopbackTransport)
-        assert isinstance(b, LoopbackTransport)
-        # a sends to b, b sends to a
-        a.send_turn({"step": 1})
-        msg = b.poll_turn()
-        assert msg == {"step": 1}
-        b.send_turn({"step": 2})
-        msg = a.poll_turn()
-        assert msg == {"step": 2}
-
-    def test_pair_with_names(self) -> None:
-        a, b = pair("Police", "Thief")
-        assert a.ours.name == "Police"
-        assert b.ours.name == "Thief"

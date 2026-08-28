@@ -34,6 +34,12 @@ risk: high
 
 # T020 — Implement League Pairing Guards
 
+> **Authoritative correction (2026-08-27):** INPUT-011/CR-001 supersedes the original
+> per-opponent play prohibition below. Repeat counted-mode rehearsals may execute against the
+> same opponent; the guard belongs at official declaration/submission and permits only one
+> selected result per opponent. The existing implementation remains stricter and needs a
+> separately authorized code-alignment task; this documentation update does not change code.
+
 ## Expected outcome
 
 Preflight guards enforce counted-match eligibility and truthful declarations, while preserving auditable evidence for computational fairness.
@@ -64,7 +70,7 @@ The system reports required inputs but never invents lecturer-side normalization
 
 ## Acceptance criteria
 
-- [x] The peer refuses an eleventh counted match or a second counted match with the same opponent.
+- [ ] The peer permits isolated repeat counted-mode rehearsals but refuses an eleventh officially submitted result or a second official declaration/submission for the same opponent.
 - [x] At least two distinct opponents is tracked as a submission obligation, not faked before completion.
 - [x] Prior counted-match declarations are signed, compared, and retained.
 - [x] Warm-up and counted modes are unambiguous and cannot share report state accidentally.
@@ -78,9 +84,10 @@ The system reports required inputs but never invents lecturer-side normalization
 
 ## Implementation plan
 
-`preflight.py` provides pure guards over opponent history and signed
-declarations: enforce 2..10 counted matches total (LEAGUE-002), at most one
-counted match per opponent (LEAGUE-003), truthful prior-count declarations
+`preflight.py` is intended to provide pure guards over opponent history and signed
+declarations: enforce 2..10 officially submitted results total (LEAGUE-002), at most one
+officially declared/submitted result per opponent while permitting isolated repeat counted-mode
+rehearsals (LEAGUE-003), truthful prior-count declarations
 signed/compared/retained (LEAGUE-004), warm-up/counted mode separation, and
 hardware/version/token evidence collection with **no** local normalization
 formula (LEAGUE-007). Live endpoint checks are behind the G-LIVE criterion
@@ -92,7 +99,7 @@ model: `TooManyCountedMatches`, `DuplicateOpponent`, `DeclarationMismatch`.
 ## Behavioral test plan
 
 (gate note: `G-LIVE blocks: criterion` on `pairing_preflight` — live endpoint checks wait)
-- **unit (guards)** — refuse an eleventh counted match; refuse a second counted match against the same opponent; warm-up and counted modes are discrete and cannot share report state.
+- **unit (guards)** — allow a repeat counted-mode rehearsal; refuse an eleventh official submission and a second official submission against the same opponent; warm-up, rehearsal, and official report state remain isolated.
 - **unit (declarations)** — signed prior counted-match declarations are compared and retained.
 - **integration** — preflight pass/fail cases run against synthetic double data; live endpoint data required only for the G-LIVE criterion.
 - **failure** — a false prior-match declaration returns the LEAGUE-004 disqualification verdict.
@@ -105,6 +112,7 @@ Report files changed, tests executed, exact test results, decisions made, deviat
 
 ## Result and evidence
 
-Completed on `production-fixes`. Pairing guards enforce total and per-opponent counted-match limits,
-retain prior declarations, separate warm-up and counted report state, and fail closed on incomplete
-preflight evidence. The preserved ZeroOne0-versus-bestteam game supplies real-match evidence.
+Completed on `production-fixes` under the earlier interpretation. INPUT-011/CR-001 later narrowed
+the per-opponent limit to official declaration/submission rather than execution. The existing guard
+therefore remains over-restrictive until a separately authorized code-alignment task lands. Its
+prior declaration retention and incomplete-evidence failures remain valid.

@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
+import hashlib
 import threading
 from pathlib import Path
 
 import pytest
 
+from common.config import load_config
 from common.domain.scoring import Role
+from common.transport.canonical import canonical_bytes
 from common.transport.kit_identity import (
     GroupIdentity,
-    config_digest,
     identity_greeting_block,
     verify_group_block,
 )
@@ -77,22 +79,34 @@ def series() -> SeriesResult:
         raise errors[0]
     assert out["p"].settled
     assert out["p"].opponent_identity["group_id"] == GROUP_B
-    assert "hardware_spec" not in out["p"].opponent_identity
+    assert "hardware_spec" in out["p"].opponent_identity
     return out["p"]
 
 
-def test_declaration_carries_a_group_block_that_verifies(series, tmp_path):
-    history = FilePairingHistoryStore(tmp_path / "history.json")
-    ours = an_identity(GROUP_A, "1.0.0", history)
-    theirs = an_identity(series.opponent_group_id, "1.0.0", history)
-
+@pytest.fixture
+def official_args(tmp_path) -> dict:
+    history = FilePairingHistoryStore(tmp_path / "identity-history.json")
     from common.transport.kit_identity import group_block
 
-    groups = [group_block(ours), group_block(theirs)]
-    groups.sort(key=lambda g: g["group_id"])
+    config = load_config(Path(__file__).resolve().parents[2] / "config" / "game.json")
+    config["agreed_between"] = [GROUP_A, GROUP_B]
+    return {
+        "groups": [
+            group_block(an_identity(GROUP_A, "1.0.0", history)),
+            group_block(an_identity(GROUP_B, "1.0.0", history)),
+        ],
+        "agreed_config": config,
+        "max_tokens_per_game": 200_000,
+        "tokens_by_sub_game": {
+            number: {GROUP_A: 0, GROUP_B: 0} for number in range(1, 7)
+        },
+        "confirmed": True,
+    }
 
+
+def test_declaration_carries_a_group_block_that_verifies(series, official_args, tmp_path):
     bundle = publish_kit_bundle(
-        tmp_path / "bundle", series, our_group=GROUP_A, counted=True, groups=groups,
+        tmp_path / "bundle", series, our_group=GROUP_A, counted=True, **official_args,
     )
     import json
 
@@ -122,9 +136,16 @@ def test_counted_games_played_and_the_inclusive_count_are_off_by_one(series, tmp
     assert final["games_played_including_this"][GROUP_B] is None, "an unclaimed count is null"
 
 
-def test_the_config_digest_in_the_bundle_matches_the_terms(series, tmp_path):
+def test_the_config_digest_in_the_bundle_matches_the_config(series, official_args, tmp_path):
     import json
 
-    bundle = publish_kit_bundle(tmp_path / "bundle2", series, our_group=GROUP_A, counted=False)
+    bundle = publish_kit_bundle(
+        tmp_path / "bundle2", series, our_group=GROUP_A, counted=False, **official_args
+    )
     config = json.loads(next(bundle.glob("config_*.json")).read_text(encoding="utf-8"))
-    assert config["config_sha256"] == config_digest(config["terms"])
+    overlay = {
+        "_schema", "game_id", "game_uid", "sub_game_number", "links", "config_name",
+        "config_sha256",
+    }
+    shared = {key: value for key, value in config.items() if key not in overlay}
+    assert config["config_sha256"] == hashlib.sha256(canonical_bytes(shared)).hexdigest()

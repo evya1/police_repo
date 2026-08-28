@@ -1,122 +1,115 @@
-"""FastMCP client: one session, re-establish once, async-free facade.
-
-``McpChannel`` is the *send* half of a peer and a drop-in ``PeerChannel``: the
-series engine calls the same four ``send_*`` / four ``poll_*`` methods it calls
-on the loopback transport and never learns a socket is involved.
-
-The FastMCP client is async; the game loop is deliberately synchronous. So the
-channel owns a private event loop on a daemon thread and drives every call
-through ``run_coroutine_threadsafe(...).result(timeout)``. One session is held
-across the whole series (FR-30); on a session-terminated error the channel tears
-down and re-establishes **once** inside the original deadline, else it raises
-``PeerUnreachableError`` (FR-31).
-
-``poll_*`` never touch the network — they drain the local ``Inboxes`` that this
-peer's own server fills as the opponent calls our tools.
-"""
+"""Synchronous ``PeerChannel`` facade over a lifecycle-owned async MCP session."""
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
-import threading
+import json
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Callable
+from typing import cast
 
 from common.transport.loopback import Inboxes
+from common.transport.mcp_session import McpSession
+from common.transport.mcp_session import PeerUnreachableError as PeerUnreachableError
 
 
-class PeerUnreachableError(Exception):
-    """Raised when the opponent cannot be reached, even after one re-establish."""
+class ProtocolRefusedError(Exception):
+    """The peer answered but refused the remote operation."""
+
+    def __init__(self, tool: str, response: object) -> None:
+        self.tool = tool
+        self.response = response
+        super().__init__(f"peer refused {tool}: {response}")
+
+
+def _fastmcp_client(url: str) -> object:
+    """Construct the sole network client allowed by the shared-layer guard."""
+    from fastmcp import Client
+
+    return Client(url)
+
+
+def decoded_tool_result(result: object) -> dict:
+    """Return the peer's JSON verdict, including dicts encoded as MCP text."""
+    data = getattr(result, "data", None)
+    if isinstance(data, dict):
+        return dict(data)
+    for item in getattr(result, "content", ()):
+        value = getattr(item, "text", None)
+        if not isinstance(value, str):
+            continue
+        try:
+            decoded = json.loads(value)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(decoded, dict):
+            return decoded
+    return {
+        "status": "error",
+        "accepted": False,
+        "ok": False,
+        "reason": "peer tool returned no JSON object verdict",
+    }
+
+
+def _is_refusal(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    status = value.get("status") or value.get("result") or value.get("outcome")
+    if isinstance(status, dict):
+        return _is_refusal(status)
+    if isinstance(status, str) and status.upper() in {
+        "REFUSED", "REJECTED", "DENIED", "ERROR",
+    }:
+        return True
+    return value.get("accepted") is False or value.get("ok") is False
 
 
 class McpChannel:
-    """A ``PeerChannel`` that reaches the opponent over FastMCP HTTP.
-
-    ``payload``/``message`` asymmetry is applied at the call site: ``submit_audit``
-    is invoked with a ``payload`` argument, the other three with ``message``.
-    """
+    """Send through MCP and poll the local server-owned inboxes."""
 
     def __init__(self, peer_url: str, inboxes: Inboxes, *, timeout: float = 30.0) -> None:
-        self.peer_url = peer_url
         self.inboxes = inboxes
-        self.timeout = timeout
-        self._loop = asyncio.new_event_loop()
-        self._loop_thread = threading.Thread(
-            target=self._loop.run_forever, name="mcp-client-loop", daemon=True
-        )
-        self._loop_thread.start()
-        self._client: object | None = None
-        try:
-            self._connect()
-        except Exception:  # noqa: BLE001 — never leak the loop thread on a failed open
-            self._stop_loop()
-            raise
+        self._session = McpSession(peer_url, timeout, _fastmcp_client)
 
-    # --- event-loop plumbing ----------------------------------------------------------------
-    def _submit(self, coro, timeout: float | None = None):
-        """Drive a coroutine on the private loop; cancel it if the wait times out.
+    @property
+    def peer_url(self) -> str:
+        return self._session.peer_url
 
-        Cancelling the future stops the orphaned coroutine instead of leaving it
-        running on the loop after the caller has moved on.
-        """
-        future = asyncio.run_coroutine_threadsafe(coro, self._loop)
-        try:
-            return future.result(timeout=timeout if timeout is not None else self.timeout)
-        except Exception:
-            future.cancel()
-            raise
+    @peer_url.setter
+    def peer_url(self, value: str) -> None:
+        self._session.peer_url = value
 
-    def _stop_loop(self) -> None:
-        """Stop the private event loop and join its daemon thread. Idempotent."""
-        if self._loop.is_running():
-            self._loop.call_soon_threadsafe(self._loop.stop)
-        self._loop_thread.join(timeout=5.0)
+    @property
+    def timeout(self) -> float:
+        return self._session.timeout
 
-    def _connect(self) -> None:
-        """Open (or reopen) the held session to the opponent."""
-        from fastmcp import Client
+    @timeout.setter
+    def timeout(self, value: float) -> None:
+        self._session.timeout = value
 
-        client = Client(self.peer_url)
-        self._submit(client.__aenter__(), timeout=self.timeout)
-        self._client = client
-
-    def _teardown(self) -> None:
-        if self._client is not None:
-            with contextlib.suppress(Exception):
-                self._submit(self._client.__aexit__(None, None, None), timeout=5.0)
-            self._client = None
-
-    # --- the one call path, with a single re-establish inside one deadline (FR-30/FR-31) ----
     def _call(self, tool: str, args: dict) -> dict:
-        async def _invoke() -> dict:
-            result = await self._client.call_tool(tool, args)
-            return dict(result.data) if getattr(result, "data", None) is not None else {"ok": True}
+        response = cast(
+            dict,
+            self._session.call_tool(tool, args, transform=decoded_tool_result),
+        )
+        if _is_refusal(response):
+            raise ProtocolRefusedError(tool, response)
+        return response
 
-        deadline = time.monotonic() + self.timeout
-        try:
-            return self._submit(_invoke(), timeout=self.timeout)
-        except Exception:  # noqa: BLE001 — re-establish once, within the same deadline
-            # A turn/audit redelivered by the retry is absorbed by the at-least-once inbox
-            # (FR-32/33/34), so a duplicate is safe even though delivery is not exactly-once.
-            self._teardown()
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                raise PeerUnreachableError(
-                    f"peer at {self.peer_url} timed out; no time to retry"
-                ) from None
-            try:
-                self._connect()
-                return self._submit(_invoke(), timeout=max(0.1, deadline - time.monotonic()))
-            except PeerUnreachableError:
-                raise
-            except Exception as exc:  # noqa: BLE001
-                raise PeerUnreachableError(
-                    f"peer at {self.peer_url} unreachable after re-establish: {exc}"
-                ) from exc
+    def configure_peer_endpoints(
+        self, *, police_url: str, thief_url: str, transition_timeout: float | None = None
+    ) -> None:
+        self._session.configure_endpoints(
+            police_url=police_url,
+            thief_url=thief_url,
+            transition_timeout=transition_timeout,
+        )
 
-    # --- outbound (PeerChannel) -------------------------------------------------------------
+    def select_for_role(self, our_role) -> None:
+        self._session.select_for_role(our_role)
+
     def send_agreement(self, message: dict) -> dict:
         return self._call("negotiate", {"message": message})
 
@@ -124,12 +117,12 @@ class McpChannel:
         return self._call("receive_turn", {"message": message})
 
     def send_audit(self, payload: dict) -> dict:
+        self.inboxes.audit_reply = payload
         return self._call("submit_audit", {"payload": payload})
 
     def send_control(self, message: dict) -> dict:
         return self._call("receive_control", {"message": message})
 
-    # --- inbound (PeerChannel): drain the local server's queues -----------------------------
     def poll_agreement(self) -> dict | None:
         return self.inboxes.agreements.popleft() if self.inboxes.agreements else None
 
@@ -143,21 +136,32 @@ class McpChannel:
         return self.inboxes.controls.popleft() if self.inboxes.controls else None
 
     def close(self) -> None:
-        """Tear down the session and stop the private loop. Idempotent."""
-        self._teardown()
-        self._stop_loop()
+        self._session.close()
 
 
 def edge_answers(url: str, timeout: float = 2.0) -> bool:
-    """True once anything HTTP answers at the URL.
-
-    ``406`` is the healthy answer for an MCP edge probed with a browser-shaped
-    GET, but any status proves a listener is up (FR-9).
-    """
+    """Return whether the peer process, rather than only its tunnel, answers."""
     try:
         with urllib.request.urlopen(urllib.request.Request(url, method="GET"), timeout=timeout):
             return True
-    except urllib.error.HTTPError:
-        return True
+    except urllib.error.HTTPError as exc:
+        return exc.code < 500
     except (urllib.error.URLError, OSError):
         return False
+
+
+def wait_for_edge(
+    url: str,
+    budget: float,
+    *,
+    probe: Callable[[str, float], bool] = edge_answers,
+) -> bool:
+    """Poll an MCP edge with bounded exponential backoff."""
+    deadline = time.monotonic() + budget
+    delay = 0.2
+    while time.monotonic() < deadline:
+        if probe(url, 0.5):
+            return True
+        time.sleep(delay)
+        delay = min(2.0, delay * 1.5)
+    return False
